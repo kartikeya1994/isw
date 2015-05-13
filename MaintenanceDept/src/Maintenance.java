@@ -1,14 +1,11 @@
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketTimeoutException;
+import java.net.ServerSocket;
 
-import com.mb14.MachineList;
-import com.mb14.Macros;
+import org.isw.FlagPacket;
+import org.isw.MachineList;
+import org.isw.Macros;
 
 
 public class Maintenance {
@@ -17,47 +14,51 @@ public class Maintenance {
 	public static void main(String[] args)
 	{
 		boolean recd_list;
-		while(true)
-		{
-			recd_list = false;
-			//broadcasting to request for machine list
-			//create outbound packet with HELLO message
-			final ByteArrayOutputStream baos=new ByteArrayOutputStream();
-			final DataOutputStream dos=new DataOutputStream(baos);
-			dos.writeInt(Macros.REQUEST_MACHINE_LIST);
-			dos.close();
-			final byte[] buf=baos.toByteArray();
-			DatagramPacket packetOut, packetIn;
-			InetAddress group = InetAddress.getByName(Macros.MAINTENANCE_SCHEDULING_GROUP);
-			packetOut = new DatagramPacket(buf, buf.length, group, Macros.SCHEDULING_DEPT_PORT);
+		DatagramSocket udpSocket = null;
+		ServerSocket tcpSocket = null;
+		recd_list = false;
+		//broadcast to receive 
 
-			//create socket
-			DatagramSocket socket = new DatagramSocket(Macros.MAINT);
-			socket.setSoTimeout(3000);
+		//create packet
+		DatagramPacket packetOut = FlagPacket.makePacket(Macros.MAINTENANCE_SCHEDULING_GROUP, Macros.SCHEDULING_DEPT_PORT,Macros.REQUEST_MACHINE_LIST);
+
+		//create socket
+		try
+		{
+			udpSocket = new DatagramSocket(Macros.MAINTENANCE_DEPT_PORT_TCP);
+
+			tcpSocket = new ServerSocket(Macros.MAINTENANCE_DEPT_PORT_TCP);
 
 			while(!recd_list)
 			{
-				System.out.println("Getting machine list...");
-				socket.send(packetOut);
-				
-				try
-				{
+				System.out.println("Requesting machine list from scheduling dept...");
+				udpSocket.send(packetOut); //UDP
 
-				}catch(SocketTimeoutException stoe)
-				{
-					System.out.println("Timed out.");
-					continue;
-				}
+				MachineList list = MachineList.receive(tcpSocket);
 
-				if( == Macros.REPLY_MACHINE_LIST)
+				if( list != null)
 				{
 					recd_list=true;
-					serverIP=packetIn.getAddress();
+					System.out.println("Received machine list from "+ list.senderIP);
+					System.out.println(list);
 					//print recd list
 				}
 				else
 					continue;
 			}
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+
+		udpSocket.close();
+
+		try 
+		{
+			tcpSocket.close();
+		}catch (IOException e) 
+		{
+			e.printStackTrace();
 		}
 	}
 
