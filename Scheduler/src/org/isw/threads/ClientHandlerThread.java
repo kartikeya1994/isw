@@ -1,4 +1,4 @@
-package in.ac.iiti.threads;
+package org.isw.threads;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -1,4 +1,4 @@
-package in.ac.iiti.threads;
+package org.isw.threads;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,8 +16,8 @@ import java.util.PriorityQueue;
 import java.util.Random;
 
 import org.isw.Job;
-import org.isw.JobList;
 import org.isw.MachineList;
+import org.isw.Schedule;
 
 public class JobSchedThread extends Thread
 {
@@ -44,7 +44,7 @@ public class JobSchedThread extends Thread
 		{	
 			
 			getJobs();
-			PriorityQueue<JobList> pq = new PriorityQueue<JobList>();
+			PriorityQueue<Schedule> pq = new PriorityQueue<Schedule>();
 		
 			Enumeration<InetAddress> en = machineList.getList();
 			while(en.hasMoreElements())
@@ -67,7 +67,7 @@ public class JobSchedThread extends Thread
 					byte[] object = packet.getData();
 					ByteArrayInputStream in = new ByteArrayInputStream(object);
 					ObjectInputStream is = new ObjectInputStream(in);
-						JobList jl = (JobList) is.readObject();	
+						Schedule jl = (Schedule) is.readObject();	
 						jl.setAddress(ip);
 						pq.add(jl);	
 				} catch (IOException e) {
@@ -79,7 +79,7 @@ public class JobSchedThread extends Thread
 			}
 			System.out.println("Job list: ");
 			for(int i=0;i<jobArray.size();i++){
-				JobList min = pq.remove();
+				Schedule min = pq.remove();
 				min.addJob(jobArray.get(i));
 				System.out.print(jobArray.get(i).getJobName()+": "+jobArray.get(i).getJobTime()/60+" ");
 				
@@ -126,8 +126,11 @@ public class JobSchedThread extends Thread
 	void getJobs(){
 		jobArray = new ArrayList<Job>();
 		for(int i=14;i>0;i--){ 
-			if(r.nextBoolean())
-				jobArray.add(new Job(i*1200,String.valueOf(i)));
+			if(r.nextBoolean()){
+				Job job = new Job(String.valueOf(i),i*1200,i*1000,Job.JOB_NORMAL);
+				job.setPenaltyCost(i*500);
+				jobArray.add(job);
+				}
 		}
 	}
 }

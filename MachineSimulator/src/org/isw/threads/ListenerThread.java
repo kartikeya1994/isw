@@ -13,14 +13,14 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
-import org.isw.JobList;
+import org.isw.Schedule;
 
 public class ListenerThread extends Thread
 {
 
 	final static int SCHED_PUT = 3;
 	final static int SCHED_GET = 4;
-	JobList jl;
+	Schedule jl;
 	InetAddress serverIP;
 	DatagramSocket socket;
 	public ListenerThread(InetAddress serverIP,DatagramSocket socket) {
@@ -34,7 +34,7 @@ public class ListenerThread extends Thread
 		
 		try {
 			socket.setSoTimeout(0);
-			jl = new JobList(InetAddress.getByName("localhost"));
+			jl = new Schedule(InetAddress.getByName("localhost"));
 		} catch (UnknownHostException e1) {
 			e1.printStackTrace();
 		} catch (SocketException e) {
@@ -59,11 +59,14 @@ public class ListenerThread extends Thread
 					ByteArrayInputStream in = new ByteArrayInputStream(data);
 					ObjectInputStream is = new ObjectInputStream(in);
 					try {
-						jl = (JobList) is.readObject();	
-						System.out.println("Received schedule:" + jl.printList());
-						(new JobExecThread(jl)).start();
-					    } catch (ClassNotFoundException e) {
+						jl = (Schedule) is.readObject();	
+						System.out.println("Received schedule:" + jl.printSchedule());
+
+					} catch (ClassNotFoundException e) {
 					        e.printStackTrace();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
 				}
 				else if(action==SCHED_GET){

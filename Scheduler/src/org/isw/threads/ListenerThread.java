@@ -1,6 +1,4 @@
-package in.ac.iiti.threads;
-
-import in.ac.iiti.threads.ClientHandlerThread;
+package org.isw.threads;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -8,6 +6,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 
 import org.isw.MachineList;
+import org.isw.threads.ClientHandlerThread;
 
 public class ListenerThread extends Thread
 {

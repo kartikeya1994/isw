@@ -1,13 +1,12 @@
 package org.isw;
-import in.ac.iiti.threads.JobSchedThread;
-import in.ac.iiti.threads.ListenerThread;
-
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
 import org.isw.MachineList;
+import org.isw.threads.JobSchedThread;
+import org.isw.threads.ListenerThread;
 
 public class SchedulingDept 
 {

@@ -16,7 +16,7 @@ public class Machine {
 
 	
 	static InetAddress serverIP;
-
+	static int machineNo;
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
@@ -68,7 +68,7 @@ public class Machine {
 				else
 					continue;
 			}
-			
+			machineNo = Integer.parseInt(args[1]);
 			ListenerThread listener = new ListenerThread(serverIP,socket);
 			listener.start();
 			

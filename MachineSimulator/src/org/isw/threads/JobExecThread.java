@@ -1,10 +1,10 @@
 package org.isw.threads;
 
-import org.isw.JobList;
+import org.isw.Schedule;
 
 public class JobExecThread extends Thread{
-	JobList jobList;
-	public JobExecThread(JobList jobList){
+	Schedule jobList;
+	public JobExecThread(Schedule jobList){
 		this.jobList = jobList;
 	}
 	public void run(){

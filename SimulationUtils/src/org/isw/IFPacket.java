@@ -9,9 +9,9 @@ public class IFPacket implements Serializable
 {
 	private static final long serialVersionUID = -8976546963278613092L;
 	float IF;
-	JobList jobList;
+	Schedule jobList;
 
-	public IFPacket(float IF, JobList jobList)
+	public IFPacket(float IF, Schedule jobList)
 	{
 		this.IF = IF;
 		this.jobList = jobList;
