@@ -17,6 +17,7 @@ public class Machine {
 	
 	static InetAddress serverIP;
 	static int machineNo;
+	public static Component[] compList;
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
@@ -69,6 +70,7 @@ public class Machine {
 					continue;
 			}
 			machineNo = Integer.parseInt(args[1]);
+			compList = parseExcel(machineNo);
 			ListenerThread listener = new ListenerThread(serverIP,socket);
 			listener.start();
 			
@@ -77,6 +79,15 @@ public class Machine {
 		{
 			e.printStackTrace();
 		}
+	}
+	private static Component[] parseExcel(int machineNo) {
+		/**
+		 * Parse the component excel file into a list of components.
+		 * Total number of components should be 14 for our experiment.
+		 * Different component excel file for different machineNo (Stick
+		 * to one for now)
+		 * **/
+		return null;
 	}
 
 }

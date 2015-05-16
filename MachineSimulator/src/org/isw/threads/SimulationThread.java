@@ -1,42 +1,47 @@
 package org.isw.threads;
 
+import java.util.concurrent.Callable;
+
 import org.isw.Component;
 import org.isw.Job;
+import org.isw.Machine;
 import org.isw.Schedule;
+import org.isw.SimulationResult;
 
-public class SimulationThread extends Thread {
+public class SimulationThread implements Callable<SimulationResult> {
 	Schedule schedule; // Job Schedule received by scheduler
 	int compCombo; //Combination of components to perform PM on.
 	int pmOpportunity;
 	int noOfSimulations = 1000;
-	Component[] compList; 
-	public SimulationThread(Schedule schedule, int compCombo, int pmOpportunity, Component[] compList){
+
+	public SimulationThread(Schedule schedule, int compCombo, int pmOpportunity){
 		this.schedule = schedule;
 		this.compCombo = compCombo;
 		this.pmOpportunity = pmOpportunity;
-		this.compList = compList;
+
 		}
 	/**
 	 * We shall run the simulation 1000 times,each simulation being 8 hours (real time) in duration.
 	 * For each simulation PM is done only once and is carried out in between job executions.
 	 * TODO: Fix time scaling at cost calculations.
 	 * **/
-	public void run(){
-		long totalCost = 0;
+	public SimulationResult call(){
+		double totalCost = 0;
+		double pmAvgTime = 0;
 		while(noOfSimulations-- <= 0){
 			double procCost = 0;  //Processing cost
 			double pmCost = 0;   //PM cost 
 			double cmCost = 0;   //CM cost
 			double penaltyCost = 0; //Penalty cost
 			Schedule simSchedule = new Schedule(schedule);
-			Component[] simCompList = compList.clone();
+			Component[] simCompList = Machine.compList.clone();
 			/*Add PM job to the schedule*/
 			if(pmOpportunity >=0 ){
 				addPMJobs(simSchedule,simCompList);
 			}
 			/*Calculate the TTF for every component and add it's corresponding CM job 
 			 * to the schedule*/
-			for(int i=0;i<compList.length;i++){
+			for(int i=0;i<simCompList.length;i++){
 				long cmTTF = (long)simCompList[i].getCMTTF();
 				if(cmTTF < 8*3600){
 					Job cmJob = new Job("CM", (long)simCompList[i].getCMTTR(),simCompList[i].getCMCost(), Job.JOB_CM);
@@ -59,6 +64,7 @@ public class SimulationThread extends Thread {
 					case Job.JOB_PM:
 						pmCost += current.getFixedCost() + current.getJobCost()*(time2-time);
 						current.setFixedCost(0);
+						pmAvgTime += time2-time;
 						break;
 					case Job.JOB_CM:
 						cmCost += current.getFixedCost() + current.getJobCost()*(time2-time);
@@ -78,7 +84,9 @@ public class SimulationThread extends Thread {
 		   //Calculate totalCost for the shift
 		totalCost += procCost + pmCost + cmCost + penaltyCost;
 		}
-		
+		totalCost /= 1000;
+		pmAvgTime /= 1000;
+		return new SimulationResult(totalCost,pmAvgTime,compCombo,pmOpportunity);
 	}
 	/*Add PM job for the given combination of components.
 	 * The PM jobs are being split into smaller PM jobs for each component.
@@ -87,7 +95,8 @@ public class SimulationThread extends Thread {
 	 * */
 	private void addPMJobs(Schedule simSchedule,Component[] simCompList) {
 		int cnt = 0;
-		String combo = Integer.toBinaryString(compCombo);
+		String formatPattern = "%" + simCompList.length + "s";
+		String combo = String.format(formatPattern, Integer.toBinaryString(compCombo)).replace(' ', '0');
 		for(int i=0;i< combo.length();i++){
 			if(combo.charAt(i)=='1'){
 				Job pmJob = new Job("PM",(long)simCompList[i].getPMTTR(),simCompList[i].getPMCost(),Job.JOB_PM);

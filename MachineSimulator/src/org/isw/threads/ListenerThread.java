@@ -12,8 +12,15 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import org.isw.Machine;
 import org.isw.Schedule;
+import org.isw.SimulationResult;
 
 public class ListenerThread extends Thread
 {
@@ -60,13 +67,14 @@ public class ListenerThread extends Thread
 					ObjectInputStream is = new ObjectInputStream(in);
 					try {
 						jl = (Schedule) is.readObject();	
+						
 						System.out.println("Received schedule:" + jl.printSchedule());
-
-					} catch (ClassNotFoundException e) {
+						System.out.println("Running Simulations");
+						runSimulation(jl.getFarthestCompleteJob());
+						
+					
+					} catch (ClassNotFoundException | InterruptedException | ExecutionException e) {
 					        e.printStackTrace();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
 					}
 				}
 				else if(action==SCHED_GET){
@@ -85,5 +93,26 @@ public class ListenerThread extends Thread
 			e.printStackTrace();
 		}
 	}
+	private void runSimulation(int maxPMO) throws InterruptedException, ExecutionException {
+		SimulationResult[] results = new SimulationResult[maxPMO+1];
+		for(int i=0;i<=maxPMO;i++){
+			results[i]= new SimulationResult(Double.MAX_VALUE,0,0,0);
+		}
+		ExecutorService threadPool = Executors.newFixedThreadPool(20);
+		CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
+		pool.submit(new SimulationThread(jl,1,-1));
+		int cnt=1;
+		for(int i=0;i<=maxPMO;i++){
+			for(int j = 1;j<Math.pow(Machine.compList.length, 2);j++){
+				pool.submit(new SimulationThread(jl,j,i));
+				cnt++;
+			}
+			}
+		for(int i=0;i<cnt;i++){
+			SimulationResult result = pool.take().get();
+			if(results[result.getPMOpportunity()].getCost() > result.getCost())
+				results[result.getPMOpportunity()] = result;
+		}
+		}
 	
 }

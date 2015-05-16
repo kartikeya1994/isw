@@ -106,5 +106,14 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 				
 		return str;
 	}
+	public int getFarthestCompleteJob(){
+		int i = jobs.size();
+		long temp = sum;
+		while(temp>8*3600){
+			temp -= jobs.get(i-1).getJobTime();
+			i--;
+		}
+		return i;
+	}
 
 }
