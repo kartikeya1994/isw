@@ -24,7 +24,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		ip = source.ip;
 		jobs = new LinkedList<Job>(source.jobs);
 	}
-	
+	//FIXME: Machine address must not be associated with the schedule.
 	public InetAddress getAddress(){
 		return ip;
 	}
@@ -33,7 +33,10 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		jobs.add(job);
 		sum+=job.getJobTime();
 	}
-	
+	/**
+	 * Add CM Job. If a CM job overlaps with a normal job, split the normal job and insert CM job 
+	 * in between. If a CM job overlaps with a PM/CM job, add it after the CM/PM job.
+	**/
 	public void addCMJob(Job cmJob, long TTF){
 		if (TTF >= sum)
 			return;
@@ -62,7 +65,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		}
 		sum+=cmJob.getJobTime();
 	}
-	
+	//Insert PM job at give opportunity.
 	public void addPMJob(Job pmJob, int opportunity){
 		jobs.add(opportunity, pmJob);
 		sum+=pmJob.getJobTime();

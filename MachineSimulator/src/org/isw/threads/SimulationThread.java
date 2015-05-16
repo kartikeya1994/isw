@@ -50,6 +50,7 @@ public class SimulationThread extends Thread {
 			while(time - startTime < 8*3600 && !simSchedule.isEmpty()){
 				time2 = System.currentTimeMillis();
 				simSchedule.decrement(time2-time);
+				//Calculate the cost depending upon the job type
 				Job current = simSchedule.peek(); 
 				switch(current.getJobType()){
 					case Job.JOB_NORMAL:
@@ -65,17 +66,25 @@ public class SimulationThread extends Thread {
 						break;
 				}
 				if(current.getJobType()<0){
+					//Job ends here
 					System.out.println("Job "+ simSchedule.remove().getJobName()+" complete");
 				}
 				time = time2;
 			}
+			//Calculate penaltyCost for leftover jobs
 		   while(!simSchedule.isEmpty()){
 			   penaltyCost += simSchedule.remove().getJobCost()*8;
 		   }
+		   //Calculate totalCost for the shift
 		totalCost += procCost + pmCost + cmCost + penaltyCost;
 		}
 		
 	}
+	/*Add PM job for the given combination of components.
+	 * The PM jobs are being split into smaller PM jobs for each component.
+	 * But the fixed PM cost is only added for the first job to meet the cost model requirements.
+	 * FIXME: A CM job can be introduced between the split up PM jobs.   
+	 * */
 	private void addPMJobs(Schedule simSchedule,Component[] simCompList) {
 		int cnt = 0;
 		String combo = Integer.toBinaryString(compCombo);
