@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.isw.IFPacket;
 import org.isw.Machine;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
@@ -70,8 +71,10 @@ public class ListenerThread extends Thread
 						
 						System.out.println("Received schedule:" + jl.printSchedule());
 						System.out.println("Running Simulations");
-						runSimulation(jl.getFarthestCompleteJob());
-						
+						SimulationResult[] results = runSimulation(jl.getFarthestCompleteJob());
+						IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
+						ifPacket.send(maintenanceIP, maintenancePort);
+						IFPacket newSchedule = IFPacket.receive(tcpSocket);
 					
 					} catch (ClassNotFoundException | InterruptedException | ExecutionException e) {
 					        e.printStackTrace();
@@ -93,7 +96,7 @@ public class ListenerThread extends Thread
 			e.printStackTrace();
 		}
 	}
-	private void runSimulation(int maxPMO) throws InterruptedException, ExecutionException {
+	private SimulationResult[] runSimulation(int maxPMO) throws InterruptedException, ExecutionException {
 		SimulationResult[] results = new SimulationResult[maxPMO+1];
 		for(int i=0;i<=maxPMO;i++){
 			results[i]= new SimulationResult(Double.MAX_VALUE,0,0,0);
@@ -113,6 +116,8 @@ public class ListenerThread extends Thread
 			if(results[result.getPMOpportunity()].getCost() > result.getCost())
 				results[result.getPMOpportunity()] = result;
 		}
-		}
+		return results;
+	}
+	
 	
 }
