@@ -36,8 +36,26 @@ public class Maintenance
 	public static void main(String[] args)
 	{
 
+		//handle program termination
+		Runtime.getRuntime().addShutdownHook(new Thread(){
+			@Override
+			public void run() {
+				System.out.println("Bye");
+				udpSocket.close();
+
+				try 
+				{
+					tcpSocket.close();
+				}catch (IOException e) 
+				{
+					e.printStackTrace();
+				}	
+			}
+		});
+
 		recd_list = false;
 
+		//create sockets for tcp and udp
 		try {
 			udpSocket = new DatagramSocket(Macros.MAINTENANCE_DEPT_PORT_TCP);
 			tcpSocket = new ServerSocket(Macros.MAINTENANCE_DEPT_PORT_TCP);
@@ -53,17 +71,8 @@ public class Maintenance
 		//create packet
 		packetOut = FlagPacket.makePacket(Macros.MAINTENANCE_SCHEDULING_GROUP, Macros.SCHEDULING_DEPT_PORT,Macros.REQUEST_MACHINE_LIST);
 
-		startShift();
-
-		udpSocket.close();
-
-		try 
-		{
-			tcpSocket.close();
-		}catch (IOException e) 
-		{
-			e.printStackTrace();
-		}
+		while(true)
+			startShift();
 	}
 
 	public static void startShift()
@@ -109,27 +118,27 @@ public class Maintenance
 			ip = new ArrayList<InetAddress>();
 			port = new ArrayList<Long>();
 			schedule = new ArrayList<Schedule>();
-			
+
 			for(int i = 0; i < numOfMachines; i++)
 			{
 				IFPacket p = pool.take().get(); //fetch results of all tasks
 				System.out.println("Machine " + p.ip + "\n" + p);
-				
+
 				ip.add(p.ip);
 				port.add(p.port);
 				Schedule sched = p.jobList;
 				schedule.add(sched);
-				
+
 				for(int j=0;j<p.results.length;j++)
 				{
 					p.results[j].id = count; //assign machine id
-					
+
 					//calculate t for each SimulationResult
 					long t = 0;
 					for(int k=0; k<p.results[j].pmOpportunity;k++)
 						t += sched.jobs.get(k).jobTime;
 					p.results[j].t = t; //assign calculated t
-					
+
 					table.add(p.results[j]);
 				}
 				count++;
