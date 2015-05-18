@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.PriorityQueue;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -31,7 +32,11 @@ public class Maintenance
 	static ArrayList<InetAddress> ip = new ArrayList<InetAddress>();
 	static ArrayList<Long> port = new ArrayList<Long>();
 	static ArrayList<Schedule> schedule = new ArrayList<Schedule>();
+	static ArrayList<Component[]> component = new ArrayList<Component[]>();
+	
 	static int numOfMachines;
+	static PriorityQueue<CompTTF> ttfList;
+	
 
 	public static void main(String[] args)
 	{
@@ -118,7 +123,8 @@ public class Maintenance
 			ip = new ArrayList<InetAddress>();
 			port = new ArrayList<Long>();
 			schedule = new ArrayList<Schedule>();
-
+			component = new ArrayList<Component[]>();
+			ttfList = new PriorityQueue<CompTTF>();
 			for(int i = 0; i < numOfMachines; i++)
 			{
 				IFPacket p = pool.take().get(); //fetch results of all tasks
@@ -128,7 +134,7 @@ public class Maintenance
 				port.add(p.port);
 				Schedule sched = p.jobList;
 				schedule.add(sched);
-
+				component.add(p.compList);
 				for(int j=0;j<p.results.length;j++)
 				{
 					p.results[j].id = count; //assign machine id
@@ -141,6 +147,7 @@ public class Maintenance
 
 					table.add(p.results[j]);
 				}
+			
 				count++;
 			}
 			threadPool.shutdown();
@@ -156,6 +163,9 @@ public class Maintenance
 		/**
 		 * TOOD: Algo is incorrect. pmOpportunity is not time, its slot.
 		 */
+		long[] pmTimeArray = new long[schedule.size()];
+		int[] compCombos = new int[schedule.size()];
+		
 		Collections.sort(table, new CustomComparator()); //sort according to lower t, higher IF and lower PM time
 		int busyTime = 0;
 		HashMap<Integer, Boolean> toPerformPM = new HashMap<Integer,Boolean>(); //only one PM per machine per shift.
@@ -167,10 +177,71 @@ public class Maintenance
 				//incorporate the job into schedule of machine
 				schedule.get(row.id).addPMJob(new Job("PM", (long)row.pmAvgTime, row.cost,Job.JOB_PM),row.pmOpportunity);
 				toPerformPM.put(row.id, true);
+				pmTimeArray[row.id] = row.t;
+				compCombos[row.id] = row.compCombo;
 				busyTime += (long)row.pmAvgTime;
 			}
 		}
-		System.out.println("PM incorporated schedule- ");
+		for(int i=0; i<numOfMachines;i++){
+			for(int j=0;j<component.get(i).length;j++){
+				long ttf = (long)component.get(i)[j].getCMTTF();
+				//If TTF is greater than shift time or schedule length, ignore.
+			if(ttf> 8 || ttf > schedule.get(i).getSum())
+				continue;
+			//if PM is performed for a component before ttf of that component, ignore.
+			if(ttf> pmTimeArray[i] && ((1<<j)&compCombos[i])==1)
+				continue;
+			long ttr = (long)component.get(i)[j].getCMTTR();
+			Job cmJob = new Job("CM",ttr,component.get(i)[j].getCMCost(),Job.JOB_CM);
+			cmJob.setFixedCost(component.get(i)[j].getCompCost());
+			ttfList.add(new CompTTF(ttf,cmJob,i));	
+			
+			}
+		}
+		while(!ttfList.isEmpty()){
+			CompTTF compTTF = ttfList.remove();
+			Job job = schedule.get(compTTF.machineID).jobAt(compTTF.ttf);
+			if(job.getJobType() == Job.JOB_PM || job.getJobType() == Job.JOB_CM);
+			{
+				//TODO: Calculate new time
+				ttfList.add(new CompTTF(newTime,compTTF.cmJob,compTTF.machineID));
+				continue;
+			}
+			boolean pmFlag = false;
+			boolean cmFlag = false;
+			int pmIndex =0;
+			for(int i = 0;i < schedule.size();i++){
+				if(compTTF.machineID == i)
+					continue;
+				switch(schedule.get(i).jobAt(compTTF.ttf).getJobType()){
+					case Job.JOB_CM:
+						cmFlag = true;
+						break;
+					case Job.JOB_PM:
+						pmFlag = true;
+						pmIndex = i;
+						break;
+				}		
+			
+				if(cmFlag){
+					//TODO
+					//ttfList.add(new CompTTF(newTime,compTTF.cmJob,compTTF.machineID));
+					continue;
+				}
+				else if(pmFlag){
+					//TODO
+					//schedule.get(pmIndex).addWaitJob();
+				}
+				else{
+					//Safe to add CM job to the schedule.
+					schedule.get(i).addCMJob(compTTF.cmJob, compTTF.ttf);
+				}
+			}
+			
+		
+		}
+		
+		System.out.println("PM + CM incorporated schedule- ");
 		for(int i=0; i<numOfMachines;i++)
 			System.out.println("Machine: "+ip.get(i)+"\nSchedule: "+schedule.get(i).printSchedule());
 		//sending PM incorporated schedule to respective machines
@@ -222,6 +293,21 @@ public class Maintenance
 	{
 		return false;
 	}
-
+	
 
 }	
+class CompTTF implements Comparable<CompTTF>{
+	public long ttf;
+	public int machineID;
+	public Job cmJob;
+	public CompTTF(long ttf2,Job cmJob,int count) {
+		ttf = ttf2;
+		machineID = count;
+		this.cmJob = cmJob;
+	}
+	@Override
+	public int compareTo(CompTTF other) {
+		return Long.compare(ttf, other.ttf);
+	}
+	
+}

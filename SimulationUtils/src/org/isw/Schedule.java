@@ -15,24 +15,24 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	InetAddress ip;
 
 	public Schedule(){
-		sum = 0;
+		setSum(0);
 		jobs = new LinkedList<Job>();
 	}
 	
 	public Schedule(Schedule source){
-		sum = source.sum;
+		setSum(source.getSum());
 		jobs = new LinkedList<Job>(source.jobs);
 	}
 	
 	public Schedule(InetAddress byName) {
 		//check this
-		sum = 0;
+		setSum(0);
 		jobs = new LinkedList<Job>();
 	}
 
 	public void addJob(Job job){
 		jobs.add(job);
-		sum+=job.getJobTime();
+		setSum(getSum() + job.getJobTime());
 	}
 	
 	public int numOfJobs()
@@ -44,7 +44,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	 * in between. If a CM job overlaps with a PM/CM job, add it after the CM/PM job.
 	**/
 	public void addCMJob(Job cmJob, long TTF){
-		if (TTF >= sum)
+		if (TTF >= getSum())
 			return;
 		long time=0;
 		int i=0;
@@ -73,23 +73,23 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 				jobs.add(i,cmJob);
 			}
 		}
-		sum+=cmJob.getJobTime();
+		setSum(getSum() + cmJob.getJobTime());
 	}
 	//Insert PM job at give opportunity.
 	public void addPMJob(Job pmJob, int opportunity){
 		jobs.add(opportunity, pmJob);
-		sum+=pmJob.getJobTime();
+		setSum(getSum() + pmJob.getJobTime());
 	}
 	
 	public synchronized Job remove(){
 		Job job = jobs.removeFirst();
-		sum-= job.getJobTime();
+		setSum(getSum() - job.getJobTime());
 		return job;
 	}
 	
 	@Override
 	public int compareTo(Schedule other) {
-		return Long.compare(this.sum, other.sum);
+		return Long.compare(this.getSum(), other.getSum());
 	}
 
 	public synchronized boolean isEmpty() {
@@ -102,7 +102,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	
 	public synchronized void decrement(long delta){
 		jobs.getFirst().decrement(delta);
-		sum-= delta;
+		setSum(getSum() - delta);
 	}
 
 	public String printSchedule() {
@@ -114,7 +114,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	}
 	public int getFarthestCompleteJob(){
 		int i = jobs.size();
-		long temp = sum;
+		long temp = getSum();
 		while(temp>8*3600){
 			temp -= jobs.get(i-1).getJobTime();
 			i--;
@@ -133,4 +133,22 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		
 	}
 
+	public long getSum() {
+		return sum;
+	}
+
+	public void setSum(long sum) {
+		this.sum = sum;
+	}
+
+	public Job jobAt(long time) {
+		int temp =0;
+		int i = 0;
+		while(temp<time){
+			temp+= jobs.get(i).getJobTime();
+			i++;
+		}
+		return jobs.get(i-1);
+	}
+	
 }
