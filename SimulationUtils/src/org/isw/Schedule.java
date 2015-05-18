@@ -12,21 +12,15 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	private static final long serialVersionUID = 1L;
 	LinkedList<Job> jobs;
 	private long sum;
-	private InetAddress ip;
-	public Schedule(InetAddress ip){
+
+	public Schedule(){
 		sum = 0;
-		this.ip = ip;
 		jobs = new LinkedList<Job>();
 	}
 	
 	public Schedule(Schedule source){
 		sum = source.sum;
-		ip = source.ip;
 		jobs = new LinkedList<Job>(source.jobs);
-	}
-	//FIXME: Machine address must not be associated with the schedule.
-	public InetAddress getAddress(){
-		return ip;
 	}
 	
 	public void addJob(Job job){
@@ -93,10 +87,6 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	public synchronized void decrement(long delta){
 		jobs.getFirst().decrement(delta);
 		sum-= delta;
-	}
-
-	public void setAddress(InetAddress ip) {
-		this.ip = ip; 	
 	}
 
 	public String printSchedule() {

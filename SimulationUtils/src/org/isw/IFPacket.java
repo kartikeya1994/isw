@@ -2,18 +2,21 @@ package org.isw;
 
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class IFPacket implements Serializable
 {
 	private static final long serialVersionUID = -8976546963278613092L;
-	float IF;
-	Schedule jobList;
+	SimulationResult results[];
+	public Schedule jobList;
+	public InetAddress ip;
+	public long port;
 
-	public IFPacket(float IF, Schedule jobList)
+	public IFPacket(SimulationResult results[], Schedule jobList)
 	{
-		this.IF = IF;
+		this.results = results;
 		this.jobList = jobList;
 	}
 
@@ -26,7 +29,10 @@ public class IFPacket implements Serializable
 			Object o = ois.readObject();
 			if(o instanceof IFPacket) 
 			{
-				return (IFPacket)o;
+				IFPacket ret =  (IFPacket)o;
+				ret.ip = tcpSchedSock.getInetAddress();
+				ret.port = tcpSchedSock.getPort();
+				return ret;
 			}
 			else 
 			{
@@ -39,5 +45,10 @@ public class IFPacket implements Serializable
 			System.out.println("Failed to receive packet from machine.");
 		}
 		return null;
+	}
+	
+	public String toString()
+	{
+		return "No. of IF opportunities - "+results.length +"\nSchedule - " + jobList.printSchedule() ;
 	}
 }

@@ -46,7 +46,7 @@ public class JobSchedThread extends Thread
 			getJobs();
 			PriorityQueue<Schedule> pq = new PriorityQueue<Schedule>();
 		
-			Enumeration<InetAddress> en = machineList.getList();
+			Enumeration<InetAddress> en = machineList.getIPs();
 			while(en.hasMoreElements())
 			{	
 				InetAddress ip = en.nextElement();

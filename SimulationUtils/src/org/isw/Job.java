@@ -13,6 +13,7 @@ public class Job implements Serializable {
 	long jobTime;
 	String jobName;
 	int jobType;
+	
 	//Fixed cost can be the component cost or the PM fixed cost. 
 	double fixedCost;
 	double jobCost;

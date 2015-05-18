@@ -5,6 +5,8 @@ public class SimulationResult {
   double pmAvgTime;
   int compCombo;
   int pmOpportunity;
+  public long t; //to be used for calculations by maintenance dept
+  public int id; //to be used for calculations by maintenance dept
   public SimulationResult(double cost,double pmAvgTime,int compCombo,int pmOpportunity){
 	  this.cost = cost;
 	  this.pmAvgTime = pmAvgTime;

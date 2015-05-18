@@ -38,9 +38,14 @@ public class MachineList implements Serializable
 		return count;
 	}
 
-	public Enumeration<InetAddress> getList()
+	public Enumeration<InetAddress> getIPs()
 	{
 		return ips.keys();
+	}
+	
+	public Enumeration<Long> getPorts()
+	{
+		return ips.elements();
 	}
 
 	public static MachineList receive(ServerSocket tcpSocket)
