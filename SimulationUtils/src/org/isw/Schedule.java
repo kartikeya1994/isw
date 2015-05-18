@@ -34,6 +34,11 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		jobs.add(job);
 		sum+=job.getJobTime();
 	}
+	
+	public int numOfJobs()
+	{
+		return jobs.size();
+	}
 	/**
 	 * Add CM Job. If a CM job overlaps with a normal job, split the normal job and insert CM job 
 	 * in between. If a CM job overlaps with a PM/CM job, add it after the CM/PM job.

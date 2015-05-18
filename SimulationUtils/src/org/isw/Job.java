@@ -9,6 +9,7 @@ public class Job implements Serializable {
 	public static final int JOB_NORMAL = 1;
 	public static final int JOB_PM = 2;
 	public static final int JOB_CM = 3;
+	public static final int WAIT_FOR_MT = 4;
 	private static final long serialVersionUID = 1L;
 	long jobTime;
 	String jobName;
