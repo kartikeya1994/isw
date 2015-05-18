@@ -101,9 +101,9 @@ public class Maintenance
 				pool.submit(new FetchIFTask(tcpSocket, ips.nextElement(), ports.nextElement()));
 			}
 
-			threadPool.shutdown();
+			
 			System.out.println("Fetching IFs and schedules from " + numOfMachines + " connected machines...");
-			while(!threadPool.isTerminated()); //block till all tasks are done
+			
 
 			int count = 0; //count provides temporary id numbers to machines
 			ip = new ArrayList<InetAddress>();
@@ -134,6 +134,8 @@ public class Maintenance
 				}
 				count++;
 			}
+			threadPool.shutdown();
+			while(!threadPool.isTerminated()); //block till all tasks are done
 			System.out.println("Collected IFs and schedules from all machines. Incorporating PM in schedule...");
 
 		}catch(Exception e)
@@ -154,7 +156,7 @@ public class Maintenance
 			if(row.t >= busyTime && !toPerformPM.containsKey(row.id))
 			{
 				//incorporate the job into schedule of machine
-				schedule.get(row.id).jobs.add(row.pmOpportunity, new Job("PM", (long)row.pmAvgTime, row.cost,Job.JOB_PM));
+				schedule.get(row.id).addPMJob(new Job("PM", (long)row.pmAvgTime, row.cost,Job.JOB_PM),row.pmOpportunity);
 				toPerformPM.put(row.id, true);
 				busyTime += (long)row.pmAvgTime;
 			}

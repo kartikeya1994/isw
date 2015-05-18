@@ -48,6 +48,8 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 			i++;
 		}
 		if(TTF == time || TTF == 0){
+			while(jobs.get(i).getJobType() == Job.JOB_PM)
+				i++;
 			jobs.add(i, cmJob);
 		}
 		else{
@@ -61,6 +63,8 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 				jobs.add(i+2,j2);
 			}
 			else{
+				while(jobs.get(i).getJobType() == Job.JOB_PM)
+					i++;
 				jobs.add(i,cmJob);
 			}
 		}
