@@ -12,6 +12,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	private static final long serialVersionUID = 1L;
 	LinkedList<Job> jobs;
 	private long sum;
+	InetAddress ip;
 
 	public Schedule(){
 		sum = 0;
@@ -23,6 +24,12 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		jobs = new LinkedList<Job>(source.jobs);
 	}
 	
+	public Schedule(InetAddress byName) {
+		//check this
+		sum = 0;
+		jobs = new LinkedList<Job>();
+	}
+
 	public void addJob(Job job){
 		jobs.add(job);
 		sum+=job.getJobTime();
@@ -104,6 +111,17 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 			i--;
 		}
 		return i;
+	}
+
+	//check these two
+	public InetAddress getAddress() {
+		// TODO Auto-generated method stub
+		return ip;
+	}
+
+	public void setAddress(InetAddress ip) {
+		this.ip = ip;
+		
 	}
 
 }
