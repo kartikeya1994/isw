@@ -46,23 +46,13 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	public void addCMJob(Job cmJob, long TTF){
 		if (TTF >= getSum())
 			return;
-		long time=0;
-		int i=0;
-		while(time<TTF){
-			time+= jobs.get(i).getJobTime();
-			i++;
-		}
-		if(TTF == time || TTF == 0){
-			while(jobs.get(i).getJobType() == Job.JOB_PM)
-				i++;
-			jobs.add(i, cmJob);
-		}
-		else{
-			if(jobs.get(i-1).getJobType() == Job.JOB_NORMAL){
-				i--;
+		int i = jobIndexAt(TTF);
+		long time = getFinishingTime(i);
+		if(jobs.get(i).getJobType() == Job.JOB_NORMAL){
 				Job job  = jobs.remove(i);
-				Job j1 =  new Job(job.getJobName(),TTF-time+job.getJobTime(),job.getJobCost(),Job.JOB_NORMAL);
-				Job j2 = new Job(job.getJobName(),time-TTF,job.getJobCost(),Job.JOB_NORMAL);
+				time -= job.getJobTime();
+				Job j1 =  new Job(job.getJobName(),TTF-time,job.getJobCost(),Job.JOB_NORMAL);
+				Job j2 = new Job(job.getJobName(),time+job.getJobTime()-TTF,job.getJobCost(),Job.JOB_NORMAL);
 				jobs.add(i,j1);
 				jobs.add(i+1,cmJob);
 				jobs.add(i+2,j2);
@@ -72,7 +62,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 					i++;
 				jobs.add(i,cmJob);
 			}
-		}
+		
 		setSum(getSum() + cmJob.getJobTime());
 	}
 	//Insert PM job at give opportunity.

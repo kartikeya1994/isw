@@ -220,6 +220,7 @@ public class Maintenance
 			int cmJobIndex = 0;
 			int pmIndex =0;
 			int pmJobIndex =0;
+			//Loop through all machines and check for overlaps.
 			for(int i = 0;i < schedule.size();i++){
 				if(compTTF.machineID == i)
 					continue;
