@@ -141,14 +141,32 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		this.sum = sum;
 	}
 
-	public Job jobAt(long time) {
+	public int jobIndexAt(long time) {
 		int temp =0;
 		int i = 0;
 		while(temp<time){
 			temp+= jobs.get(i).getJobTime();
 			i++;
 		}
-		return jobs.get(i-1);
+		return i-1;
 	}
-	
+
+	public void addWaitJob(long startTime, long waitTime, int pmJobIndex) {
+		Job pmJob = jobs.remove(pmJobIndex);
+		long time = getFinishingTime(pmJobIndex-1);
+		Job pmJob1 = new Job("PM",startTime - time,pmJob.getJobCost(),Job.JOB_PM);
+		pmJob1.setFixedCost(pmJob.getFixedCost());
+		Job waitJob = new Job("Waiting",waitTime,0,Job.WAIT_FOR_MT);
+		Job pmJob2 = new Job("PM",time+pmJob.getJobTime()-startTime,pmJob.getJobCost(),Job.JOB_PM);
+		jobs.add(pmJobIndex,pmJob1);
+		jobs.add(pmJobIndex+1,waitJob);
+		jobs.add(pmJobIndex+2,pmJob2);
+	}
+
+	public long getFinishingTime(int index){
+		return 0;
+	}
+	public Job jobAt(int i) {
+		return jobs.get(i);
+	}
 }

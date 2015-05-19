@@ -198,43 +198,64 @@ public class Maintenance
 			
 			}
 		}
+		
 		while(!ttfList.isEmpty()){
 			CompTTF compTTF = ttfList.remove();
-			Job job = schedule.get(compTTF.machineID).jobAt(compTTF.ttf);
-			if(job.getJobType() == Job.JOB_PM || job.getJobType() == Job.JOB_CM);
+			int index = schedule.get(compTTF.machineID).jobIndexAt(compTTF.ttf);
+			Job job = schedule.get(compTTF.machineID).jobAt(index);
+			/**If breakdown occurs on a machine while PM/CM is going on shift the ttf to occur after
+			 * the PM/CM ends
+			 * **/ 
+			if(job.getJobType() == Job.JOB_PM || job.getJobType() == Job.JOB_CM)
 			{
 				//TODO: Calculate new time
+				long newTime = schedule.get(compTTF.machineID).getFinishingTime(index);
 				ttfList.add(new CompTTF(newTime,compTTF.cmJob,compTTF.machineID));
 				continue;
 			}
+			
 			boolean pmFlag = false;
 			boolean cmFlag = false;
+			int cmIndex = 0;
+			int cmJobIndex = 0;
 			int pmIndex =0;
+			int pmJobIndex =0;
 			for(int i = 0;i < schedule.size();i++){
 				if(compTTF.machineID == i)
 					continue;
-				switch(schedule.get(i).jobAt(compTTF.ttf).getJobType()){
+				int index1 = schedule.get(i).jobIndexAt(compTTF.ttf); 
+				Job job1 = schedule.get(i).jobAt(i);
+				switch(job1.getJobType()){
 					case Job.JOB_CM:
 						cmFlag = true;
+						cmIndex = i;
+						cmJobIndex = index1;
 						break;
 					case Job.JOB_PM:
 						pmFlag = true;
 						pmIndex = i;
+						pmJobIndex = index1;
 						break;
 				}		
 			
 				if(cmFlag){
-					//TODO
-					//ttfList.add(new CompTTF(newTime,compTTF.cmJob,compTTF.machineID));
+					/**If CM is being performed on a different machine wait for CM to complete i.e 
+					 * shift breakdown time to occur after CM job.
+					 * **/
+					long newTime = schedule.get(cmIndex).getFinishingTime(cmJobIndex);
+					ttfList.add(new CompTTF(newTime,compTTF.cmJob,compTTF.machineID));
 					continue;
 				}
 				else if(pmFlag){
-					//TODO
-					//schedule.get(pmIndex).addWaitJob();
+					/**If PM is being performed on a different machine, interrupt that PM and add a waiting job
+					 * and then add the CM job for our machine.
+					 **/
+					schedule.get(pmIndex).addWaitJob(compTTF.ttf, compTTF.cmJob.getJobTime(),pmJobIndex);
+					schedule.get(compTTF.machineID).addCMJob(compTTF.cmJob, compTTF.ttf);
 				}
 				else{
-					//Safe to add CM job to the schedule.
-					schedule.get(i).addCMJob(compTTF.cmJob, compTTF.ttf);
+					//Since no maintenance is going on add CM job directly
+					schedule.get(compTTF.machineID).addCMJob(compTTF.cmJob, compTTF.ttf);
 				}
 			}
 			
