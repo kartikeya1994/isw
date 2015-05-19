@@ -184,14 +184,14 @@ public class Maintenance
 		}
 		for(int i=0; i<numOfMachines;i++){
 			for(int j=0;j<component.get(i).length;j++){
-				long ttf = (long)component.get(i)[j].getCMTTF();
+				long ttf = (long)component.get(i)[j].getCMTTF()*60;
 				//If TTF is greater than shift time or schedule length, ignore.
-			if(ttf> 8 || ttf > schedule.get(i).getSum())
+			if(ttf> 8*60 || ttf > schedule.get(i).getSum())
 				continue;
 			//if PM is performed for a component before ttf of that component, ignore.
 			if(ttf> pmTimeArray[i] && ((1<<j)&compCombos[i])==1)
 				continue;
-			long ttr = (long)component.get(i)[j].getCMTTR();
+			long ttr = (long)component.get(i)[j].getCMTTR()*60;
 			Job cmJob = new Job("CM",ttr,component.get(i)[j].getCMCost(),Job.JOB_CM);
 			cmJob.setFixedCost(component.get(i)[j].getCompCost());
 			ttfList.add(new CompTTF(ttf,cmJob,i));	
@@ -278,45 +278,6 @@ public class Maintenance
 		System.out.println("Successfully sent PM incorporated schedules to all connected machines.\nShift can now begin.");
 	}
 	
-	public void incorporateCM()
-	{
-		ArrayList<Long> tof; //tofs of all machines sorted in ascending order
-		ArrayList<String> component; //corresponding component name
-		ArrayList<Integer> machineID; //corresponding machine id
-		ArrayList<Integer> jobsRemaining = new ArrayList<Integer>();
-		
-		for(int i=0;i<schedule.size();i++)
-			jobsRemaining.add(schedule.get(i).numOfJobs());
-		
-		long time = 0;
-		
-
-		while(!allJobsDone())
-		{
-			for(int i=0; i<schedule.size(); i++)
-			{
-
-			}
-		}
-	}
-	
-	public void delayJob(Schedule s, long tstart, long tfinish)
-	{
-		long t = 0;
-		
-	}
-	
-	public void removeComponent(String name, Integer machineID)
-	{
-		
-	}
-	
-	public boolean allJobsDone()
-	{
-		return false;
-	}
-	
-
 }	
 class CompTTF implements Comparable<CompTTF>{
 	public long ttf;

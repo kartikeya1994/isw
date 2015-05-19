@@ -23,7 +23,6 @@ public class SimulationThread implements Callable<SimulationResult> {
 	/**
 	 * We shall run the simulation 1000 times,each simulation being 8 hours (real time) in duration.
 	 * For each simulation PM is done only once and is carried out in between job executions.
-	 * TODO: Fix time scaling at cost calculations.
 	 * **/
 	public SimulationResult call(){
 		double totalCost = 0;
@@ -42,9 +41,9 @@ public class SimulationThread implements Callable<SimulationResult> {
 			/*Calculate the TTF for every component and add it's corresponding CM job 
 			 * to the schedule*/
 			for(int i=0;i<simCompList.length;i++){
-				long cmTTF = (long)simCompList[i].getCMTTF();
-				if(cmTTF < 8*3600){
-					Job cmJob = new Job("CM", (long)simCompList[i].getCMTTR(),simCompList[i].getCMCost(), Job.JOB_CM);
+				long cmTTF = (long)simCompList[i].getCMTTF()*60;
+				if(cmTTF < 8*60){
+					Job cmJob = new Job("CM", (long)simCompList[i].getCMTTR()*60,simCompList[i].getCMCost(), Job.JOB_CM);
 					cmJob.setFixedCost(simCompList[i].getCompCost());
 					simSchedule.addCMJob(cmJob, cmTTF);
 				}
@@ -52,22 +51,22 @@ public class SimulationThread implements Callable<SimulationResult> {
 			long startTime = System.currentTimeMillis();
 			long time = startTime;
 			long time2 = startTime;
-			while(time - startTime < 8*3600 && !simSchedule.isEmpty()){
+			while(time - startTime < 8*60 && !simSchedule.isEmpty()){
 				time2 = System.currentTimeMillis();
 				simSchedule.decrement(time2-time);
 				//Calculate the cost depending upon the job type
 				Job current = simSchedule.peek(); 
 				switch(current.getJobType()){
 					case Job.JOB_NORMAL:
-						procCost += current.getJobCost()*(time2-time);
+						procCost += current.getJobCost()*(time2-time)/60;
 						break;
 					case Job.JOB_PM:
-						pmCost += current.getFixedCost() + current.getJobCost()*(time2-time);
+						pmCost += current.getFixedCost() + current.getJobCost()*(time2-time)/60;
 						current.setFixedCost(0);
 						pmAvgTime += time2-time;
 						break;
 					case Job.JOB_CM:
-						cmCost += current.getFixedCost() + current.getJobCost()*(time2-time);
+						cmCost += current.getFixedCost() + current.getJobCost()*(time2-time)/60;
 						current.setFixedCost(0);
 						break;
 				}
@@ -98,7 +97,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 		String combo = String.format(formatPattern, Integer.toBinaryString(compCombo)).replace(' ', '0');
 		for(int i=0;i< combo.length();i++){
 			if(combo.charAt(i)=='1'){
-				Job pmJob = new Job("PM",(long)simCompList[i].getPMTTR(),simCompList[i].getPMCost(),Job.JOB_PM);
+				Job pmJob = new Job("PM",(long)simCompList[i].getPMTTR()*60,simCompList[i].getPMCost(),Job.JOB_PM);
 				if(cnt==0)
 					pmJob.setFixedCost(simCompList[i].getPMFixedCost());
 				simSchedule.addPMJob(pmJob,pmOpportunity+cnt);

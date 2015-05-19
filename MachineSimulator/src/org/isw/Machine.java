@@ -122,7 +122,7 @@ public class Machine {
 				c[i-4] = comp;
 			}
 			file.close();
-			workbook.close();
+			
 		}
 		catch (Exception e)
 		{

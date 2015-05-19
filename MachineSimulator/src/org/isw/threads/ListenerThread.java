@@ -92,6 +92,10 @@ public class ListenerThread extends Thread
 						IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
 						ifPacket.send(fp.ip, fp.port);
 						IFPacket newSchedule = IFPacket.receive(tcpSocket);
+						jl = new Schedule(newSchedule.jobList);
+						Thread t = new JobExecThread(jl);
+						t.start();
+						t.wait();
 
 					} catch (ClassNotFoundException | InterruptedException | ExecutionException e) {
 						e.printStackTrace();
