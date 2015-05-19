@@ -12,29 +12,30 @@ public class Component implements Serializable {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
-	private String compName;
-	private double compCost;
-	private double initAge;
-	private double p1;
-	private double p2;
-	private double p3;
+	public static final long serialVersionUID = 1L;
+	public String compName;
+	public double p1;
+	public double p2;
+	public double p3;
 	//CM
 	// TOF
-	private double cmEta;
-	private double cmBeta;
+	public double cmEta;
+	public double cmBeta;
 	// TTR
-	private double cmMu;
-	private double cmSigma;
-	private double cmRF;
-	private double cmCost;
+	public double cmMu;
+	public double cmSigma;
+	public double cmRF;
+	public double cmCost;
 	//PM
 	// TTR
-	private double pmMu;
-	private double pmSigma;
-	private double pmRF;
-	private double pmCost;
-	private double pmFixedCost;
+	public double pmMu;
+	public double pmSigma;
+	public double pmRF;
+	public double pmCost;
+	public double pmFixedCost;
+	
+	public double compCost;
+	public double initAge;
 
 	public double getPMTTR(){
 		return normalRandom(pmMu,pmSigma);

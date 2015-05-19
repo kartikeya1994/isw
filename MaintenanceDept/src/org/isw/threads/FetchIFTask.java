@@ -4,16 +4,18 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.concurrent.Callable;
 
+import org.isw.FlagPacket;
 import org.isw.IFPacket;
+import org.isw.Macros;
 
 public class FetchIFTask implements Callable<IFPacket>
 {
 	InetAddress ip;
-	long port;
+	int port;
 	ServerSocket tcpSocket;
 	IFPacket result = null;
 	
-	public FetchIFTask(ServerSocket tcpSocket, InetAddress ip, long port)
+	public FetchIFTask(ServerSocket tcpSocket, InetAddress ip, int port)
 	{
 		this.ip = ip;
 		this.port = port;
@@ -22,8 +24,10 @@ public class FetchIFTask implements Callable<IFPacket>
 
 	@Override
 	public IFPacket call() throws Exception {
-		// TODO Auto-generated method stub
-		return IFPacket.receive(tcpSocket);
+		//send request for IFPacket, this is to provide ip of maintenance to machine
+		FlagPacket.sendTCP(Macros.REQUEST_IFPACKET, ip, port);
+		
+		return IFPacket.receive(tcpSocket); //blocking call that waits for reply
 	}
 	
 }

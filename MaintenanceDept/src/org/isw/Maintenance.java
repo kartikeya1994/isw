@@ -30,7 +30,7 @@ public class Maintenance
 
 	static ArrayList<SimulationResult> table;
 	static ArrayList<InetAddress> ip = new ArrayList<InetAddress>();
-	static ArrayList<Long> port = new ArrayList<Long>();
+	static ArrayList<Integer> port = new ArrayList<Integer>();
 	static ArrayList<Schedule> schedule = new ArrayList<Schedule>();
 	static ArrayList<Component[]> component = new ArrayList<Component[]>();
 	
@@ -112,7 +112,7 @@ public class Maintenance
 			numOfMachines = 0;
 			while(ips.hasMoreElements()){
 				numOfMachines++;
-				pool.submit(new FetchIFTask(tcpSocket, ips.nextElement(), ports.nextElement()));
+				pool.submit(new FetchIFTask(tcpSocket, ips.nextElement(), ports.nextElement().intValue()));
 			}
 
 			
@@ -121,7 +121,7 @@ public class Maintenance
 
 			int count = 0; //count provides temporary id numbers to machines
 			ip = new ArrayList<InetAddress>();
-			port = new ArrayList<Long>();
+			port = new ArrayList<Integer>();
 			schedule = new ArrayList<Schedule>();
 			component = new ArrayList<Component[]>();
 			ttfList = new PriorityQueue<CompTTF>();

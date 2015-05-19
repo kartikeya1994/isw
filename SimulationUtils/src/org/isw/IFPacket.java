@@ -15,7 +15,7 @@ public class IFPacket implements Serializable
 	Component[] compList;
 	public Schedule jobList;
 	public InetAddress ip;
-	public long port;
+	public int port;
 
 	public IFPacket(SimulationResult results[], Schedule jobList, Component[] compList)
 	{

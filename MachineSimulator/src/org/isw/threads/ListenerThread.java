@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -18,8 +19,10 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.Machine;
+import org.isw.Macros;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
 
@@ -30,33 +33,35 @@ public class ListenerThread extends Thread
 	final static int SCHED_GET = 4;
 	Schedule jl;
 	InetAddress serverIP;
-	DatagramSocket socket;
-	public ListenerThread(InetAddress serverIP,DatagramSocket socket) {
+	DatagramSocket udpSocket;
+	ServerSocket tcpSocket;
+	public ListenerThread(InetAddress serverIP,DatagramSocket udpSocket) {
 		this.serverIP = serverIP;
-		this.socket = socket;
+		this.udpSocket = udpSocket;
 	}
 	public void run()
 	{
-		
 		DatagramPacket packet;
-		
+
 		try {
-			socket.setSoTimeout(0);
-			jl = new Schedule(InetAddress.getByName("localhost"));
+			udpSocket.setSoTimeout(0);
+			tcpSocket = new ServerSocket(Macros.MACHINE_PORT_TCP);
+			jl = new Schedule(InetAddress.getByName("localhost")); //FIXME: why is this localhost?
 		} catch (UnknownHostException e1) {
 			e1.printStackTrace();
 		} catch (SocketException e) {
-			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		try
 		{
 			while(true)
 			{
 				byte[] bufIn = new byte[1024];
 				packet = new DatagramPacket(bufIn, bufIn.length);
-				socket.receive(packet); 
+				udpSocket.receive(packet); 
 				byte[] reply=packet.getData();
 				byte [] header = Arrays.copyOfRange(reply, 0, 4);
 				final ByteArrayInputStream bais=new ByteArrayInputStream(header);
@@ -68,26 +73,38 @@ public class ListenerThread extends Thread
 					ObjectInputStream is = new ObjectInputStream(in);
 					try {
 						jl = (Schedule) is.readObject();	
-						
+
 						System.out.println("Received schedule:" + jl.printSchedule());
 						System.out.println("Running Simulations");
 						SimulationResult[] results = runSimulation(jl.getFarthestCompleteJob());
+
+						//wait for maintenance request
+						boolean recd_req=false;
+						FlagPacket fp = null;
+						while(!recd_req)
+						{
+							fp = FlagPacket.receiveTCP(tcpSocket);
+							if(fp == null || fp.flag!=Macros.REQUEST_IFPACKET)
+								continue;
+							recd_req = true;
+						}
+						System.out.println("Maintenance is at "+fp.ip);
 						IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
-						ifPacket.send(maintenanceIP, maintenancePort);
+						ifPacket.send(fp.ip, fp.port);
 						IFPacket newSchedule = IFPacket.receive(tcpSocket);
-					
+
 					} catch (ClassNotFoundException | InterruptedException | ExecutionException e) {
-					        e.printStackTrace();
+						e.printStackTrace();
 					}
 				}
 				else if(action==SCHED_GET){
-					
+
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		            ObjectOutputStream os = new ObjectOutputStream(outputStream);
-		            os.writeObject(jl);
-		            byte[] object = outputStream.toByteArray();
-		            DatagramPacket sendPacket = new DatagramPacket(object, object.length,serverIP, 8889);
-		            socket.send(sendPacket);
+					ObjectOutputStream os = new ObjectOutputStream(outputStream);
+					os.writeObject(jl);
+					byte[] object = outputStream.toByteArray();
+					DatagramPacket sendPacket = new DatagramPacket(object, object.length,serverIP, 8889);
+					udpSocket.send(sendPacket);
 				}
 			}
 
@@ -110,7 +127,7 @@ public class ListenerThread extends Thread
 				pool.submit(new SimulationThread(jl,j,i));
 				cnt++;
 			}
-			}
+		}
 		for(int i=0;i<cnt;i++){
 			SimulationResult result = pool.take().get();
 			if(results[result.getPMOpportunity()].getCost() > result.getCost())
@@ -118,6 +135,6 @@ public class ListenerThread extends Thread
 		}
 		return results;
 	}
-	
-	
+
+
 }

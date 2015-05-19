@@ -3,24 +3,26 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 
-import org.isw.Macros;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.isw.threads.ListenerThread;
 
 public class Machine {
 
-	
+
 	static InetAddress serverIP;
 	static int machineNo;
 	public static Component[] compList;
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
 
 		boolean registered=false;
 		try
@@ -73,21 +75,61 @@ public class Machine {
 			compList = parseExcel(machineNo);
 			ListenerThread listener = new ListenerThread(serverIP,socket);
 			listener.start();
-			
-			
+
+
 		}catch(IOException e)
 		{
 			e.printStackTrace();
 		}
 	}
-	private static Component[] parseExcel(int machineNo) {
+	private static Component[] parseExcel(int num) {
 		/**
 		 * Parse the component excel file into a list of components.
 		 * Total number of components should be 14 for our experiment.
 		 * Different component excel file for different machineNo (Stick
 		 * to one for now)
 		 * **/
-		return null;
+		Component[] c = new Component[14];
+		try
+		{
+			FileInputStream file = new FileInputStream(new File("Components.xlsx"));
+			XSSFWorkbook workbook = new XSSFWorkbook(file);
+			XSSFSheet sheet = workbook.getSheetAt(0);
+			
+			for(int i=4;i<18;i++)
+			{
+				Row row = sheet.getRow(i);
+				Component comp = new Component();
+				comp.compName = row.getCell(1).getStringCellValue();
+				comp.p1 = row.getCell(2).getNumericCellValue();
+				comp.p2 = row.getCell(3).getNumericCellValue();
+				comp.p3 = row.getCell(4).getNumericCellValue();
+				
+				comp.cmEta = row.getCell(5).getNumericCellValue();
+				comp.cmBeta = row.getCell(6).getNumericCellValue();
+				
+				comp.cmMu = row.getCell(7).getNumericCellValue();
+				comp.cmSigma = row.getCell(8).getNumericCellValue();
+				comp.cmRF = row.getCell(9).getNumericCellValue();
+				comp.cmCost = row.getCell(10).getNumericCellValue();
+				
+				comp.pmMu = row.getCell(11).getNumericCellValue();
+				comp.pmSigma = row.getCell(12).getNumericCellValue();
+				comp.pmRF = row.getCell(13).getNumericCellValue();
+				comp.pmCost = row.getCell(14).getNumericCellValue();
+				comp.pmFixedCost = row.getCell(15).getNumericCellValue();
+				
+				c[i-4] = comp;
+			}
+			file.close();
+			workbook.close();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		return c;
 	}
+
 
 }
