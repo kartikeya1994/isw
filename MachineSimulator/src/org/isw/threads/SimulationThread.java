@@ -70,7 +70,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 						current.setFixedCost(0);
 						break;
 				}
-				if(current.getJobType()<0){
+				if(current.getJobTime()<0){
 					//Job ends here
 					System.out.println("Job "+ simSchedule.remove().getJobName()+" complete");
 				}

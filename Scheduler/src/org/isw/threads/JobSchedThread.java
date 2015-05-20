@@ -9,14 +9,17 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.PriorityQueue;
 import java.util.Random;
 
+import org.isw.FlagPacket;
 import org.isw.Job;
 import org.isw.MachineList;
+import org.isw.Macros;
 import org.isw.Schedule;
 
 public class JobSchedThread extends Thread
@@ -26,6 +29,7 @@ public class JobSchedThread extends Thread
 	MachineList machineList;
 	Random r = new Random();
 	DatagramSocket socket;
+	ServerSocket tcpSocket;
 	ArrayList<Job> jobArray; 
 	public JobSchedThread(MachineList machineList)
 	{
@@ -36,9 +40,13 @@ public class JobSchedThread extends Thread
 	{	
 		
 		try {
-			socket = new DatagramSocket(8889);
+			socket = new DatagramSocket(Macros.SCHEDULING_DEPT_PORT);
+			tcpSocket = new ServerSocket(Macros.SCHEDULING_DEPT_PORT_TCP);
 		} catch (SocketException e1) {
 			e1.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		while(true)
 		{	
@@ -57,7 +65,7 @@ public class JobSchedThread extends Thread
 				daos.writeInt(SCHED_GET);
 				daos.close();
 				final byte[] bufOut=baos.toByteArray();
-				DatagramPacket packetOut = new DatagramPacket(bufOut, bufOut.length, ip, 8889);
+				DatagramPacket packetOut = new DatagramPacket(bufOut, bufOut.length, ip, Macros.MACHINE_PORT);
 				socket.send(packetOut);
 				
 				byte[] bufIn = new byte[1024];
@@ -114,12 +122,11 @@ public class JobSchedThread extends Thread
 				
 			}
 			
-			try
-			{
-				sleep(8*3600+40); // sleep for 8 hours plus extra time for network lag
-			}catch(InterruptedException e)
-			{
-				e.printStackTrace();
+			FlagPacket fp;
+			while(true){
+				fp = FlagPacket.receiveTCP(tcpSocket,0);
+				if(fp.flag == Macros.REQUEST_NEXT_SHIFT)
+					break;
 			}
 		}
 	}

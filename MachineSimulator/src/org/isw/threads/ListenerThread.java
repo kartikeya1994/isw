@@ -32,11 +32,11 @@ public class ListenerThread extends Thread
 	final static int SCHED_PUT = 3;
 	final static int SCHED_GET = 4;
 	Schedule jl;
-	InetAddress serverIP;
+	InetAddress schedulerIP;
 	DatagramSocket udpSocket;
 	ServerSocket tcpSocket;
-	public ListenerThread(InetAddress serverIP,DatagramSocket udpSocket) {
-		this.serverIP = serverIP;
+	public ListenerThread(InetAddress schedulerIP,DatagramSocket udpSocket) {
+		this.schedulerIP = schedulerIP;
 		this.udpSocket = udpSocket;
 	}
 	public void run()
@@ -83,7 +83,7 @@ public class ListenerThread extends Thread
 						FlagPacket fp = null;
 						while(!recd_req)
 						{
-							fp = FlagPacket.receiveTCP(tcpSocket);
+							fp = FlagPacket.receiveTCP(tcpSocket,0);
 							if(fp == null || fp.flag!=Macros.REQUEST_IFPACKET)
 								continue;
 							recd_req = true;
@@ -96,7 +96,7 @@ public class ListenerThread extends Thread
 						Thread t = new JobExecThread(jl);
 						t.start();
 						t.wait();
-
+						FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);
 					} catch (ClassNotFoundException | InterruptedException | ExecutionException e) {
 						e.printStackTrace();
 					}
@@ -107,7 +107,7 @@ public class ListenerThread extends Thread
 					ObjectOutputStream os = new ObjectOutputStream(outputStream);
 					os.writeObject(jl);
 					byte[] object = outputStream.toByteArray();
-					DatagramPacket sendPacket = new DatagramPacket(object, object.length,serverIP, 8889);
+					DatagramPacket sendPacket = new DatagramPacket(object, object.length,schedulerIP, 8889);
 					udpSocket.send(sendPacket);
 				}
 			}

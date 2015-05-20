@@ -44,11 +44,13 @@ public class FlagPacket implements Serializable{
 		return new DatagramPacket(buf, buf.length, group, port);
 	}
 	
-	public static FlagPacket receiveTCP(ServerSocket tcpSocket)
+	public static FlagPacket receiveTCP(ServerSocket tcpSocket, int timeout)
 	{
 		FlagPacket ret = null;
+		
 		try
 		{
+			tcpSocket.setSoTimeout(timeout);
 			Socket tcpSchedSock = tcpSocket.accept();
 			ObjectInputStream ois = new ObjectInputStream(tcpSchedSock.getInputStream());
 			Object o = ois.readObject();
