@@ -2,3 +2,8 @@
 .recommenders/
 *.class
 bin/
+out/
+Scheduler.xml
+MachineSimulator.xml
+MaintenanceDept.xml
+build

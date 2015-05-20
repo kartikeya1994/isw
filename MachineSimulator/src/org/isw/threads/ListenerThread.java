@@ -42,14 +42,11 @@ public class ListenerThread extends Thread
 		DatagramPacket packet;
 
 		try {
-			udpSocket.setSoTimeout(0);
-			
+			udpSocket.setSoTimeout(0);	
 			jl = new Schedule(InetAddress.getByName("localhost")); //FIXME: why is this localhost?
 		} catch (UnknownHostException e1) {
 			e1.printStackTrace();
 		} catch (SocketException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
