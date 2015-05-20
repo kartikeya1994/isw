@@ -8,10 +8,9 @@ import java.net.DatagramPacket;
 import java.net.MulticastSocket;
 
 import org.isw.MachineList;
+import org.isw.Macros;
 
 class ClientHandlerThread extends Thread {
-	final static int HELLO = 1; //not yet registered
-	final static int SERVER_ACCEPT = 2; //registered
 
 	MulticastSocket socket;
 	DatagramPacket packet;
@@ -30,7 +29,7 @@ class ClientHandlerThread extends Thread {
 		final DataInputStream dais=new DataInputStream(bais);
 		try
 		{
-			if(dais.readInt()==HELLO)
+			if(dais.readInt()==Macros.REQUEST_SCHEDULING_DEPT_IP)
 			{
 				if(!machineList.contains(packet.getAddress()))
 				{
@@ -40,7 +39,7 @@ class ClientHandlerThread extends Thread {
 				//create outbound packet with HELLO message
 				final ByteArrayOutputStream baos=new ByteArrayOutputStream();
 				final DataOutputStream daos=new DataOutputStream(baos);
-				daos.writeInt(SERVER_ACCEPT);
+				daos.writeInt(Macros.REPLY_SCHEDULING_DEPT_IP);
 				daos.close();
 				final byte[] bufOut=baos.toByteArray();
 				DatagramPacket packetOut = new DatagramPacket(bufOut, bufOut.length, packet.getAddress(), packet.getPort());

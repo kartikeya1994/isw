@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 
 import org.isw.MachineList;
+import org.isw.Macros;
 import org.isw.threads.ClientHandlerThread;
 
 public class ListenerThread extends Thread
@@ -23,8 +24,8 @@ public class ListenerThread extends Thread
 		InetAddress group;
 		try
 		{
-			socket = new MulticastSocket(8888);
-			group = InetAddress.getByName("224.0.0.1");
+			socket = new MulticastSocket(Macros.SCHEDULING_DEPT_PORT);
+			group = InetAddress.getByName(Macros.MACHINE_SCHEDULING_GROUP);
 			socket.joinGroup(group);
 
 			while(true)

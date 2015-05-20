@@ -10,8 +10,6 @@ import org.isw.threads.ListenerThread;
 
 public class SchedulingDept 
 {
-	final static int HELLO = 1; //not yet registered
-	final static int SERVER_ACCEPT = 2; //registered
 
 	public static void main(String args[])
 	{
