@@ -160,13 +160,11 @@ public class Maintenance
 		}
 
 		//create PM incorporated schedule
-		/**
-		 * TOOD: Algo is incorrect. pmOpportunity is not time, its slot.
-		 */
 		long[] pmTimeArray = new long[schedule.size()];
 		int[] compCombos = new int[schedule.size()];
 		
 		Collections.sort(table, new CustomComparator()); //sort according to lower t, higher IF and lower PM time
+		
 		int busyTime = 0;
 		HashMap<Integer, Boolean> toPerformPM = new HashMap<Integer,Boolean>(); //only one PM per machine per shift.
 		for(int i=0;i<table.size();i++)

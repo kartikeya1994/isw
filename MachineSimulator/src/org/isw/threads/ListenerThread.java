@@ -28,9 +28,6 @@ import org.isw.SimulationResult;
 
 public class ListenerThread extends Thread
 {
-
-	final static int SCHED_PUT = 3;
-	final static int SCHED_GET = 4;
 	Schedule jl;
 	InetAddress schedulerIP;
 	DatagramSocket udpSocket;
@@ -67,7 +64,7 @@ public class ListenerThread extends Thread
 				final ByteArrayInputStream bais=new ByteArrayInputStream(header);
 				DataInputStream dias =new DataInputStream(bais);
 				int action = dias.readInt();
-				if(action==SCHED_PUT){
+				if(action==Macros.SCHEDULE_PUT){
 					byte[] data = Arrays.copyOfRange(reply, 4, reply.length);
 					ByteArrayInputStream in = new ByteArrayInputStream(data);
 					ObjectInputStream is = new ObjectInputStream(in);
@@ -88,11 +85,10 @@ public class ListenerThread extends Thread
 								continue;
 							recd_req = true;
 						}
-						System.out.println("Maintenance is at "+fp.ip);
+						System.out.println("Maintenance is at "+fp.ip +", sending simulation results");
 						IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
 						ifPacket.send(fp.ip, fp.port);
-						IFPacket newSchedule = IFPacket.receive(tcpSocket);
-						jl = new Schedule(newSchedule.jobList);
+						jl = Schedule.receive(tcpSocket); //receive PM and CM incorporated schedule from maintenance
 						Thread t = new JobExecThread(jl);
 						t.start();
 						t.wait();
@@ -101,13 +97,13 @@ public class ListenerThread extends Thread
 						e.printStackTrace();
 					}
 				}
-				else if(action==SCHED_GET){
-
+				else if(action==Macros.SCHEDULE_GET){
+					//send jobs pending from last shift to scheduler
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 					ObjectOutputStream os = new ObjectOutputStream(outputStream);
 					os.writeObject(jl);
 					byte[] object = outputStream.toByteArray();
-					DatagramPacket sendPacket = new DatagramPacket(object, object.length,schedulerIP, 8889);
+					DatagramPacket sendPacket = new DatagramPacket(object, object.length,schedulerIP, Macros.SCHEDULING_DEPT_PORT);
 					udpSocket.send(sendPacket);
 				}
 			}

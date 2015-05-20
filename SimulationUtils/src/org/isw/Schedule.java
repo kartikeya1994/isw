@@ -1,10 +1,11 @@
 package org.isw;
 
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.LinkedList;
-
-
 
 public class Schedule implements  Comparable<Schedule>,Serializable{
 
@@ -158,5 +159,34 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	}
 	public Job jobAt(int i) {
 		return jobs.get(i);
+	}
+	
+	public static Schedule receive(ServerSocket tcpSocket)
+	{
+		//uses TCP to receive Schedule
+		Schedule ret = null;
+		try
+		{
+			Socket tcpSchedSock = tcpSocket.accept();
+			ObjectInputStream ois = new ObjectInputStream(tcpSchedSock.getInputStream());
+			Object o = ois.readObject();
+
+			if(o instanceof Schedule) 
+			{
+
+				ret = (Schedule)o;
+			}
+			else 
+			{
+				System.out.println("Received Schedule is garbled");
+			}
+			ois.close();
+			tcpSchedSock.close();
+		}catch(Exception e)
+		{
+			System.out.println("Failed to receive schedule.");
+		}
+
+		return ret;
 	}
 }
