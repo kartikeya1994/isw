@@ -32,9 +32,10 @@ public class ListenerThread extends Thread
 	InetAddress schedulerIP;
 	DatagramSocket udpSocket;
 	ServerSocket tcpSocket;
-	public ListenerThread(InetAddress schedulerIP,DatagramSocket udpSocket) {
+	public ListenerThread(InetAddress schedulerIP,DatagramSocket udpSocket,ServerSocket tcpSocket) {
 		this.schedulerIP = schedulerIP;
 		this.udpSocket = udpSocket;
+		this.tcpSocket = tcpSocket;
 	}
 	public void run()
 	{
@@ -42,7 +43,7 @@ public class ListenerThread extends Thread
 
 		try {
 			udpSocket.setSoTimeout(0);
-			tcpSocket = new ServerSocket(Macros.MACHINE_PORT_TCP);
+			
 			jl = new Schedule(InetAddress.getByName("localhost")); //FIXME: why is this localhost?
 		} catch (UnknownHostException e1) {
 			e1.printStackTrace();
@@ -74,7 +75,7 @@ public class ListenerThread extends Thread
 						System.out.println("Received schedule:" + jl.printSchedule());
 						System.out.println("Running Simulations");
 						SimulationResult[] results = runSimulation(jl.getFarthestCompleteJob());
-
+						System.out.println("Simulations complete");
 						//wait for maintenance request
 						boolean recd_req=false;
 						FlagPacket fp = null;
@@ -118,21 +119,27 @@ public class ListenerThread extends Thread
 		for(int i=0;i<=maxPMO;i++){
 			results[i]= new SimulationResult(Double.MAX_VALUE,0,0,0);
 		}
+		SimulationResult noPM;
 		ExecutorService threadPool = Executors.newFixedThreadPool(20);
 		CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
 		pool.submit(new SimulationThread(jl,1,-1));
 		int cnt=1;
 		for(int i=0;i<=maxPMO;i++){
-			for(int j = 1;j<Math.pow(Machine.compList.length, 2);j++){
+			for(int j = 1;j<Math.pow(2,Machine.compList.length);j++){
 				pool.submit(new SimulationThread(jl,j,i));
 				cnt++;
 			}
 		}
 		for(int i=0;i<cnt;i++){
 			SimulationResult result = pool.take().get();
-			if(results[result.getPMOpportunity()].getCost() > result.getCost())
-				results[result.getPMOpportunity()] = result;
-		}
+			if(result.getPMOpportunity() < 0){
+				noPM = result;
+			}
+			else{
+				if(results[result.getPMOpportunity()].getCost() > result.getCost())
+					results[result.getPMOpportunity()] = result;
+			}
+			}
 		return results;
 	}
 

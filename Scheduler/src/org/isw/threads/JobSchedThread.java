@@ -67,7 +67,7 @@ public class JobSchedThread extends Thread
 					final byte[] bufOut=baos.toByteArray();
 					DatagramPacket packetOut = new DatagramPacket(bufOut, bufOut.length, ip, Macros.MACHINE_PORT);
 					socket.send(packetOut);
-
+					System.out.println("Sent schedule get req to machines");
 					byte[] bufIn = new byte[1024];
 					DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
 					socket.receive(packet);
@@ -90,7 +90,6 @@ public class JobSchedThread extends Thread
 				Schedule min = pq.remove();
 				min.addJob(jobArray.get(i));
 				System.out.print(jobArray.get(i).getJobName()+": "+jobArray.get(i).getJobTime()/60+" ");
-
 				pq.add(min);
 			}
 
@@ -111,7 +110,7 @@ public class JobSchedThread extends Thread
 					outputStream.write( header );
 					outputStream.write( object );
 					byte[] data = outputStream.toByteArray( );
-					DatagramPacket sendPacket = new DatagramPacket(data, data.length, pq.poll().getAddress(), Macros.MACHINE_PORT);
+					DatagramPacket sendPacket = new DatagramPacket(data, data.length, pq.peek().getAddress(), Macros.MACHINE_PORT);
 					System.out.println("Sending schedule to "+pq.poll().getAddress());
 					socket.send(sendPacket);
 				} catch (SocketException e) {

@@ -1,13 +1,12 @@
 package org.isw.threads;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
+import org.isw.FlagPacket;
 import org.isw.MachineList;
 import org.isw.Macros;
-import org.isw.threads.ClientHandlerThread;
 
 public class ListenerThread extends Thread
 {
@@ -20,22 +19,23 @@ public class ListenerThread extends Thread
 	public void run()
 	{
 		MulticastSocket socket;
-		DatagramPacket packet;
-		InetAddress group;
 		try
 		{
-			socket = new MulticastSocket(Macros.SCHEDULING_DEPT_PORT);
-			group = InetAddress.getByName(Macros.MACHINE_SCHEDULING_GROUP);
-			socket.joinGroup(group);
-
+			socket = new MulticastSocket(Macros.SCHEDULING_DEPT_MULTICAST_PORT);
+			socket.joinGroup(InetAddress.getByName(Macros.MACHINE_SCHEDULING_GROUP));
+			socket.joinGroup(InetAddress.getByName(Macros.MAINTENANCE_SCHEDULING_GROUP));
 			while(true)
 			{
-				byte[] bufIn = new byte[256];
-				packet = new DatagramPacket(bufIn, bufIn.length);
-
-				socket.receive(packet); 
-				ClientHandlerThread worker = new ClientHandlerThread(socket, packet, machineList);
-				worker.start();
+				FlagPacket fp = FlagPacket.receiveMulticast(socket);
+				switch(fp.flag){
+				case Macros.REQUEST_SCHEDULING_DEPT_IP:
+					ClientHandlerThread worker = new ClientHandlerThread(socket, fp, machineList);
+					worker.start();
+					break;
+				case Macros.REQUEST_MACHINE_LIST:
+					System.out.println("Request for machineList");
+					MachineList.send(machineList, fp.ip, fp.port);
+				}	
 			}
 
 		}catch(IOException e)

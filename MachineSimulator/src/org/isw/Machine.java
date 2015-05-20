@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 
 import org.apache.poi.ss.usermodel.Row;
@@ -34,10 +35,11 @@ public class Machine {
 			final byte[] buf=baos.toByteArray();
 			InetAddress group = InetAddress.getByName(Macros.MACHINE_SCHEDULING_GROUP);
 			DatagramPacket packetOut, packetIn;
-			packetOut = new DatagramPacket(buf, buf.length, group, Macros.SCHEDULING_DEPT_PORT);
+			packetOut = new DatagramPacket(buf, buf.length, group, Macros.SCHEDULING_DEPT_MULTICAST_PORT);
 
 			//create socket
 			DatagramSocket socket = new DatagramSocket(Macros.MACHINE_PORT);
+			ServerSocket tcpSocket = new ServerSocket(Macros.MACHINE_PORT_TCP);
 			socket.setSoTimeout(3000);
 
 			while(!registered)
@@ -70,9 +72,9 @@ public class Machine {
 				else
 					continue;
 			}
-			machineNo = Integer.parseInt(args[0]);
-			compList = parseExcel(machineNo);
-			ListenerThread listener = new ListenerThread(serverIP,socket);
+			//machineNo = Integer.parseInt(args[0]);
+			compList = parseExcel(0);
+			ListenerThread listener = new ListenerThread(serverIP,socket,tcpSocket);
 			listener.start();
 
 

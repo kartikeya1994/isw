@@ -24,6 +24,7 @@ public class FetchIFTask implements Callable<IFPacket>
 
 	@Override
 	public IFPacket call() throws Exception {
+		System.out.println(port);
 		//send request for IFPacket, this is to provide ip of maintenance to machine
 		FlagPacket.sendTCP(Macros.REQUEST_IFPACKET, ip, port);
 		

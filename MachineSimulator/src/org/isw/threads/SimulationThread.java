@@ -27,6 +27,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 	public SimulationResult call(){
 		double totalCost = 0;
 		double pmAvgTime = 0;
+		System.out.println("Running simulation for combination "+ compCombo+ " and PM opportunity "+pmOpportunity);
 		while(noOfSimulations-- <= 0){
 			double procCost = 0;  //Processing cost
 			double pmCost = 0;   //PM cost 

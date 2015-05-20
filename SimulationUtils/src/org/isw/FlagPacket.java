@@ -1,6 +1,8 @@
 package org.isw;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -8,8 +10,11 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.MulticastSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 
 public class FlagPacket implements Serializable{
 
@@ -42,6 +47,32 @@ public class FlagPacket implements Serializable{
 		final byte[] buf=baos.toByteArray();
 		
 		return new DatagramPacket(buf, buf.length, group, port);
+	}
+	
+	public static FlagPacket receiveMulticast(MulticastSocket socket){
+		FlagPacket ret = null;
+		try
+		{
+			byte[] bufIn = new byte[256];
+			DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
+			socket.receive(packet); 
+			byte[] data=packet.getData();
+			ByteArrayInputStream in = new ByteArrayInputStream(data);
+			DataInputStream is = new DataInputStream(in);
+			int flag = is.readInt();
+			ret = new FlagPacket(flag);
+			ret.ip = packet.getAddress();
+			ret.port = packet.getPort();
+			is.close();
+			
+		}catch(Exception e)
+		{
+			System.out.println("Failed to receive FlagPacket.");
+			e.printStackTrace();
+			
+		}
+
+		return ret;
 	}
 	
 	public static FlagPacket receiveTCP(ServerSocket tcpSocket, int timeout)
@@ -82,7 +113,9 @@ public class FlagPacket implements Serializable{
 		FlagPacket fp = new FlagPacket(flag);
 		try
 		{
-			Socket socket = new Socket(ip, port);
+			Socket socket = new Socket();
+			SocketAddress dest = new InetSocketAddress(ip,port);
+			socket.connect(dest, 88000);
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 			oos.writeObject(fp);
 			oos.close();

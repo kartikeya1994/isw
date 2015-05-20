@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project MachineSimulator with Jar-in-Jar Loader">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="/home/mb14/projects/work/vibhor/isw/out/MachineSimulator.jar">
+            <manifest>
+                <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
+                <attribute name="Rsrc-Main-Class" value="org.isw.Machine"/>
+                <attribute name="Class-Path" value="."/>
+                <attribute name="Rsrc-Class-Path" value="./ commons-math3-3.2.jar dom4j-1.6.1.jar poi-3.10-FINAL-20140208.jar poi-ooxml-3.10-FINAL-20140208.jar poi-ooxml-schemas-3.10-FINAL-20140208.jar xmlbeans-5.3.0-m7.jar"/>
+            </manifest>
+            <zipfileset src="jar-in-jar-loader.zip"/>
+            <fileset dir="/home/mb14/projects/work/vibhor/isw/MachineSimulator/bin"/>
+            <fileset dir="/home/mb14/projects/work/vibhor/isw/SimulationUtils/bin"/>
+            <zipfileset dir="/home/mb14/projects/work/vibhor/isw/SimulationUtils/lib" includes="commons-math3-3.2.jar"/>
+            <zipfileset dir="/home/mb14/projects/work/vibhor/isw/MachineSimulator/lib" includes="dom4j-1.6.1.jar"/>
+            <zipfileset dir="/home/mb14/projects/work/vibhor/isw/MachineSimulator/lib" includes="poi-3.10-FINAL-20140208.jar"/>
+            <zipfileset dir="/home/mb14/projects/work/vibhor/isw/MachineSimulator/lib" includes="poi-ooxml-3.10-FINAL-20140208.jar"/>
+            <zipfileset dir="/home/mb14/projects/work/vibhor/isw/MachineSimulator/lib" includes="poi-ooxml-schemas-3.10-FINAL-20140208.jar"/>
+            <zipfileset dir="/home/mb14/projects/work/vibhor/isw/MachineSimulator/lib" includes="xmlbeans-5.3.0-m7.jar"/>
+        </jar>
+    </target>
+</project>

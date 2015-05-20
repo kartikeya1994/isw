@@ -1,4 +1,5 @@
 package org.isw;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -17,7 +18,12 @@ public class SchedulingDept
 		ListenerThread listener = new ListenerThread(machineList);
 		listener.start();
 		System.out.println("Waiting for machines...");
-		while(machineList.ips.size() < 2);
+		try {
+			System.in.read();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out.println("here");
 		JobSchedThread scheduler = new JobSchedThread(machineList);
 		scheduler.start();

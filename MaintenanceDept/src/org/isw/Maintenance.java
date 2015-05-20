@@ -74,7 +74,7 @@ public class Maintenance
 
 
 		//create packet
-		packetOut = FlagPacket.makePacket(Macros.MAINTENANCE_SCHEDULING_GROUP, Macros.SCHEDULING_DEPT_PORT,Macros.REQUEST_MACHINE_LIST);
+		packetOut = FlagPacket.makePacket(Macros.MAINTENANCE_SCHEDULING_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT,Macros.REQUEST_MACHINE_LIST);
 
 		while(true)
 			startShift();
@@ -89,9 +89,9 @@ public class Maintenance
 			{
 				System.out.println("Requesting machine list from scheduling dept...");
 				udpSocket.send(packetOut); //UDP
-
+				
 				list = MachineList.receive(tcpSocket);
-
+				System.out.println("Received MachineList");
 				if(list != null)
 				{
 					recd_list=true;
