@@ -18,7 +18,6 @@ import org.isw.threads.ListenerThread;
 
 public class Machine {
 
-
 	static InetAddress serverIP;
 	static int machineNo;
 	public static Component[] compList;
@@ -71,7 +70,7 @@ public class Machine {
 				else
 					continue;
 			}
-			machineNo = Integer.parseInt(args[1]);
+			machineNo = Integer.parseInt(args[0]);
 			compList = parseExcel(machineNo);
 			ListenerThread listener = new ListenerThread(serverIP,socket);
 			listener.start();
