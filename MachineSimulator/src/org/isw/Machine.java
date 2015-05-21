@@ -90,14 +90,14 @@ public class Machine {
 		 * Different component excel file for different machineNo (Stick
 		 * to one for now)
 		 * **/
-		Component[] c = new Component[14];
+		Component[] c = new Component[5];
 		try
 		{
 			FileInputStream file = new FileInputStream(new File("Components.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
 			
-			for(int i=4;i<18;i++)
+			for(int i=4;i<9;i++)
 			{
 				Row row = sheet.getRow(i);
 				Component comp = new Component();

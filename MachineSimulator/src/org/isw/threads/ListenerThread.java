@@ -32,6 +32,7 @@ public class ListenerThread extends Thread
 	InetAddress schedulerIP;
 	DatagramSocket udpSocket;
 	ServerSocket tcpSocket;
+	private InetAddress maintenanceIP =null;
 	public ListenerThread(InetAddress schedulerIP,DatagramSocket udpSocket,ServerSocket tcpSocket) {
 		this.schedulerIP = schedulerIP;
 		this.udpSocket = udpSocket;
@@ -54,7 +55,7 @@ public class ListenerThread extends Thread
 		{
 			while(true)
 			{
-				byte[] bufIn = new byte[1024];
+				byte[] bufIn = new byte[4096];
 				packet = new DatagramPacket(bufIn, bufIn.length);
 				udpSocket.receive(packet); 
 				byte[] reply=packet.getData();
@@ -62,40 +63,35 @@ public class ListenerThread extends Thread
 				final ByteArrayInputStream bais=new ByteArrayInputStream(header);
 				DataInputStream dias =new DataInputStream(bais);
 				int action = dias.readInt();
-				if(action==Macros.SCHEDULE_PUT){
+				switch(action){
+				case Macros.MAINTENANCE_DEPT_IP:
+					maintenanceIP  = packet.getAddress();
+					break;
+				case Macros.REPLY_NEXT_SHIFT:	
 					byte[] data = Arrays.copyOfRange(reply, 4, reply.length);
 					ByteArrayInputStream in = new ByteArrayInputStream(data);
 					ObjectInputStream is = new ObjectInputStream(in);
 					try {
 						jl = (Schedule) is.readObject();	
-
 						System.out.println("Received schedule:" + jl.printSchedule());
 						System.out.println("Running Simulations");
-						SimulationResult[] results = runSimulation(jl.getFarthestCompleteJob());
+						SimulationResult[] results = runSimulation(jl.jobIndexAt(8*Macros.TIME_SCALE_FACTOR));
 						System.out.println("Simulations complete");
 						//wait for maintenance request
-						boolean recd_req=false;
-						FlagPacket fp = null;
-						while(!recd_req)
-						{
-							fp = FlagPacket.receiveTCP(tcpSocket,0);
-							if(fp == null || fp.flag!=Macros.REQUEST_IFPACKET)
-								continue;
-							recd_req = true;
-						}
-						System.out.println("Maintenance is at "+fp.ip +", sending simulation results");
+						System.out.println("Maintenance is at "+maintenanceIP +", sending simulation results");
 						IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
-						ifPacket.send(fp.ip, fp.port);
+						ifPacket.send(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP);
 						jl = Schedule.receive(tcpSocket); //receive PM and CM incorporated schedule from maintenance
-						Thread t = new JobExecThread(jl);
-						t.start();
-						t.wait();
+						ExecutorService threadPool = Executors.newSingleThreadExecutor();
+						threadPool.execute(new JobExecThread(jl));
+						threadPool.shutdown();
+						while(!threadPool.isTerminated()); 
 						FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);
 					} catch (ClassNotFoundException | InterruptedException | ExecutionException e) {
 						e.printStackTrace();
 					}
-				}
-				else if(action==Macros.SCHEDULE_GET){
+					break;
+				case Macros.REQUEST_PREVIOUS_SHIFT:
 					//send jobs pending from last shift to scheduler
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 					ObjectOutputStream os = new ObjectOutputStream(outputStream);
@@ -137,6 +133,9 @@ public class ListenerThread extends Thread
 					results[result.getPMOpportunity()] = result;
 			}
 			}
+		System.out.println("miroojin");
+		threadPool.shutdown();
+		while(!threadPool.isTerminated());
 		return results;
 	}
 

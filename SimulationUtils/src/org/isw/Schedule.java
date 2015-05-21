@@ -5,30 +5,33 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 public class Schedule implements  Comparable<Schedule>,Serializable{
 
 	
 	private static final long serialVersionUID = 1L;
-	LinkedList<Job> jobs;
+	ArrayList<Job> jobs;
 	private long sum;
 	InetAddress ip;
 
 	public Schedule(){
 		setSum(0);
-		jobs = new LinkedList<Job>();
+		jobs = new ArrayList<Job>();
 	}
 	
 	public Schedule(Schedule source){
 		setSum(source.getSum());
-		jobs = new LinkedList<Job>(source.jobs);
+		jobs =  new ArrayList<Job>();
+		for(int i =0; i<source.jobs.size();i++){
+			jobs.add(new Job(source.jobAt(i)));
+		}		
 	}
 	
 	public Schedule(InetAddress byName) {
 		//check this
 		setSum(0);
-		jobs = new LinkedList<Job>();
+		jobs = new ArrayList<Job>();
 	}
 
 	public void addJob(Job job){
@@ -73,7 +76,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	}
 	
 	public synchronized Job remove(){
-		Job job = jobs.removeFirst();
+		Job job = jobs.remove(0);
 		setSum(getSum() - job.getJobTime());
 		return job;
 	}
@@ -88,18 +91,18 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	}
 	
 	public synchronized Job peek(){
-		return jobs.getFirst();
+		return jobs.get(0);
 	}
 	
 	public synchronized void decrement(long delta){
-		jobs.getFirst().decrement(delta);
+		jobs.get(0).decrement(delta);
 		setSum(getSum() - delta);
 	}
 
 	public String printSchedule() {
 		String str="";
 		for(int i=0;i<jobs.size();i++)
-			str += jobs.get(i).getJobName()+": "+ jobs.get(i).getJobTime()/60+" ";
+			str += jobs.get(i).getJobName()+": "+ jobs.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR+" ";
 				
 		return str;
 	}
@@ -135,7 +138,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	public int jobIndexAt(long time) {
 		int temp =0;
 		int i = 0;
-		while(temp<time){
+		while(temp<=time){
 			temp+= jobs.get(i).getJobTime();
 			i++;
 		}

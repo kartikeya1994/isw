@@ -28,7 +28,7 @@ public class Maintenance
 	static ServerSocket tcpSocket;
 	static DatagramPacket packetOut;
 
-	static ArrayList<SimulationResult> table;
+	static ArrayList<SimulationResult> table = new ArrayList<SimulationResult>();
 	static ArrayList<InetAddress> ip = new ArrayList<InetAddress>();
 	static ArrayList<Integer> port = new ArrayList<Integer>();
 	static ArrayList<Schedule> schedule = new ArrayList<Schedule>();
@@ -98,6 +98,11 @@ public class Maintenance
 					System.out.println("Received machine list from "+ list.senderIP);
 					System.out.println(list);
 					//print recd list
+					Enumeration<InetAddress> ips = list.getIPs();
+					while(ips.hasMoreElements()){
+						DatagramPacket fp = FlagPacket.makePacket(ips.nextElement().getHostAddress(), Macros.MACHINE_PORT, Macros.MAINTENANCE_DEPT_IP);
+						udpSocket.send(fp);
+					}
 				}
 				else
 					continue;
@@ -105,14 +110,13 @@ public class Maintenance
 
 			//use thread pool to query each machine in list for IFs and schedule
 			Enumeration<InetAddress> ips = list.getIPs();
-			Enumeration<Long> ports = list.getPorts();
 			ExecutorService threadPool = Executors.newFixedThreadPool(5);
 			CompletionService<IFPacket> pool = new ExecutorCompletionService<IFPacket>(threadPool);
 
 			numOfMachines = 0;
 			while(ips.hasMoreElements()){
 				numOfMachines++;
-				pool.submit(new FetchIFTask(tcpSocket, ips.nextElement(), ports.nextElement().intValue()));
+				pool.submit(new FetchIFTask(tcpSocket, ips.nextElement(), Macros.MACHINE_PORT_TCP));
 			}
 
 			
@@ -182,14 +186,14 @@ public class Maintenance
 		}
 		for(int i=0; i<numOfMachines;i++){
 			for(int j=0;j<component.get(i).length;j++){
-				long ttf = (long)component.get(i)[j].getCMTTF()*60;
+				long ttf = (long)component.get(i)[j].getCMTTF()*Macros.TIME_SCALE_FACTOR;
 				//If TTF is greater than shift time or schedule length, ignore.
-			if(ttf> 8*60 || ttf > schedule.get(i).getSum())
+			if(ttf> 8*Macros.TIME_SCALE_FACTOR || ttf > schedule.get(i).getSum())
 				continue;
 			//if PM is performed for a component before ttf of that component, ignore.
 			if(ttf> pmTimeArray[i] && ((1<<j)&compCombos[i])==1)
 				continue;
-			long ttr = (long)component.get(i)[j].getCMTTR()*60;
+			long ttr = (long)component.get(i)[j].getCMTTR()*Macros.TIME_SCALE_FACTOR;
 			Job cmJob = new Job("CM",ttr,component.get(i)[j].getCMCost(),Job.JOB_CM);
 			cmJob.setFixedCost(component.get(i)[j].getCompCost());
 			ttfList.add(new CompTTF(ttf,cmJob,i));	
@@ -269,7 +273,7 @@ public class Maintenance
 		ExecutorService threadPool = Executors.newFixedThreadPool(5);
 		for(int x=0; x<ip.size();x++)
 		{
-			threadPool.execute(new SendScheduleTask(schedule.get(x), ip.get(x), (int)port.get(x).longValue()));
+			threadPool.execute(new SendScheduleTask(schedule.get(x), ip.get(x), Macros.MACHINE_PORT_TCP));
 		}
 		threadPool.shutdown();
 		while(!threadPool.isTerminated()); //block till all tasks are done

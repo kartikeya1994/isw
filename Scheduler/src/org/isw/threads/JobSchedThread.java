@@ -62,7 +62,7 @@ public class JobSchedThread extends Thread
 					//request pending jobs from previous shift from machine
 					final ByteArrayOutputStream baos=new ByteArrayOutputStream();
 					final DataOutputStream daos=new DataOutputStream(baos);
-					daos.writeInt(Macros.SCHEDULE_GET);
+					daos.writeInt(Macros.REQUEST_PREVIOUS_SHIFT);
 					daos.close();
 					final byte[] bufOut=baos.toByteArray();
 					DatagramPacket packetOut = new DatagramPacket(bufOut, bufOut.length, ip, Macros.MACHINE_PORT);
@@ -89,7 +89,7 @@ public class JobSchedThread extends Thread
 			for(int i=0;i<jobArray.size();i++){
 				Schedule min = pq.remove();
 				min.addJob(jobArray.get(i));
-				System.out.print(jobArray.get(i).getJobName()+": "+jobArray.get(i).getJobTime()/60+" ");
+				System.out.print(jobArray.get(i).getJobName()+": "+jobArray.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR+" ");
 				pq.add(min);
 			}
 
@@ -103,7 +103,7 @@ public class JobSchedThread extends Thread
 					os.close();
 					outputStream.reset();
 					DataOutputStream ds = new DataOutputStream(outputStream);
-					ds.writeInt(Macros.SCHEDULE_PUT);
+					ds.writeInt(Macros.REPLY_NEXT_SHIFT);
 					byte[] header =outputStream.toByteArray();
 					ds.close();
 					outputStream.reset();
@@ -135,7 +135,7 @@ public class JobSchedThread extends Thread
 		jobArray = new ArrayList<Job>();
 		for(int i=14;i>0;i--){ 
 			if(r.nextBoolean()){
-				Job job = new Job(String.valueOf(i),i*1200,i*1000,Job.JOB_NORMAL);
+				Job job = new Job(String.valueOf(i),i,i*1000,Job.JOB_NORMAL);
 				job.setPenaltyCost(i*500);
 				jobArray.add(job);
 			}

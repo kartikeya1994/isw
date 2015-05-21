@@ -1,12 +1,11 @@
 package org.isw.threads;
 
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.concurrent.Callable;
 
-import org.isw.FlagPacket;
 import org.isw.IFPacket;
-import org.isw.Macros;
 
 public class FetchIFTask implements Callable<IFPacket>
 {
@@ -25,9 +24,6 @@ public class FetchIFTask implements Callable<IFPacket>
 	@Override
 	public IFPacket call() throws Exception {
 		System.out.println(port);
-		//send request for IFPacket, this is to provide ip of maintenance to machine
-		FlagPacket.sendTCP(Macros.REQUEST_IFPACKET, ip, port);
-		
 		return IFPacket.receive(tcpSocket); //blocking call that waits for reply
 	}
 	

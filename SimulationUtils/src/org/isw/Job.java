@@ -28,6 +28,15 @@ public class Job implements Serializable {
 		penaltyCost = 0;
 	}
 	
+	public Job(Job source) {
+		this.jobTime = source.jobTime;
+		this.jobName = source.jobName;
+		this.jobType = source.jobType;
+		this.jobCost = source.jobCost;
+		fixedCost = source.fixedCost;
+		penaltyCost = source.penaltyCost;
+	}
+
 	public void setPenaltyCost(double penaltyCost){
 		this.penaltyCost = penaltyCost;
 	}
