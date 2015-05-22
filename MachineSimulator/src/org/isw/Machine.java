@@ -86,8 +86,8 @@ public class Machine {
 			shiftCount = 0;
 			cmCost = new double[compList.length];
 			pmCost = new double[compList.length];
-			penaltyCost++;
-			procCost++;
+			penaltyCost=0;
+			procCost=0;
 			ListenerThread listener = new ListenerThread(serverIP,socket,tcpSocket);
 			listener.start();
 
