@@ -24,8 +24,8 @@ public class Macros {
 	public static final int MACHINE_PORT_TCP = 8892;
 	public static final int MAINTENANCE_DEPT_PORT_TCP = 8893;
 	public static final int SCHEDULING_DEPT_MULTICAST_PORT = 8888;
-	public static final String MACHINE_SCHEDULING_GROUP = "224.0.0.1";
-	public static final String MAINTENANCE_SCHEDULING_GROUP = "224.0.0.2";
+	public static final String MACHINE_SCHEDULING_GROUP = "224.1.1.1";
+	public static final String MAINTENANCE_SCHEDULING_GROUP = "224.1.1.2";
 	public static final int TIME_SCALE_FACTOR = 1;
 	
 	

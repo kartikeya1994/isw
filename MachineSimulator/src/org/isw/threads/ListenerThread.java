@@ -75,8 +75,9 @@ public class ListenerThread extends Thread
 						jl = (Schedule) is.readObject();	
 						System.out.println("Received schedule:" + jl.printSchedule());
 						System.out.println("Running Simulations");
-						SimulationResult[] results = runSimulation(jl.jobIndexAt(8*Macros.TIME_SCALE_FACTOR));
-						System.out.println("Simulations complete");
+						long starttime = System.currentTimeMillis();
+						SimulationResult[] results = runSimulation(jl.getFarthestCompleteJob());
+						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));
 						//wait for maintenance request
 						System.out.println("Maintenance is at "+maintenanceIP +", sending simulation results");
 						IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
@@ -112,7 +113,7 @@ public class ListenerThread extends Thread
 		for(int i=0;i<=maxPMO;i++){
 			results[i]= new SimulationResult(Double.MAX_VALUE,0,0,0);
 		}
-		SimulationResult noPM;
+		SimulationResult noPM = null;
 		ExecutorService threadPool = Executors.newFixedThreadPool(20);
 		CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
 		pool.submit(new SimulationThread(jl,1,-1));
@@ -133,7 +134,10 @@ public class ListenerThread extends Thread
 					results[result.getPMOpportunity()] = result;
 			}
 			}
-		System.out.println("miroojin");
+		//Calculate IFs
+		for(int i=0;i<results.length;i++){
+			results[i].cost = noPM.cost*(results[i].cost - noPM.cost);
+		}
 		threadPool.shutdown();
 		while(!threadPool.isTerminated());
 		return results;

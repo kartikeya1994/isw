@@ -18,6 +18,7 @@ public class SchedulingDept
 		ListenerThread listener = new ListenerThread(machineList);
 		listener.start();
 		System.out.println("Waiting for machines...");
+		System.out.println("Press any key to continue...");
 		try {
 			System.in.read();
 		} catch (IOException e) {

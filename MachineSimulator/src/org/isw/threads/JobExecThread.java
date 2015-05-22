@@ -1,6 +1,7 @@
 package org.isw.threads;
 
 import org.isw.Job;
+import org.isw.Macros;
 import org.isw.Schedule;
 
 public class JobExecThread extends Thread{
@@ -14,20 +15,20 @@ public class JobExecThread extends Thread{
 	long procCost =0;
 	long pmCost = 0;
 	long cmCost = 0;
-	while(!jobList.isEmpty() && sum < 8*60){
+	while(!jobList.isEmpty() && sum < 8*Macros.TIME_SCALE_FACTOR){
 		jobList.decrement(1);
 		Job current = jobList.peek(); 
 		switch(current.getJobType()){
 			case Job.JOB_NORMAL:
-				procCost += current.getJobCost()/60;
+				procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				break;
 			case Job.JOB_PM:
-				pmCost += current.getFixedCost() + current.getJobCost()/60;
+				pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
 				downTime++;
 				break;
 			case Job.JOB_CM:
-				cmCost += current.getFixedCost() + current.getJobCost()/60;
+				cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
 				downTime++;
 				break;

@@ -29,8 +29,8 @@ public class SimulationThread implements Callable<SimulationResult> {
 		double totalCost = 0;
 		double pmAvgTime = 0;
 		int cnt = 0;
-		System.out.println("CompCombo: "+ compCombo+ " Pm opportunity "+pmOpportunity);
-		while(cnt++ <= noOfSimulations){
+		//System.out.println("CompCombo: "+ compCombo+ " Pm opportunity "+pmOpportunity);
+		while(cnt++ < noOfSimulations){
 			double procCost = 0;  //Processing cost
 			double pmCost = 0;   //PM cost 
 			double cmCost = 0;   //CM cost
@@ -44,40 +44,37 @@ public class SimulationThread implements Callable<SimulationResult> {
 			/*Calculate the TTF for every component and add it's corresponding CM job 
 			 * to the schedule*/
 			for(int i=0;i<simCompList.length;i++){
-				long cmTTF = (long)simCompList[i].getCMTTF()*Macros.TIME_SCALE_FACTOR;
+				long cmTTF = (long)(simCompList[i].getCMTTF()*Macros.TIME_SCALE_FACTOR);
 				if(cmTTF < 8*Macros.TIME_SCALE_FACTOR){
-					Job cmJob = new Job("CM", (long)simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR,simCompList[i].getCMCost(), Job.JOB_CM);
+					Job cmJob = new Job("CM", (long)(simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR),simCompList[i].getCMCost(), Job.JOB_CM);
 					cmJob.setFixedCost(simCompList[i].getCompCost());;
 					simSchedule.addCMJob(cmJob, cmTTF);
 				}
 			}
-			long startTime = System.currentTimeMillis();
-			long time = startTime;
-			long time2 = startTime;
-			while(time - startTime < 8*Macros.TIME_SCALE_FACTOR && !simSchedule.isEmpty()){
-				time2 = System.currentTimeMillis();
-				simSchedule.decrement(time2-time);
+			long time = 0;
+			while(time<= 8*Macros.TIME_SCALE_FACTOR && !simSchedule.isEmpty()){
+				simSchedule.decrement(1);
 				//Calculate the cost depending upon the job type
 				Job current = simSchedule.peek(); 
 				switch(current.getJobType()){
 					case Job.JOB_NORMAL:
-						procCost += current.getJobCost()*(time2-time)/Macros.TIME_SCALE_FACTOR;
+						procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 						break;
 					case Job.JOB_PM:
-						pmCost += current.getFixedCost() + current.getJobCost()*(time2-time)/Macros.TIME_SCALE_FACTOR;
+						pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 						current.setFixedCost(0);
-						pmAvgTime += time2-time;
+						pmAvgTime += 1;
 						break;
 					case Job.JOB_CM:
-						cmCost += current.getFixedCost() + current.getJobCost()*(time2-time)/Macros.TIME_SCALE_FACTOR;
+						cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 						current.setFixedCost(0);
 						break;
 				}
+
 				if(current.getJobTime()<0){
-					//Job ends here
-					//System.out.println("Job "+ simSchedule.remove().getJobName()+" complete");
+					simSchedule.remove().getJobName();
 				}
-				time = time2;
+				time++;
 			}
 			//Calculate penaltyCost for leftover jobs
 		   while(!simSchedule.isEmpty()){
@@ -85,6 +82,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 		   }
 		   //Calculate totalCost for the shift
 		totalCost += procCost + pmCost + cmCost + penaltyCost;
+		
 		}
 		totalCost /= noOfSimulations;
 		pmAvgTime /= noOfSimulations;
@@ -100,7 +98,8 @@ public class SimulationThread implements Callable<SimulationResult> {
 		String combo = String.format(formatPattern, Integer.toBinaryString(compCombo)).replace(' ', '0');
 		for(int i=0;i< combo.length();i++){
 			if(combo.charAt(i)=='1'){
-				Job pmJob = new Job("PM",(long)simCompList[i].getPMTTR()*60,simCompList[i].getPMCost(),Job.JOB_PM);
+				double pmttr = simCompList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR;
+				Job pmJob = new Job("PM",(long)pmttr,simCompList[i].getPMCost(),Job.JOB_PM);
 				if(cnt==0)
 					pmJob.setFixedCost(simCompList[i].getPMFixedCost());
 				simSchedule.addPMJob(pmJob,pmOpportunity+cnt);

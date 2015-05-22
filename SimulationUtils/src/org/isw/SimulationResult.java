@@ -7,7 +7,7 @@ public class SimulationResult  implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-  double cost;
+  public double cost;
   double pmAvgTime;
   int compCombo;
   int pmOpportunity;

@@ -133,7 +133,7 @@ public class JobSchedThread extends Thread
 	}
 	void getJobs(){
 		jobArray = new ArrayList<Job>();
-		for(int i=14;i>0;i--){ 
+		for(int i=7;i>0;i--){ 
 			if(r.nextBoolean()){
 				Job job = new Job(String.valueOf(i),i,i*1000,Job.JOB_NORMAL);
 				job.setPenaltyCost(i*500);

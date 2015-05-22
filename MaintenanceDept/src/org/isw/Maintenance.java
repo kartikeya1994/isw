@@ -186,14 +186,14 @@ public class Maintenance
 		}
 		for(int i=0; i<numOfMachines;i++){
 			for(int j=0;j<component.get(i).length;j++){
-				long ttf = (long)component.get(i)[j].getCMTTF()*Macros.TIME_SCALE_FACTOR;
+				long ttf = (long)(component.get(i)[j].getCMTTF()*Macros.TIME_SCALE_FACTOR);
 				//If TTF is greater than shift time or schedule length, ignore.
 			if(ttf> 8*Macros.TIME_SCALE_FACTOR || ttf > schedule.get(i).getSum())
 				continue;
 			//if PM is performed for a component before ttf of that component, ignore.
 			if(ttf> pmTimeArray[i] && ((1<<j)&compCombos[i])==1)
 				continue;
-			long ttr = (long)component.get(i)[j].getCMTTR()*Macros.TIME_SCALE_FACTOR;
+			long ttr = (long)(component.get(i)[j].getCMTTR()*Macros.TIME_SCALE_FACTOR);
 			Job cmJob = new Job("CM",ttr,component.get(i)[j].getCMCost(),Job.JOB_CM);
 			cmJob.setFixedCost(component.get(i)[j].getCompCost());
 			ttfList.add(new CompTTF(ttf,cmJob,i));	
