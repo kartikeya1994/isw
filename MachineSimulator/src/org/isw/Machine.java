@@ -21,7 +21,14 @@ public class Machine {
 
 	static InetAddress serverIP;
 	static int machineNo;
+	public static int shiftCount;
 	public static Component[] compList;
+	public static double cmCost[];
+	public static double pmCost[];
+	public	static double downTime;
+	public static int jobsDone;
+	public static double procCost;
+	public static double penaltyCost;
 	public static void main(String[] args) {
 
 		boolean registered=false;
@@ -74,6 +81,13 @@ public class Machine {
 			}
 			//machineNo = Integer.parseInt(args[0]);
 			compList = parseExcel(0);
+			downTime = 0;
+			jobsDone = 0;
+			shiftCount = 0;
+			cmCost = new double[compList.length];
+			pmCost = new double[compList.length];
+			penaltyCost++;
+			procCost++;
 			ListenerThread listener = new ListenerThread(serverIP,socket,tcpSocket);
 			listener.start();
 

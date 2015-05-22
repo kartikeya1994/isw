@@ -30,10 +30,12 @@ public class JobSchedThread extends Thread
 	Random r = new Random();
 	DatagramSocket socket;
 	ServerSocket tcpSocket;
-	ArrayList<Job> jobArray; 
-	public JobSchedThread(MachineList machineList)
+	ArrayList<Job> jobArray;
+	int shiftCount;
+	public JobSchedThread(MachineList machineList, int shiftCount)
 	{
 		this.machineList=machineList;
+		this.shiftCount = shiftCount;
 	}
 
 	public void run()
@@ -48,12 +50,11 @@ public class JobSchedThread extends Thread
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		while(true)
+		int cnt = 0;
+		while(cnt++ < shiftCount)
 		{	
-
 			getJobs();
 			PriorityQueue<Schedule> pq = new PriorityQueue<Schedule>();
-
 			Enumeration<InetAddress> en = machineList.getIPs();
 			while(en.hasMoreElements())
 			{	
@@ -89,7 +90,7 @@ public class JobSchedThread extends Thread
 			for(int i=0;i<jobArray.size();i++){
 				Schedule min = pq.remove();
 				min.addJob(jobArray.get(i));
-				System.out.print(jobArray.get(i).getJobName()+": "+jobArray.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR+" ");
+				System.out.print(jobArray.get(i).getJobName()+": "+String.valueOf(jobArray.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR)+" ");
 				pq.add(min);
 			}
 
@@ -130,12 +131,23 @@ public class JobSchedThread extends Thread
 					break;
 			}
 		}
+		System.out.println("Process Complete");
+		Enumeration<InetAddress> en = machineList.getIPs();
+		while(en.hasMoreElements()){
+			DatagramPacket dp = FlagPacket.makePacket(en.nextElement().getHostAddress(), Macros.MACHINE_PORT, Macros.PROCESS_COMPLETE);
+			try {
+				socket.send(dp);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
 	}
 	void getJobs(){
 		jobArray = new ArrayList<Job>();
 		for(int i=7;i>0;i--){ 
 			if(r.nextBoolean()){
-				Job job = new Job(String.valueOf(i),i,i*1000,Job.JOB_NORMAL);
+				Job job = new Job(String.valueOf(i),i*Macros.TIME_SCALE_FACTOR,i*1000,Job.JOB_NORMAL);
 				job.setPenaltyCost(i*500);
 				jobArray.add(job);
 			}

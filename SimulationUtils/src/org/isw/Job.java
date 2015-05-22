@@ -14,6 +14,8 @@ public class Job implements Serializable {
 	long jobTime;
 	String jobName;
 	int jobType;
+	int compNo;
+	int compCombo;
 	
 	//Fixed cost can be the component cost or the PM fixed cost. 
 	double fixedCost;
@@ -73,4 +75,19 @@ public class Job implements Serializable {
 	public double getJobCost() {
 		return jobCost;
 	}
+	public int getCompNo(){
+		return compNo;
+	}
+	public void setCompNo(int no ){
+		compNo = no;
+		
+	}
+	public int getCompCombo() {
+		return compCombo;
+	}
+
+	public void setCompCombo(int compCombo) {
+		this.compCombo = compCombo;
+	}
+	
 }

@@ -177,13 +177,16 @@ public class Maintenance
 			if(row.t >= busyTime && !toPerformPM.containsKey(row.id))
 			{
 				//incorporate the job into schedule of machine
-				schedule.get(row.id).addPMJob(new Job("PM", (long)row.pmAvgTime, row.cost,Job.JOB_PM),row.pmOpportunity);
+				Job pmJob = new Job("PM", (long)row.pmAvgTime, 5000,Job.JOB_PM);
+				pmJob.setCompCombo(row.compCombo);
+				schedule.get(row.id).addPMJob(pmJob,row.pmOpportunity);
 				toPerformPM.put(row.id, true);
 				pmTimeArray[row.id] = row.t;
 				compCombos[row.id] = row.compCombo;
 				busyTime += (long)row.pmAvgTime;
 			}
 		}
+		
 		for(int i=0; i<numOfMachines;i++){
 			for(int j=0;j<component.get(i).length;j++){
 				long ttf = (long)(component.get(i)[j].getCMTTF()*Macros.TIME_SCALE_FACTOR);
@@ -195,9 +198,9 @@ public class Maintenance
 				continue;
 			long ttr = (long)(component.get(i)[j].getCMTTR()*Macros.TIME_SCALE_FACTOR);
 			Job cmJob = new Job("CM",ttr,component.get(i)[j].getCMCost(),Job.JOB_CM);
+			cmJob.setCompNo(i);
 			cmJob.setFixedCost(component.get(i)[j].getCompCost());
 			ttfList.add(new CompTTF(ttf,cmJob,i));	
-			
 			}
 		}
 		

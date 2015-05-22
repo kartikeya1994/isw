@@ -26,7 +26,8 @@ public class SchedulingDept
 			e.printStackTrace();
 		}
 		System.out.println("here");
-		JobSchedThread scheduler = new JobSchedThread(machineList);
+		int dayCount = Integer.parseInt(args[1]);
+		JobSchedThread scheduler = new JobSchedThread(machineList,dayCount*3);
 		scheduler.start();
 	}
 

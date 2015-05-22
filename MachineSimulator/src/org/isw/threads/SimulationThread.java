@@ -48,6 +48,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 				if(cmTTF < 8*Macros.TIME_SCALE_FACTOR){
 					Job cmJob = new Job("CM", (long)(simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR),simCompList[i].getCMCost(), Job.JOB_CM);
 					cmJob.setFixedCost(simCompList[i].getCompCost());;
+					cmJob.setCompNo(i);
 					simSchedule.addCMJob(cmJob, cmTTF);
 				}
 			}
@@ -78,7 +79,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 			}
 			//Calculate penaltyCost for leftover jobs
 		   while(!simSchedule.isEmpty()){
-			   penaltyCost += simSchedule.remove().getJobCost()*8;
+			   penaltyCost += simSchedule.remove().getPenaltyCost()*8;
 		   }
 		   //Calculate totalCost for the shift
 		totalCost += procCost + pmCost + cmCost + penaltyCost;
@@ -100,9 +101,11 @@ public class SimulationThread implements Callable<SimulationResult> {
 			if(combo.charAt(i)=='1'){
 				double pmttr = simCompList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR;
 				Job pmJob = new Job("PM",(long)pmttr,simCompList[i].getPMCost(),Job.JOB_PM);
-				if(cnt==0)
+				if(cnt==0){
 					pmJob.setFixedCost(simCompList[i].getPMFixedCost());
-				simSchedule.addPMJob(pmJob,pmOpportunity+cnt);
+					pmJob.setCompCombo(compCombo);
+				}
+					simSchedule.addPMJob(pmJob,pmOpportunity+cnt);
 				cnt++;
 			}
 		}

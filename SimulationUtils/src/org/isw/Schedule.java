@@ -102,10 +102,10 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	public String printSchedule() {
 		String str="";
 		for(int i=0;i<jobs.size();i++)
-			str += jobs.get(i).getJobName()+": "+ jobs.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR+"hrs ";
-				
+			str += jobs.get(i).getJobName()+": "+ String.valueOf(jobs.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR)+"hrs ";			
 		return str;
 	}
+	
 	public int getFarthestCompleteJob(){
 		int i = jobs.size();
 		long temp = getSum();
@@ -163,7 +163,9 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	public Job jobAt(int i) {
 		return jobs.get(i);
 	}
-	
+	public int indexOf(Job job){
+		return jobs.indexOf(job);
+	}
 	public static Schedule receive(ServerSocket tcpSocket)
 	{
 		//uses TCP to receive Schedule
@@ -191,5 +193,9 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		}
 
 		return ret;
+	}
+
+	public int getSize() {
+		return jobs.size();
 	}
 }

@@ -32,6 +32,7 @@ public class ListenerThread extends Thread
 	InetAddress schedulerIP;
 	DatagramSocket udpSocket;
 	ServerSocket tcpSocket;
+	
 	private InetAddress maintenanceIP =null;
 	public ListenerThread(InetAddress schedulerIP,DatagramSocket udpSocket,ServerSocket tcpSocket) {
 		this.schedulerIP = schedulerIP;
@@ -64,6 +65,9 @@ public class ListenerThread extends Thread
 				DataInputStream dias =new DataInputStream(bais);
 				int action = dias.readInt();
 				switch(action){
+				case Macros.PROCESS_COMPLETE:
+					writeResults();
+					break;
 				case Macros.MAINTENANCE_DEPT_IP:
 					maintenanceIP  = packet.getAddress();
 					break;
@@ -87,6 +91,7 @@ public class ListenerThread extends Thread
 						threadPool.execute(new JobExecThread(jl));
 						threadPool.shutdown();
 						while(!threadPool.isTerminated()); 
+						Machine.shiftCount++;
 						FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);
 					} catch (ClassNotFoundException | InterruptedException | ExecutionException e) {
 						e.printStackTrace();
@@ -107,6 +112,10 @@ public class ListenerThread extends Thread
 		{
 			e.printStackTrace();
 		}
+	}
+	private void writeResults() {
+		// TODO Auto-generated method stub
+		
 	}
 	private SimulationResult[] runSimulation(int maxPMO) throws InterruptedException, ExecutionException {
 		SimulationResult[] results = new SimulationResult[maxPMO+1];
