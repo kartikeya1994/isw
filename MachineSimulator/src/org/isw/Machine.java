@@ -25,10 +25,16 @@ public class Machine {
 	public static Component[] compList;
 	public static double cmCost[];
 	public static double pmCost[];
-	public	static double downTime;
+	public	static long downTime;
+	public static long waitTime;
 	public static int jobsDone;
-	public static double procCost;
-	public static double penaltyCost;
+	public static int cmJobsDone;
+	public static int pmJobsDone;
+	public static long procCost;
+	public static long penaltyCost;
+	public static long cmDownTime;
+	public static long pmDownTime;
+	public static long runTime;
 	public static void main(String[] args) {
 		boolean registered=false;
 		try
@@ -83,11 +89,16 @@ public class Machine {
 			compList = parseExcel(0);
 			downTime = 0;
 			jobsDone = 0;
+			cmJobsDone = pmJobsDone = 0;
 			shiftCount = 0;
 			cmCost = new double[compList.length];
 			pmCost = new double[compList.length];
+			cmDownTime=0;
+			pmDownTime=0;
+			waitTime=0;
 			penaltyCost=0;
 			procCost=0;
+			runTime =0;
 			ListenerThread listener = new ListenerThread(serverIP,socket,tcpSocket);
 			listener.start();
 
@@ -133,7 +144,7 @@ public class Machine {
 				comp.pmRF = row.getCell(13).getNumericCellValue();
 				comp.pmCost = row.getCell(14).getNumericCellValue();
 				comp.pmFixedCost = row.getCell(15).getNumericCellValue();
-				
+				comp.initAge = 10000;
 				c[i-4] = comp;
 			}
 			file.close();

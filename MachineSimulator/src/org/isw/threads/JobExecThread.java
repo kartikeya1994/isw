@@ -30,16 +30,19 @@ public class JobExecThread extends Thread{
 					current.setFixedCost(0);
 					}
 				}
-				
+				Machine.pmDownTime++;
 				Machine.downTime++;
+				
 				break;
 			case Job.JOB_CM:
 				Machine.cmCost[current.getCompNo()] += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
 				Machine.downTime++;
+				Machine.cmDownTime++;
 				break;
 			case Job.WAIT_FOR_MT:
 				Machine.downTime++;
+				Machine.waitTime++;
 		}
 		if(current.getJobTime()<=0){
 			//Job ends here
@@ -51,18 +54,22 @@ public class JobExecThread extends Thread{
 						comp.initAge = (1-comp.pmRF)*comp.initAge;
 					}
 				}
+				Machine.pmJobsDone++;
 				break;
 			case Job.JOB_CM:	
 				Component comp = Machine.compList[current.getCompNo()];
 				comp.initAge = (1 - comp.cmRF)*comp.initAge;
+				Machine.cmJobsDone++;
 				break;
 			case Job.JOB_NORMAL:
 				Machine.jobsDone++;
+				break;
 			}
 			
 			System.out.println("Job "+ jobList.remove().getJobName()+" complete");
 		}
 		sum++;
+		Machine.runTime++;
 		
 	}
 	if(jobList.isEmpty())
@@ -71,6 +78,7 @@ public class JobExecThread extends Thread{
 	while(i < jobList.getSize()){
 		Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost();
 	}
+	
 	}
 	
 

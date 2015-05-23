@@ -29,7 +29,6 @@ public class SimulationThread implements Callable<SimulationResult> {
 		double totalCost = 0;
 		double pmAvgTime = 0;
 		int cnt = 0;
-		int total = 0;
 		//System.out.println("CompCombo: "+ compCombo+ " Pm opportunity "+pmOpportunity);
 		while(cnt++ < noOfSimulations){
 			double procCost = 0;  //Processing cost
@@ -56,7 +55,6 @@ public class SimulationThread implements Callable<SimulationResult> {
 			long time = 0;
 			while(time< 8*Macros.TIME_SCALE_FACTOR && !simSchedule.isEmpty()){
 				simSchedule.decrement(1);
-				total++;
 				//Calculate the cost depending upon the job type
 				Job current = simSchedule.peek(); 
 				switch(current.getJobType()){

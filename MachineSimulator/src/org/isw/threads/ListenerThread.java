@@ -78,17 +78,19 @@ public class ListenerThread extends Thread
 					ObjectInputStream is = new ObjectInputStream(in);
 					try {
 						jl = (Schedule) is.readObject();	
-						System.out.println("Received schedule:" + jl.printSchedule());
+						System.out.println("Received schedule from scheduler:" + jl.printSchedule());
+						System.out.println("Total time" + jl.getSum());
 						System.out.println("Running Simulations");
 						long starttime = System.currentTimeMillis();
 						SimulationResult[] results = null;
 						results = runSimulation(jl.getPMOpportunities());
 						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));
-						//wait for maintenance request
-						System.out.println("Maintenance is at "+maintenanceIP +", sending simulation results");
+						System.out.println("Sending simulation results to Maintenance");
 						IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
 						ifPacket.send(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP);
 						jl = Schedule.receive(tcpSocket); //receive PM and CM incorporated schedule from maintenance
+						System.out.println("Received schedule from maintenance:" + jl.printSchedule());
+						System.out.println("Total time" + jl.getSum());
 						ExecutorService threadPool = Executors.newSingleThreadExecutor();
 						threadPool.execute(new JobExecThread(jl));
 						threadPool.shutdown();
@@ -116,8 +118,14 @@ public class ListenerThread extends Thread
 		}
 	}
 	private void writeResults() {
-		System.out.println("Downtime:" + String.valueOf(Machine.downTime*100/(Machine.shiftCount*8)) +"%");
-		
+		System.out.println("=========================================");
+		System.out.println("Downtime:" + String.valueOf(Machine.downTime*100/(Machine.runTime)) +"%");
+		System.out.println("CM Downtime: "+ Machine.cmDownTime +" hours");
+		System.out.println("PM Downtime: "+ Machine.pmDownTime +" hours");
+		System.out.println("Waiting Downtime: "+ Machine.waitTime +" hours");
+		System.out.println("Number of jobs:" + Machine.jobsDone);
+		System.out.println("Number of CM jobs:" + Machine.cmJobsDone);
+		System.out.println("Number of PM jobs:" + Machine.pmJobsDone);
 	}
 	private SimulationResult[] runSimulation(ArrayList<Integer> pmoList) throws InterruptedException, ExecutionException {
 		if(pmoList.isEmpty()){

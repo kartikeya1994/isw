@@ -11,17 +11,17 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 
 	
 	private static final long serialVersionUID = 1L;
-	ArrayList<Job> jobs;
+	private ArrayList<Job> jobs;
 	private long sum;
 	InetAddress ip;
 
 	public Schedule(){
-		setSum(0);
+		sum = 0;
 		jobs = new ArrayList<Job>();
 	}
 	
 	public Schedule(Schedule source){
-		setSum(source.getSum());
+		sum = source.sum;
 		jobs =  new ArrayList<Job>();
 		for(int i =0; i<source.jobs.size();i++){
 			jobs.add(new Job(source.jobAt(i)));
@@ -30,13 +30,13 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	
 	public Schedule(InetAddress byName) {
 		//check this
-		setSum(0);
+		sum = 0;
 		jobs = new ArrayList<Job>();
 	}
 
 	public void addJob(Job job){
 		jobs.add(job);
-		setSum(getSum() + job.getJobTime());
+		sum+=job.getJobTime();
 	}
 	
 	public int numOfJobs()
@@ -48,7 +48,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	 * in between. If a CM job overlaps with a PM/CM job, add it after the CM/PM job.
 	**/
 	public void addCMJob(Job cmJob, long TTF){
-		if (TTF >= getSum())
+		if (TTF >= sum)
 			return;
 		int i = jobIndexAt(TTF);
 		long time = getFinishingTime(i);
@@ -66,13 +66,12 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 					i++;
 				jobs.add(i,cmJob);
 			}
-		
-		setSum(getSum() + cmJob.getJobTime());
+		sum += cmJob.getJobTime();
 	}
 	//Insert PM job at give opportunity.
 	public void addPMJob(Job pmJob, int opportunity){
 		jobs.add(opportunity, pmJob);
-		setSum(getSum() + pmJob.getJobTime());
+		sum += pmJob.getJobTime();
 	}
 	
 	public synchronized Job remove(){
@@ -96,6 +95,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	
 	public synchronized void decrement(long delta){
 		jobs.get(0).decrement(delta);
+		sum -= delta;
 	}
 
 	public String printSchedule() {
@@ -144,6 +144,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		jobs.add(pmJobIndex,pmJob1);
 		jobs.add(pmJobIndex+1,waitJob);
 		jobs.add(pmJobIndex+2,pmJob2);
+		sum += waitTime;
 	}
 
 	public long getFinishingTime(int index){
@@ -155,6 +156,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		}
 		return sum;
 	}
+	
 	public Job jobAt(int i) {
 		return jobs.get(i);
 	}

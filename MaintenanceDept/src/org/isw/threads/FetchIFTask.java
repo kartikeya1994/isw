@@ -1,6 +1,5 @@
 package org.isw.threads;
 
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.concurrent.Callable;

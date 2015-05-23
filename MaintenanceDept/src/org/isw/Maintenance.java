@@ -143,12 +143,10 @@ public class Maintenance
 				{
 					p.results[j].id = count; //assign machine id
 
-					//calculate t for each SimulationResult
-					long t = 0;
-					for(int k=0; k<p.results[j].pmOpportunity;k++)
-						t += sched.jobs.get(k).jobTime;
-					p.results[j].t = t; //assign calculated t
-
+					if(p.results[j].pmOpportunity <= 0)
+						p.results[j].t = 0; //assign calculated t
+					else
+						p.results[j].t = p.jobList.getFinishingTime(p.results[j].pmOpportunity-1);
 					table.add(p.results[j]);
 				}
 			
