@@ -4,8 +4,8 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
+import java.util.Scanner;
 
-import org.isw.MachineList;
 import org.isw.threads.JobSchedThread;
 import org.isw.threads.ListenerThread;
 
@@ -16,6 +16,9 @@ public class SchedulingDept
 	{
 		MachineList machineList = new MachineList();
 		ListenerThread listener = new ListenerThread(machineList);
+		System.out.println("Enter number of days to simulate:");
+		Scanner in = new Scanner(System.in);
+		int dayCount = in.nextInt();
 		listener.start();
 		System.out.println("Waiting for machines...");
 		System.out.println("Press any key to continue...");
@@ -26,7 +29,6 @@ public class SchedulingDept
 			e.printStackTrace();
 		}
 		System.out.println("here");
-		int dayCount = Integer.parseInt(args[1]);
 		JobSchedThread scheduler = new JobSchedThread(machineList,dayCount*3);
 		scheduler.start();
 	}

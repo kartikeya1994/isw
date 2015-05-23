@@ -174,7 +174,7 @@ public class Maintenance
 		for(int i=0;i<table.size();i++)
 		{
 			SimulationResult row = table.get(i);
-			if(row.t >= busyTime && !toPerformPM.containsKey(row.id))
+			if(row.t >= busyTime && !toPerformPM.containsKey(row.id) && row.pmOpportunity >= 0)
 			{
 				//incorporate the job into schedule of machine
 				Job pmJob = new Job("PM", (long)row.pmAvgTime, 5000,Job.JOB_PM);

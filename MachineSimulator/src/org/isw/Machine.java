@@ -30,10 +30,10 @@ public class Machine {
 	public static double procCost;
 	public static double penaltyCost;
 	public static void main(String[] args) {
-
 		boolean registered=false;
 		try
 		{
+			
 			//create outbound packet with HELLO message
 			final ByteArrayOutputStream baos=new ByteArrayOutputStream();
 			final DataOutputStream dos=new DataOutputStream(baos);

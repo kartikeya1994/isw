@@ -69,7 +69,7 @@ public class JobSchedThread extends Thread
 					DatagramPacket packetOut = new DatagramPacket(bufOut, bufOut.length, ip, Macros.MACHINE_PORT);
 					socket.send(packetOut);
 					System.out.println("Sent schedule get req to machines");
-					byte[] bufIn = new byte[1024];
+					byte[] bufIn = new byte[4096];
 					DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
 					socket.receive(packet);
 					byte[] object = packet.getData();

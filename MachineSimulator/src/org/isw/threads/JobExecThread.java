@@ -41,7 +41,7 @@ public class JobExecThread extends Thread{
 			case Job.WAIT_FOR_MT:
 				Machine.downTime++;
 		}
-		if(current.getJobTime()<0){
+		if(current.getJobTime()<=0){
 			//Job ends here
 			switch(current.getJobType()){
 			case Job.JOB_PM:
@@ -59,11 +59,14 @@ public class JobExecThread extends Thread{
 			case Job.JOB_NORMAL:
 				Machine.jobsDone++;
 			}
+			
 			System.out.println("Job "+ jobList.remove().getJobName()+" complete");
 		}
 		sum++;
 		
 	}
+	if(jobList.isEmpty())
+		return;
 	int i = jobList.indexOf(jobList.peek());
 	while(i < jobList.getSize()){
 		Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost();

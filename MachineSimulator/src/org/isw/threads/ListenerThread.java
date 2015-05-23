@@ -12,6 +12,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
@@ -80,7 +81,8 @@ public class ListenerThread extends Thread
 						System.out.println("Received schedule:" + jl.printSchedule());
 						System.out.println("Running Simulations");
 						long starttime = System.currentTimeMillis();
-						SimulationResult[] results = runSimulation(jl.getFarthestCompleteJob());
+						SimulationResult[] results = null;
+						results = runSimulation(jl.getPMOpportunities());
 						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));
 						//wait for maintenance request
 						System.out.println("Maintenance is at "+maintenanceIP +", sending simulation results");
@@ -114,20 +116,26 @@ public class ListenerThread extends Thread
 		}
 	}
 	private void writeResults() {
-		// TODO Auto-generated method stub
+		System.out.println("Downtime:" + String.valueOf(Machine.downTime*100/(Machine.shiftCount*8)) +"%");
 		
 	}
-	private SimulationResult[] runSimulation(int maxPMO) throws InterruptedException, ExecutionException {
-		SimulationResult[] results = new SimulationResult[maxPMO+1];
-		for(int i=0;i<=maxPMO;i++){
-			results[i]= new SimulationResult(Double.MAX_VALUE,0,0,0);
+	private SimulationResult[] runSimulation(ArrayList<Integer> pmoList) throws InterruptedException, ExecutionException {
+		if(pmoList.isEmpty()){
+		SimulationResult[] results ={new SimulationResult(Double.MAX_VALUE,0,1,-1)};
+		return results;
 		}
+		
+		SimulationResult[] results = new SimulationResult[pmoList.size()];
+		for(int i=0;i<pmoList.size();i++){
+			results[i]= new SimulationResult(Double.MAX_VALUE,0,1,-1);
+		}
+		
 		SimulationResult noPM = null;
 		ExecutorService threadPool = Executors.newFixedThreadPool(20);
 		CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
 		pool.submit(new SimulationThread(jl,1,-1));
 		int cnt=1;
-		for(int i=0;i<=maxPMO;i++){
+		for(Integer i : pmoList){
 			for(int j = 1;j<Math.pow(2,Machine.compList.length);j++){
 				pool.submit(new SimulationThread(jl,j,i));
 				cnt++;

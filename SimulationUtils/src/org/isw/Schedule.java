@@ -77,7 +77,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	
 	public synchronized Job remove(){
 		Job job = jobs.remove(0);
-		setSum(getSum() - job.getJobTime());
+		sum -= job.getJobTime();
 		return job;
 	}
 	
@@ -96,7 +96,6 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	
 	public synchronized void decrement(long delta){
 		jobs.get(0).decrement(delta);
-		setSum(getSum() - delta);
 	}
 
 	public String printSchedule() {
@@ -106,16 +105,6 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		return str;
 	}
 	
-	public int getFarthestCompleteJob(){
-		int i = jobs.size();
-		long temp = getSum();
-		while(temp>8*3600){
-			temp -= jobs.get(i-1).getJobTime();
-			i--;
-		}
-		return i;
-	}
-
 	//check these two
 	public InetAddress getAddress() {
 		// TODO Auto-generated method stub
@@ -158,7 +147,13 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	}
 
 	public long getFinishingTime(int index){
-		return 0;
+		long sum = 0;
+		int i =0;
+		while(i <= index){
+			sum+= jobs.get(0).getJobTime();
+			i++;
+		}
+		return sum;
 	}
 	public Job jobAt(int i) {
 		return jobs.get(i);
@@ -197,5 +192,23 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 
 	public int getSize() {
 		return jobs.size();
+	}
+	public ArrayList<Integer> getPMOpportunities(){
+		ArrayList<Integer> arr = new ArrayList<Integer>();
+		if(jobs.isEmpty())
+			return arr;
+		
+		if(jobs.get(0).getJobType() == Job.JOB_NORMAL)
+			arr.add(0);
+		int i=1;
+		while(i<jobs.size()){
+			Job current = jobs.get(i);
+			if(current.getJobType() == Job.JOB_NORMAL && getFinishingTime(i-1) < 8*Macros.TIME_SCALE_FACTOR)
+				arr.add(i);
+			i++;
+		}
+		if(getFinishingTime(i-1) < 8*Macros.TIME_SCALE_FACTOR)
+			arr.add(i);
+		return arr;
 	}
 }
