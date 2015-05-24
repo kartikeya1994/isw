@@ -155,8 +155,8 @@ public class ListenerThread extends Thread
 				noPM = result;
 			}
 			else{
-				if(results[result.getPMOpportunity()].getCost() > result.getCost())
-					results[result.getPMOpportunity()] = result;
+				if(results[pmoList.indexOf(result.getPMOpportunity())].getCost() > result.getCost())
+					results[pmoList.indexOf(result.getPMOpportunity())] = result;
 			}
 			}
 		//Calculate IFs

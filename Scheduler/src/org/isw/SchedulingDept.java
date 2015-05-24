@@ -16,10 +16,11 @@ public class SchedulingDept
 	{
 		MachineList machineList = new MachineList();
 		ListenerThread listener = new ListenerThread(machineList);
+		listener.start();
 		System.out.println("Enter number of days to simulate:");
 		Scanner in = new Scanner(System.in);
 		int dayCount = in.nextInt();
-		listener.start();
+		
 		System.out.println("Waiting for machines...");
 		System.out.println("Press any key to continue...");
 		try {

@@ -45,8 +45,12 @@ public class SimulationThread implements Callable<SimulationResult> {
 			 * to the schedule*/
 			for(int i=0;i<simCompList.length;i++){
 				long cmTTF = (long)(simCompList[i].getCMTTF()*Macros.TIME_SCALE_FACTOR);
-				if(cmTTF < 8*Macros.TIME_SCALE_FACTOR){
-					Job cmJob = new Job("CM", (long)(simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR),simCompList[i].getCMCost(), Job.JOB_CM);
+				if(cmTTF <= 8*Macros.TIME_SCALE_FACTOR){
+					long cmTTR = (long)(simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR);
+					//Smallest unit is one hour for now
+					if(cmTTR==0)
+						cmTTR=1;
+					Job cmJob = new Job("CM",cmTTR,simCompList[i].getCMCost(), Job.JOB_CM);
 					cmJob.setFixedCost(simCompList[i].getCompCost());;
 					cmJob.setCompNo(i);
 					simSchedule.addCMJob(cmJob, cmTTF);
@@ -99,8 +103,11 @@ public class SimulationThread implements Callable<SimulationResult> {
 		String combo = String.format(formatPattern, Integer.toBinaryString(compCombo)).replace(' ', '0');
 		for(int i=0;i< combo.length();i++){
 			if(combo.charAt(i)=='1'){
-				double pmttr = simCompList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR;
-				Job pmJob = new Job("PM",(long)pmttr,simCompList[i].getPMCost(),Job.JOB_PM);
+				long pmttr = (long)(simCompList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR);
+				//Smallest unit is one hour
+				if(pmttr == 0)
+					pmttr=1;
+				Job pmJob = new Job("PM",pmttr,simCompList[i].getPMCost(),Job.JOB_PM);
 				if(cnt==0){
 					pmJob.setFixedCost(simCompList[i].getPMFixedCost());
 					pmJob.setCompCombo(compCombo);

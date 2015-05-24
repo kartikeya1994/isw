@@ -15,8 +15,9 @@ public class JobExecThread extends Thread{
 	int sum=0;
 
 	while(!jobList.isEmpty() && sum < 8*Macros.TIME_SCALE_FACTOR){
-		jobList.decrement(1);
 		Job current = jobList.peek(); 
+		jobList.decrement(1);
+		
 		switch(current.getJobType()){
 			case Job.JOB_NORMAL:
 				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;

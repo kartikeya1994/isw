@@ -2,12 +2,10 @@ package org.isw;
 
 import java.util.Comparator;
 
-class CustomComparator implements Comparator<SimulationResult>
-{
-	//sort such that lower pmOpportunity, higher cost and lower PM time
+public class CustomComparator implements Comparator<SimulationResult> {
+
 	@Override
-	public int compare(SimulationResult a, SimulationResult b) 
-	{
+	public int compare(SimulationResult a, SimulationResult b) {
 		if(a.t == b.t)
 		{
 			if(a.cost == b.cost)
@@ -15,12 +13,12 @@ class CustomComparator implements Comparator<SimulationResult>
 				return signOf(a.pmAvgTime - b.pmAvgTime);
 			}
 			else
-				return signOf(b.cost - a.cost);
+				return signOf(a.cost - b.cost);
 		}
 		else
-			return (int)(a.t - b.t);
+			return (int)(b.t - a.t);
+		
 	}
-	
 	public int signOf(double a)
 	{
 		if(a>0)
@@ -30,4 +28,5 @@ class CustomComparator implements Comparator<SimulationResult>
 		else
 			return 0;
 	}
+
 }

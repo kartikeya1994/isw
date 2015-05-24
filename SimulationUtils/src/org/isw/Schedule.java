@@ -52,14 +52,21 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 			return;
 		int i = jobIndexAt(TTF);
 		long time = getFinishingTime(i);
+		
 		if(jobs.get(i).getJobType() == Job.JOB_NORMAL){
 				Job job  = jobs.remove(i);
 				time -= job.getJobTime();
 				Job j1 =  new Job(job.getJobName(),TTF-time,job.getJobCost(),Job.JOB_NORMAL);
 				Job j2 = new Job(job.getJobName(),time+job.getJobTime()-TTF,job.getJobCost(),Job.JOB_NORMAL);
-				jobs.add(i,j1);
-				jobs.add(i+1,cmJob);
-				jobs.add(i+2,j2);
+				if(TTF == time){
+					jobs.add(i,cmJob);
+					jobs.add(i+1,j2);
+				}
+				else{
+					jobs.add(i,j1);
+					jobs.add(i+1,cmJob);
+					jobs.add(i+2,j2);
+				}
 			}
 			else{
 				while(i< jobs.size() && jobs.get(i).getJobType() == Job.JOB_PM)
@@ -151,7 +158,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		long sum = 0;
 		int i =0;
 		while(i <= index){
-			sum+= jobs.get(0).getJobTime();
+			sum+= jobs.get(i).getJobTime();
 			i++;
 		}
 		return sum;

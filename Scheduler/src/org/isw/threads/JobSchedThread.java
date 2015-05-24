@@ -125,10 +125,11 @@ public class JobSchedThread extends Thread
 			}
 
 			FlagPacket fp;
-			while(true){
+			int count =0;
+			while(count < machineList.count()){
 				fp = FlagPacket.receiveTCP(tcpSocket,0);
 				if(fp.flag == Macros.REQUEST_NEXT_SHIFT)
-					break;
+					count++;
 			}
 		}
 		System.out.println("Process Complete");

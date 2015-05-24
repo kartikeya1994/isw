@@ -2,7 +2,7 @@ package org.isw;
 
 import java.io.Serializable;
 
-public class SimulationResult  implements Serializable {
+public class SimulationResult implements Serializable {
   /**
 	 * 
 	 */
@@ -36,4 +36,7 @@ public void setCost(double cost) {
 	this.cost = cost;
 	
 }
+
+
+
 }

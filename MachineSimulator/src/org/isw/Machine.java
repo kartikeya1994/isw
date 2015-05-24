@@ -11,6 +11,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
+import java.util.Scanner;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -37,6 +38,9 @@ public class Machine {
 	public static long runTime;
 	public static void main(String[] args) {
 		boolean registered=false;
+		System.out.println("Enter age of machine in hours:");
+		Scanner in = new Scanner(System.in);
+		int age = in.nextInt();
 		try
 		{
 			
@@ -86,7 +90,7 @@ public class Machine {
 					continue;
 			}
 			//machineNo = Integer.parseInt(args[0]);
-			compList = parseExcel(0);
+			compList = parseExcel(age);
 			downTime = 0;
 			jobsDone = 0;
 			cmJobsDone = pmJobsDone = 0;
@@ -144,7 +148,7 @@ public class Machine {
 				comp.pmRF = row.getCell(13).getNumericCellValue();
 				comp.pmCost = row.getCell(14).getNumericCellValue();
 				comp.pmFixedCost = row.getCell(15).getNumericCellValue();
-				comp.initAge = 10000;
+				comp.initAge = num;
 				c[i-4] = comp;
 			}
 			file.close();

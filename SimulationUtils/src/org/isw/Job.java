@@ -51,6 +51,8 @@ public class Job implements Serializable {
 	
 	public void decrement(long delta) {
 		jobTime -=delta;
+		if(jobTime<0)
+			jobTime=0;
 	}
 	
 	public String getJobName() {
