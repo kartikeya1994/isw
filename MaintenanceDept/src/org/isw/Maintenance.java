@@ -194,7 +194,7 @@ public class Maintenance
 			if(ttf>= 8*Macros.TIME_SCALE_FACTOR || ttf >= schedule.get(i).getSum())
 				continue;
 			//if PM is performed for a component before ttf of that component, ignore.
-			if(ttf> pmTimeArray[i] && ((1<<j)&compCombos[i])==1)
+			if(ttf> pmTimeArray[i] && ((1<<j)&compCombos[i])!=0)
 				continue;
 			long ttr = (long)(component.get(i)[j].getCMTTR()*Macros.TIME_SCALE_FACTOR);
 			if(ttr == 0)

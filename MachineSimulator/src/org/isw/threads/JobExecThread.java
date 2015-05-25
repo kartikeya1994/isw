@@ -1,5 +1,7 @@
 package org.isw.threads;
 
+import java.io.IOException;
+
 import org.isw.Component;
 import org.isw.Job;
 import org.isw.Machine;
@@ -15,9 +17,15 @@ public class JobExecThread extends Thread{
 	int sum=0;
 
 	while(!jobList.isEmpty() && sum < 8*Macros.TIME_SCALE_FACTOR){
-		Job current = jobList.peek(); 
-		jobList.decrement(1);
 		
+		Job current = jobList.peek(); 
+		try{
+		jobList.decrement(1);
+		}
+		catch(IOException e){
+			e.printStackTrace();
+			System.exit(0);
+		}
 		switch(current.getJobType()){
 			case Job.JOB_NORMAL:
 				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
@@ -25,18 +33,13 @@ public class JobExecThread extends Thread{
 					comp.initAge++;
 				break;
 			case Job.JOB_PM:
-				for(int i =0; i<Machine.compList.length;i++){
-					if( ((1<<i)&current.getCompCombo()) == 1){
-					Machine.pmCost[i] += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-					current.setFixedCost(0);
-					}
-				}
+				Machine.pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				Machine.pmDownTime++;
 				Machine.downTime++;
 				
 				break;
 			case Job.JOB_CM:
-				Machine.cmCost[current.getCompNo()] += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
+				Machine.cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
 				Machine.downTime++;
 				Machine.cmDownTime++;
@@ -50,9 +53,12 @@ public class JobExecThread extends Thread{
 			switch(current.getJobType()){
 			case Job.JOB_PM:
 				for(int i =0; i<Machine.compList.length;i++){
-					if( ((1<<i)&current.getCompCombo()) == 1){
+					int pos= 1<<i;
+					int bitmask = current.getCompCombo();
+					if((pos&bitmask) != 0){
 						Component comp = Machine.compList[i];
 						comp.initAge = (1-comp.pmRF)*comp.initAge;
+						Machine.compPMJobsDone[i]++;
 					}
 				}
 				Machine.pmJobsDone++;
@@ -61,20 +67,28 @@ public class JobExecThread extends Thread{
 				Component comp = Machine.compList[current.getCompNo()];
 				comp.initAge = (1 - comp.cmRF)*comp.initAge;
 				Machine.cmJobsDone++;
+				Machine.compCMJobsDone[current.getCompNo()]++;
 				break;
 			case Job.JOB_NORMAL:
 				Machine.jobsDone++;
 				break;
 			}
-			
+			try{
 			System.out.println("Job "+ jobList.remove().getJobName()+" complete");
-		}
+			}
+			catch(IOException e){
+				e.printStackTrace();
+				System.exit(0);
+			}
+			}
 		sum++;
 		Machine.runTime++;
 		
 	}
-	if(jobList.isEmpty())
+	if(jobList.isEmpty()){
+		Machine.idleTime += 8*Macros.TIME_SCALE_FACTOR - sum;
 		return;
+		}
 	int i = jobList.indexOf(jobList.peek());
 	while(i < jobList.getSize()){
 		Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost();

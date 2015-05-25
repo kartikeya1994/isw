@@ -30,6 +30,8 @@ public class JobSchedThread extends Thread
 	Random r = new Random();
 	DatagramSocket socket;
 	ServerSocket tcpSocket;
+	long procTimeArr[]={5,5,5,4,4,4,4,4,2,2,1,1};
+	int procCostArr[]={80,80,70,70,70,60,60,50,50,40,40,40};
 	ArrayList<Job> jobArray;
 	int shiftCount;
 	public JobSchedThread(MachineList machineList, int shiftCount)
@@ -40,6 +42,7 @@ public class JobSchedThread extends Thread
 
 	public void run()
 	{	
+		
 
 		try {
 			socket = new DatagramSocket(Macros.SCHEDULING_DEPT_PORT);
@@ -69,7 +72,7 @@ public class JobSchedThread extends Thread
 					DatagramPacket packetOut = new DatagramPacket(bufOut, bufOut.length, ip, Macros.MACHINE_PORT);
 					socket.send(packetOut);
 					System.out.println("Sent schedule get req to machines");
-					byte[] bufIn = new byte[4096];
+					byte[] bufIn = new byte[4096*8];
 					DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
 					socket.receive(packet);
 					byte[] object = packet.getData();
@@ -144,12 +147,14 @@ public class JobSchedThread extends Thread
 		}
 		
 	}
+	
+	
 	void getJobs(){
 		jobArray = new ArrayList<Job>();
-		for(int i=7;i>0;i--){ 
+		for(int i=11;i>=0;i--){ 
 			if(r.nextBoolean()){
-				Job job = new Job(String.valueOf(i),i*Macros.TIME_SCALE_FACTOR,i*1000,Job.JOB_NORMAL);
-				job.setPenaltyCost(i*500);
+				Job job = new Job("J"+String.valueOf(i),procTimeArr[i]*Macros.TIME_SCALE_FACTOR,procCostArr[i],Job.JOB_NORMAL);
+				job.setPenaltyCost(20);
 				jobArray.add(job);
 			}
 		}

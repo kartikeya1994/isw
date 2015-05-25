@@ -1,5 +1,6 @@
 package org.isw.threads;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 import org.isw.Component;
@@ -45,7 +46,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 			 * to the schedule*/
 			for(int i=0;i<simCompList.length;i++){
 				long cmTTF = (long)(simCompList[i].getCMTTF()*Macros.TIME_SCALE_FACTOR);
-				if(cmTTF <= 8*Macros.TIME_SCALE_FACTOR){
+				if(cmTTF < 8*Macros.TIME_SCALE_FACTOR){
 					long cmTTR = (long)(simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR);
 					//Smallest unit is one hour for now
 					if(cmTTR==0)
@@ -53,12 +54,23 @@ public class SimulationThread implements Callable<SimulationResult> {
 					Job cmJob = new Job("CM",cmTTR,simCompList[i].getCMCost(), Job.JOB_CM);
 					cmJob.setFixedCost(simCompList[i].getCompCost());;
 					cmJob.setCompNo(i);
+					try{
 					simSchedule.addCMJob(cmJob, cmTTF);
-				}
+					}
+					catch(Exception e){
+						e.printStackTrace();
+					}
+					}
 			}
 			long time = 0;
 			while(time< 8*Macros.TIME_SCALE_FACTOR && !simSchedule.isEmpty()){
+				try{
 				simSchedule.decrement(1);
+				}
+				catch(IOException e){
+					e.printStackTrace();
+					System.exit(0);
+				}
 				//Calculate the cost depending upon the job type
 				Job current = simSchedule.peek(); 
 				switch(current.getJobType()){
@@ -77,14 +89,26 @@ public class SimulationThread implements Callable<SimulationResult> {
 				}
 
 				if(current.getJobTime()<=0){
+					try{
 					simSchedule.remove();
-				}
+					}
+					catch(IOException e){
+						e.printStackTrace();
+						System.exit(0);
+					}
+					}
 				time++;
 			}
+			try{
 			//Calculate penaltyCost for leftover jobs
 		   while(!simSchedule.isEmpty()){
 			   penaltyCost += simSchedule.remove().getPenaltyCost()*8;
 		   }
+			}
+			catch(IOException e){
+				e.printStackTrace();
+				System.exit(0);
+			}
 		   //Calculate totalCost for the shift
 		totalCost += procCost + pmCost + cmCost + penaltyCost;
 		
@@ -99,10 +123,9 @@ public class SimulationThread implements Callable<SimulationResult> {
 	 * */
 	private void addPMJobs(Schedule simSchedule,Component[] simCompList) {
 		int cnt = 0;
-		String formatPattern = "%" + simCompList.length + "s";
-		String combo = String.format(formatPattern, Integer.toBinaryString(compCombo)).replace(' ', '0');
-		for(int i=0;i< combo.length();i++){
-			if(combo.charAt(i)=='1'){
+		for(int i=0;i< simCompList.length;i++){
+			int pos = 1<<i;
+			if((pos&compCombo)!=0){
 				long pmttr = (long)(simCompList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR);
 				//Smallest unit is one hour
 				if(pmttr == 0)

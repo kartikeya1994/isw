@@ -1,5 +1,6 @@
 package org.isw;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -81,9 +82,12 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		sum += pmJob.getJobTime();
 	}
 	
-	public synchronized Job remove(){
+	public synchronized Job remove() throws IOException{
 		Job job = jobs.remove(0);
 		sum -= job.getJobTime();
+		if(sum < 0){
+			throw new IOException();
+		}
 		return job;
 	}
 	
@@ -100,9 +104,12 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		return jobs.get(0);
 	}
 	
-	public synchronized void decrement(long delta){
+	public synchronized void decrement(long delta) throws IOException{
 		jobs.get(0).decrement(delta);
 		sum -= delta;
+		if(sum < 0){
+			throw new IOException();
+		}
 	}
 
 	public String printSchedule() {
@@ -148,9 +155,16 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		pmJob1.setFixedCost(pmJob.getFixedCost());
 		Job waitJob = new Job("Waiting",waitTime,0,Job.WAIT_FOR_MT);
 		Job pmJob2 = new Job("PM",time+pmJob.getJobTime()-startTime,pmJob.getJobCost(),Job.JOB_PM);
-		jobs.add(pmJobIndex,pmJob1);
-		jobs.add(pmJobIndex+1,waitJob);
-		jobs.add(pmJobIndex+2,pmJob2);
+		if(startTime == time){
+		jobs.add(pmJobIndex,waitJob);
+		pmJob2.setFixedCost(pmJob.getFixedCost());
+		jobs.add(pmJobIndex+1,pmJob2);
+		}
+		else{
+			jobs.add(pmJobIndex,pmJob1);
+			jobs.add(pmJobIndex+1,waitJob);
+			jobs.add(pmJobIndex+2,pmJob2);
+		}
 		sum += waitTime;
 	}
 

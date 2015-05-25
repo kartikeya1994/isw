@@ -57,7 +57,7 @@ public class ListenerThread extends Thread
 		{
 			while(true)
 			{
-				byte[] bufIn = new byte[4096];
+				byte[] bufIn = new byte[4096*8];
 				packet = new DatagramPacket(bufIn, bufIn.length);
 				udpSocket.receive(packet); 
 				byte[] reply=packet.getData();
@@ -123,10 +123,19 @@ public class ListenerThread extends Thread
 		System.out.println("CM Downtime: "+ Machine.cmDownTime +" hours");
 		System.out.println("PM Downtime: "+ Machine.pmDownTime +" hours");
 		System.out.println("Waiting Downtime: "+ Machine.waitTime +" hours");
+		System.out.println("Machine Idle time: "+ Machine.idleTime+" hours");
+		System.out.println("PM Cost: "+ Machine.pmCost);
+		System.out.println("CM Cost: "+ Machine.cmCost);
+		System.out.println("Penalty Cost: "+ Machine.penaltyCost);
+		System.out.println("Processing Cost: "+ Machine.procCost);
 		System.out.println("Number of jobs:" + Machine.jobsDone);
 		System.out.println("Number of CM jobs:" + Machine.cmJobsDone);
 		System.out.println("Number of PM jobs:" + Machine.pmJobsDone);
+		for(int i=0 ;i<Machine.compList.length; i++)
+			System.out.println("Component "+String.valueOf(i+1)+": PM "+Machine.compPMJobsDone[i]+"|CM"+Machine.compCMJobsDone[i]);
+		
 	}
+
 	private SimulationResult[] runSimulation(ArrayList<Integer> pmoList) throws InterruptedException, ExecutionException {
 		if(pmoList.isEmpty()){
 		SimulationResult[] results ={new SimulationResult(Double.MAX_VALUE,0,1,-1)};

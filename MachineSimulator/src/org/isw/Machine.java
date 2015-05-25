@@ -24,18 +24,21 @@ public class Machine {
 	static int machineNo;
 	public static int shiftCount;
 	public static Component[] compList;
-	public static double cmCost[];
-	public static double pmCost[];
+	public static double cmCost;
+	public static double pmCost;
 	public	static long downTime;
 	public static long waitTime;
 	public static int jobsDone;
 	public static int cmJobsDone;
 	public static int pmJobsDone;
+	public static int compCMJobsDone[];
+	public static int compPMJobsDone[];
 	public static long procCost;
 	public static long penaltyCost;
 	public static long cmDownTime;
 	public static long pmDownTime;
 	public static long runTime;
+	public static long idleTime;
 	public static void main(String[] args) {
 		boolean registered=false;
 		System.out.println("Enter age of machine in hours:");
@@ -95,14 +98,17 @@ public class Machine {
 			jobsDone = 0;
 			cmJobsDone = pmJobsDone = 0;
 			shiftCount = 0;
-			cmCost = new double[compList.length];
-			pmCost = new double[compList.length];
+			cmCost = 0;
+			pmCost = 0;
+			compCMJobsDone = new int[compList.length];
+			compPMJobsDone = new int[compList.length];
 			cmDownTime=0;
 			pmDownTime=0;
 			waitTime=0;
 			penaltyCost=0;
 			procCost=0;
 			runTime =0;
+			idleTime = 0;
 			ListenerThread listener = new ListenerThread(serverIP,socket,tcpSocket);
 			listener.start();
 
