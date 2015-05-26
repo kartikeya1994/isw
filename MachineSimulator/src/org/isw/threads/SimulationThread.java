@@ -27,15 +27,11 @@ public class SimulationThread implements Callable<SimulationResult> {
 	 * For each simulation PM is done only once and is carried out in between job executions.
 	 * **/
 	public SimulationResult call(){
-		double totalCost = 0;
 		double pmAvgTime = 0;
 		int cnt = 0;
 		//System.out.println("CompCombo: "+ compCombo+ " Pm opportunity "+pmOpportunity);
 		while(cnt++ < noOfSimulations){
-			double procCost = 0;  //Processing cost
-			double pmCost = 0;   //PM cost 
-			double cmCost = 0;   //CM cost
-			double penaltyCost = 0; //Penalty cost
+
 			Schedule simSchedule = new Schedule(schedule);
 			Component[] simCompList = Machine.compList.clone();
 			/*Add PM job to the schedule*/
@@ -73,21 +69,9 @@ public class SimulationThread implements Callable<SimulationResult> {
 				}
 				//Calculate the cost depending upon the job type
 				Job current = simSchedule.peek(); 
-				switch(current.getJobType()){
-					case Job.JOB_NORMAL:
-						procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-						break;
-					case Job.JOB_PM:
-						pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-						current.setFixedCost(0);
+				if(current.getJobType()==Job.JOB_PM)
 						pmAvgTime += 1;
-						break;
-					case Job.JOB_CM:
-						cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-						current.setFixedCost(0);
-						break;
-				}
-
+						
 				if(current.getJobTime()<=0){
 					try{
 					simSchedule.remove();
@@ -99,23 +83,10 @@ public class SimulationThread implements Callable<SimulationResult> {
 					}
 				time++;
 			}
-			try{
-			//Calculate penaltyCost for leftover jobs
-		   while(!simSchedule.isEmpty()){
-			   penaltyCost += simSchedule.remove().getPenaltyCost()*8;
-		   }
-			}
-			catch(IOException e){
-				e.printStackTrace();
-				System.exit(0);
-			}
-		   //Calculate totalCost for the shift
-		totalCost += procCost + pmCost + cmCost + penaltyCost;
-		
+	
 		}
-		totalCost /= noOfSimulations;
 		pmAvgTime /= noOfSimulations;
-		return new SimulationResult(totalCost,pmAvgTime,compCombo,pmOpportunity);
+		return new SimulationResult(pmAvgTime,compCombo,pmOpportunity);
 	}
 	/*Add PM job for the given combination of components.
 	 * The PM jobs are being split into smaller PM jobs for each component.

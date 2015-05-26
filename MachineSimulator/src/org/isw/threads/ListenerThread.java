@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.isw.FlagPacket;
-import org.isw.IFPacket;
 import org.isw.Machine;
 import org.isw.Macros;
 import org.isw.Schedule;
