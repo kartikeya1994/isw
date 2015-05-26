@@ -148,22 +148,22 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		return i-1;
 	}
 
-	public void addWaitJob(long startTime, long waitTime, int pmJobIndex) {
-		Job pmJob = jobs.remove(pmJobIndex);
-		long time = getFinishingTime(pmJobIndex-1);
-		Job pmJob1 = new Job("PM",startTime - time,pmJob.getJobCost(),Job.JOB_PM);
-		pmJob1.setFixedCost(pmJob.getFixedCost());
+	public void addWaitJob(long startTime, long waitTime, int jobIndex) {
+		Job job = jobs.remove(jobIndex);
+		long time = getFinishingTime(jobIndex-1);
+		Job job1 = new Job(job.getJobName(),startTime - time,job.getJobCost(),job.getJobType());
+		job1.setFixedCost(job.getFixedCost());
 		Job waitJob = new Job("Waiting",waitTime,0,Job.WAIT_FOR_MT);
-		Job pmJob2 = new Job("PM",time+pmJob.getJobTime()-startTime,pmJob.getJobCost(),Job.JOB_PM);
+		Job job2 = new Job(job.getJobName(),time+job.getJobTime()-startTime,job.getJobCost(),job.getJobType());
 		if(startTime == time){
-		jobs.add(pmJobIndex,waitJob);
-		pmJob2.setFixedCost(pmJob.getFixedCost());
-		jobs.add(pmJobIndex+1,pmJob2);
+		jobs.add(jobIndex,waitJob);
+		job2.setFixedCost(job.getFixedCost());
+		jobs.add(jobIndex+1,job2);
 		}
 		else{
-			jobs.add(pmJobIndex,pmJob1);
-			jobs.add(pmJobIndex+1,waitJob);
-			jobs.add(pmJobIndex+2,pmJob2);
+			jobs.add(jobIndex,job1);
+			jobs.add(jobIndex+1,waitJob);
+			jobs.add(jobIndex+2,job2);
 		}
 		sum += waitTime;
 	}

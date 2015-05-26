@@ -251,13 +251,12 @@ public class Maintenance
 					 * shift breakdown time to occur after CM job.
 					 * FIXME: Ignoring for now.
 					 * **/
-				
-				/*	
 					long newTime = schedule.get(cmIndex).getFinishingTime(cmJobIndex);
-					schedule.get(compTTF.machineID).addWaitJob(compTTF.ttf, newTime-compTTF.ttf, pmJobIndex);
-					ttfList.add(new CompTTF(newTime,compTTF.cmJob,compTTF.machineID));
-					continue;
-				*/
+					if(newTime>=8*Macros.TIME_SCALE_FACTOR||newTime>=schedule.get(compTTF.machineID).getSum())
+						continue;
+					int jobIndex = schedule.get(compTTF.machineID).jobIndexAt(compTTF.ttf);
+					schedule.get(compTTF.machineID).addWaitJob(compTTF.ttf, newTime-compTTF.ttf, jobIndex);
+					ttfList.add(new CompTTF(newTime,compTTF.ttr,compTTF.machineID,compTTF.componentID));
 				}
 				else if(pmFlag){
 					/**If PM is being performed on a different machine, interrupt that PM and add a waiting job

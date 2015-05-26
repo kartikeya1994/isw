@@ -131,9 +131,9 @@ public class SimulationThread implements Callable<SimulationResult> {
 				if(pmttr == 0)
 					pmttr=1;
 				Job pmJob = new Job("PM",pmttr,simCompList[i].getPMCost(),Job.JOB_PM);
+				pmJob.setCompCombo(compCombo);
 				if(cnt==0){
 					pmJob.setFixedCost(simCompList[i].getPMFixedCost());
-					pmJob.setCompCombo(compCombo);
 				}
 					simSchedule.addPMJob(pmJob,pmOpportunity+cnt);
 				cnt++;

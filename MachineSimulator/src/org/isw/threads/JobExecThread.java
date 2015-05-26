@@ -53,7 +53,7 @@ public class JobExecThread extends Thread{
 			switch(current.getJobType()){
 			case Job.JOB_PM:
 				for(int i =0; i<Machine.compList.length;i++){
-					int pos= 1<<i;
+					int pos=1<<i;
 					int bitmask = current.getCompCombo();
 					if((pos&bitmask) != 0){
 						Component comp = Machine.compList[i];
