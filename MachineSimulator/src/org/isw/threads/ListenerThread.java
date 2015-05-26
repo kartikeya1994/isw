@@ -82,16 +82,15 @@ public class ListenerThread extends Thread
 						System.out.println("Total time" + jl.getSum());
 						System.out.println("Running Simulations");
 						long starttime = System.currentTimeMillis();
-						SimulationResult[] results = null;
+						ArrayList<SimulationResult> results = null;
 						results = runSimulation(jl.getPMOpportunities());
 						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));
-						System.out.println("Sending simulation results to Maintenance");
-						IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
-						ifPacket.send(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP);
-						jl = Schedule.receive(tcpSocket); //receive PM and CM incorporated schedule from maintenance
+						ExecutorService threadPool = Executors.newSingleThreadExecutor();
+						CompletionService<Schedule> pool = new ExecutorCompletionService<Schedule>(threadPool);
+						pool.submit(new ScheduleCaclulationTask(results,jl));
+						jl = pool.take().get();
 						System.out.println("Received schedule from maintenance:" + jl.printSchedule());
 						System.out.println("Total time" + jl.getSum());
-						ExecutorService threadPool = Executors.newSingleThreadExecutor();
 						threadPool.execute(new JobExecThread(jl));
 						threadPool.shutdown();
 						while(!threadPool.isTerminated()); 
@@ -136,22 +135,15 @@ public class ListenerThread extends Thread
 		
 	}
 
-	private SimulationResult[] runSimulation(ArrayList<Integer> pmoList) throws InterruptedException, ExecutionException {
+	private ArrayList<SimulationResult> runSimulation(ArrayList<Integer> pmoList) throws InterruptedException, ExecutionException {
+		ArrayList<SimulationResult> results = new ArrayList<>();
 		if(pmoList.isEmpty()){
-		SimulationResult[] results ={new SimulationResult(Double.MAX_VALUE,0,1,-1)};
 		return results;
 		}
-		
-		SimulationResult[] results = new SimulationResult[pmoList.size()];
-		for(int i=0;i<pmoList.size();i++){
-			results[i]= new SimulationResult(Double.MAX_VALUE,0,1,-1);
-		}
-		
-		SimulationResult noPM = null;
+
 		ExecutorService threadPool = Executors.newFixedThreadPool(20);
 		CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
-		pool.submit(new SimulationThread(jl,1,-1));
-		int cnt=1;
+		int cnt=0;
 		for(Integer i : pmoList){
 			for(int j = 1;j<Math.pow(2,Machine.compList.length);j++){
 				pool.submit(new SimulationThread(jl,j,i));
@@ -159,19 +151,9 @@ public class ListenerThread extends Thread
 			}
 		}
 		for(int i=0;i<cnt;i++){
-			SimulationResult result = pool.take().get();
-			if(result.getPMOpportunity() < 0){
-				noPM = result;
+				results.add(pool.take().get());
 			}
-			else{
-				if(results[pmoList.indexOf(result.getPMOpportunity())].getCost() > result.getCost())
-					results[pmoList.indexOf(result.getPMOpportunity())] = result;
-			}
-			}
-		//Calculate IFs
-		for(int i=0;i<results.length;i++){
-			results[i].cost = noPM.cost*(results[i].cost - noPM.cost);
-		}
+
 		threadPool.shutdown();
 		while(!threadPool.isTerminated());
 		return results;
