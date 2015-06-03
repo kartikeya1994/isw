@@ -183,7 +183,7 @@ public class Maintenance
 				toPerformPM.put(row.id, true);
 				pmTimeArray[row.id] = row.t;
 				compCombos[row.id] = row.compCombo;
-				busyTime += (long)row.pmAvgTime;
+				busyTime += pmtime;
 			}
 		}
 		

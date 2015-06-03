@@ -35,8 +35,11 @@ public class Job implements Serializable {
 		this.jobName = source.jobName;
 		this.jobType = source.jobType;
 		this.jobCost = source.jobCost;
+		compCombo = source.compCombo;
+		compNo = source.compNo;
 		fixedCost = source.fixedCost;
 		penaltyCost = source.penaltyCost;
+	
 	}
 
 	public void setPenaltyCost(double penaltyCost){
