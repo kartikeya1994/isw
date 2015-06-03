@@ -194,7 +194,16 @@ public class Maintenance
 			if(ttf>= 8*Macros.TIME_SCALE_FACTOR || ttf >= schedule.get(i).getSum())
 				continue;
 			//if PM is performed for a component before ttf of that component, ignore.
-			if(ttf> pmTimeArray[i] && ((1<<j)&compCombos[i])!=0)
+			ArrayList<Job> pmJobs =	schedule.get(i).getPMJobs();
+			boolean flag = false;
+			for(Job pmJob : pmJobs){
+			int tempIndex = schedule.get(i).indexOf(pmJob);
+			int compCombo = pmJob.getCompCombo();
+			long time =	schedule.get(i).getFinishingTime(tempIndex-1);
+			if(ttf>= time && ((1<<j)&compCombo)!=0)
+				flag = true;
+			}
+			if(flag)
 				continue;
 			long ttr = (long)(component.get(i)[j].getCMTTR()*Macros.TIME_SCALE_FACTOR);
 			if(ttr == 0)

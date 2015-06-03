@@ -234,4 +234,12 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 			arr.add(i);
 		return arr;
 	}
+	public ArrayList<Job> getPMJobs() {
+		ArrayList<Job> pmJobs = new ArrayList<Job>();
+		for(int i = jobs.size()-1; i>0; i--){
+				if(jobs.get(i).jobType == Job.JOB_PM)
+					pmJobs.add(jobs.get(i));
+		}
+		return pmJobs;
+	}
 }
