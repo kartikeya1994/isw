@@ -226,11 +226,11 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		int i=1;
 		while(i<jobs.size()){
 			Job current = jobs.get(i);
-			if(current.getJobType() == Job.JOB_NORMAL && getFinishingTime(i-1) < 8*Macros.TIME_SCALE_FACTOR)
+			if(current.getJobType() == Job.JOB_NORMAL && getFinishingTime(i-1) < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
 				arr.add(i);
 			i++;
 		}
-		if(getFinishingTime(i-1) < 8*Macros.TIME_SCALE_FACTOR)
+		if(getFinishingTime(i-1) < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
 			arr.add(i);
 		return arr;
 	}

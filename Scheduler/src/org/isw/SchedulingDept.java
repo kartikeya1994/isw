@@ -16,6 +16,7 @@ public class SchedulingDept
 	{
 		MachineList machineList = new MachineList();
 		ListenerThread listener = new ListenerThread(machineList);
+		Macros.loadMacros();
 		listener.start();
 		System.out.println("Enter number of days to simulate:");
 		Scanner in = new Scanner(System.in);
@@ -30,7 +31,7 @@ public class SchedulingDept
 			e.printStackTrace();
 		}
 		System.out.println("here");
-		JobSchedThread scheduler = new JobSchedThread(machineList,dayCount*3);
+		JobSchedThread scheduler = new JobSchedThread(machineList,(int)(dayCount*24/Macros.SHIFT_DURATION));
 		scheduler.start();
 	}
 

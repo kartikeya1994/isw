@@ -40,7 +40,7 @@ public class Maintenance
 
 	public static void main(String[] args)
 	{
-
+		Macros.loadMacros();
 		//handle program termination
 		Runtime.getRuntime().addShutdownHook(new Thread(){
 			@Override
@@ -191,7 +191,7 @@ public class Maintenance
 			for(int j=0;j<component.get(i).length;j++){
 				long ttf = (long)(component.get(i)[j].getCMTTF()*Macros.TIME_SCALE_FACTOR);
 				//If TTF is greater than shift time or schedule length, ignore.
-			if(ttf>= 8*Macros.TIME_SCALE_FACTOR || ttf >= schedule.get(i).getSum())
+			if(ttf>= Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR || ttf >= schedule.get(i).getSum())
 				continue;
 			//if PM is performed for a component before ttf of that component, ignore.
 			ArrayList<Job> pmJobs =	schedule.get(i).getPMJobs();
@@ -224,7 +224,7 @@ public class Maintenance
 			{
 				//TODO: Calculate new time
 				long newTime = schedule.get(compTTF.machineID).getFinishingTime(index);
-				if(newTime >= schedule.get(compTTF.machineID).getSum() || newTime >= 8*Macros.TIME_SCALE_FACTOR)
+				if(newTime >= schedule.get(compTTF.machineID).getSum() || newTime >= Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
 					continue;
 				ttfList.add(new CompTTF(newTime,compTTF.ttr,compTTF.machineID,compTTF.componentID));
 				continue;
@@ -261,7 +261,7 @@ public class Maintenance
 					 * FIXME: Ignoring for now.
 					 * **/
 					long newTime = schedule.get(cmIndex).getFinishingTime(cmJobIndex);
-					if(newTime>=8*Macros.TIME_SCALE_FACTOR||newTime>=schedule.get(compTTF.machineID).getSum())
+					if(newTime>=Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR||newTime>=schedule.get(compTTF.machineID).getSum())
 						continue;
 					int jobIndex = schedule.get(compTTF.machineID).jobIndexAt(compTTF.ttf);
 					schedule.get(compTTF.machineID).addWaitJob(compTTF.ttf, newTime-compTTF.ttf, jobIndex);

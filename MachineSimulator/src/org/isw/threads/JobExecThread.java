@@ -16,7 +16,7 @@ public class JobExecThread extends Thread{
 	public void run(){
 	int sum=0;
 
-	while(!jobList.isEmpty() && sum < 8*Macros.TIME_SCALE_FACTOR){
+	while(!jobList.isEmpty() && sum < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR){
 		
 		Job current = jobList.peek(); 
 		try{
@@ -86,7 +86,7 @@ public class JobExecThread extends Thread{
 		
 	}
 	if(jobList.isEmpty()){
-		Machine.idleTime += 8*Macros.TIME_SCALE_FACTOR - sum;
+		Machine.idleTime += Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR - sum;
 		return;
 		}
 	int i = jobList.indexOf(jobList.peek());

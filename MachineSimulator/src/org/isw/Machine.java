@@ -41,9 +41,12 @@ public class Machine {
 	public static long idleTime;
 	public static void main(String[] args) {
 		boolean registered=false;
+		Macros.loadMacros();
 		System.out.println("Enter age of machine in hours:");
 		Scanner in = new Scanner(System.in);
 		int age = in.nextInt();
+		System.out.println("No of components");
+		int n = in.nextInt();
 		try
 		{
 			
@@ -93,7 +96,7 @@ public class Machine {
 					continue;
 			}
 			//machineNo = Integer.parseInt(args[0]);
-			compList = parseExcel(age);
+			compList = parseExcel(age,n);
 			downTime = 0;
 			jobsDone = 0;
 			cmJobsDone = pmJobsDone = 0;
@@ -118,21 +121,21 @@ public class Machine {
 			e.printStackTrace();
 		}
 	}
-	private static Component[] parseExcel(int num) {
+	private static Component[] parseExcel(int age,int n) {
 		/**
 		 * Parse the component excel file into a list of components.
 		 * Total number of components should be 14 for our experiment.
 		 * Different component excel file for different machineNo (Stick
 		 * to one for now)
 		 * **/
-		Component[] c = new Component[5];
+		Component[] c = new Component[n];
 		try
 		{
 			FileInputStream file = new FileInputStream(new File("Components.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
 			
-			for(int i=4;i<9;i++)
+			for(int i=4;i<n+4;i++)
 			{
 				Row row = sheet.getRow(i);
 				Component comp = new Component();
@@ -154,7 +157,7 @@ public class Machine {
 				comp.pmRF = row.getCell(13).getNumericCellValue();
 				comp.pmCost = row.getCell(14).getNumericCellValue();
 				comp.pmFixedCost = row.getCell(15).getNumericCellValue();
-				comp.initAge = num;
+				comp.initAge = age;
 				c[i-4] = comp;
 			}
 			file.close();

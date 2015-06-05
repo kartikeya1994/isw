@@ -14,7 +14,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 	Schedule schedule; // Job Schedule received by scheduler
 	int compCombo; //Combination of components to perform PM on.
 	int pmOpportunity;
-	int noOfSimulations = 1000;
+	int noOfSimulations = Macros.SIMULATION_COUNT;
 
 	public SimulationThread(Schedule schedule, int compCombo, int pmOpportunity){
 		this.schedule = schedule;
@@ -23,7 +23,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 
 		}
 	/**
-	 * We shall run the simulation 1000 times,each simulation being 8 hours (real time) in duration.
+	 * We shall run the simulation 1000 times,each simulation being Macros.SHIFT_DURATION hours (real time) in duration.
 	 * For each simulation PM is done only once and is carried out in between job executions.
 	 * **/
 	public SimulationResult call(){
@@ -46,7 +46,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 			 * to the schedule*/
 			for(int i=0;i<simCompList.length;i++){
 				long cmTTF = (long)(simCompList[i].getCMTTF()*Macros.TIME_SCALE_FACTOR);
-				if(cmTTF < 8*Macros.TIME_SCALE_FACTOR){
+				if(cmTTF < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR){
 					long cmTTR = (long)(simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR);
 					//Smallest unit is one hour for now
 					if(cmTTR==0)
@@ -63,7 +63,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 					}
 			}
 			long time = 0;
-			while(time< 8*Macros.TIME_SCALE_FACTOR && !simSchedule.isEmpty()){
+			while(time< Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR && !simSchedule.isEmpty()){
 				try{
 				simSchedule.decrement(1);
 				}
@@ -102,7 +102,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 			try{
 			//Calculate penaltyCost for leftover jobs
 		   while(!simSchedule.isEmpty()){
-			   penaltyCost += simSchedule.remove().getPenaltyCost()*8;
+			   penaltyCost += simSchedule.remove().getPenaltyCost()*Macros.SHIFT_DURATION;
 		   }
 			}
 			catch(IOException e){
