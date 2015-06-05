@@ -3,6 +3,8 @@ package org.isw.threads;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -16,6 +18,9 @@ import java.util.Enumeration;
 import java.util.PriorityQueue;
 import java.util.Random;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.isw.FlagPacket;
 import org.isw.Job;
 import org.isw.MachineList;
@@ -54,9 +59,9 @@ public class JobSchedThread extends Thread
 			e.printStackTrace();
 		}
 		int cnt = 0;
+		parseJobs();
 		while(cnt++ < shiftCount)
 		{	
-			getJobs();
 			PriorityQueue<Schedule> pq = new PriorityQueue<Schedule>();
 			Enumeration<InetAddress> en = machineList.getIPs();
 			while(en.hasMoreElements())
@@ -149,14 +154,36 @@ public class JobSchedThread extends Thread
 	}
 	
 	
-	void getJobs(){
+	private void parseJobs() {
 		jobArray = new ArrayList<Job>();
-		for(int i=11;i>=0;i--){ 
-			if(r.nextBoolean()){
-				Job job = new Job("J"+String.valueOf(i),procTimeArr[i]*Macros.TIME_SCALE_FACTOR,procCostArr[i],Job.JOB_NORMAL);
-				job.setPenaltyCost(20);
-				jobArray.add(job);
+		try
+		{
+			FileInputStream file = new FileInputStream(new File("Jobs.xlsx"));
+			XSSFWorkbook workbook = new XSSFWorkbook(file);
+			XSSFSheet sheet = workbook.getSheetAt(0);
+			
+			for(int i=1;i<=12;i++)
+			{
+				Row row = sheet.getRow(i);
+				int demand = (int) row.getCell(5).getNumericCellValue();
+				String jobName = row.getCell(0).getStringCellValue();
+				long jobTime = (long)(row.getCell(1).getNumericCellValue()*Macros.TIME_SCALE_FACTOR);
+				double jobCost = row.getCell(3).getNumericCellValue();
+				for(int j=0; j<demand ;j++){
+					Job job = new Job(jobName,jobTime,jobCost,Job.JOB_NORMAL);
+					job.setPenaltyCost(row.getCell(4).getNumericCellValue());
+					jobArray.add(job);
+				}
 			}
+			file.close();
+			
 		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}		
+		
 	}
+
+	
 }
