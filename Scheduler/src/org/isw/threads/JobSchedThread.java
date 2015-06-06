@@ -14,6 +14,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.PriorityQueue;
 import java.util.Random;
@@ -176,14 +178,29 @@ public class JobSchedThread extends Thread
 				}
 			}
 			file.close();
-			
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
-		}		
-		
+		}	
+		//sort jobs in ascending order of job time
+		Collections.sort(jobArray, new JobComparator());
 	}
+}
 
-	
+class JobComparator implements Comparator<Job> {
+	@Override
+	public int compare(Job a, Job b) 
+	{
+			return signOf(a.getJobTime() - b.getJobTime());
+	}
+	public int signOf(double a)
+	{
+		if(a>0)
+			return 1;
+		else if(a<0)
+			return -1;
+		else
+			return 0;
+	}
 }
