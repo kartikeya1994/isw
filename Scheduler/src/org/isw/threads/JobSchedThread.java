@@ -192,7 +192,7 @@ class JobComparator implements Comparator<Job> {
 	@Override
 	public int compare(Job a, Job b) 
 	{
-			return signOf(a.getJobTime() - b.getJobTime());
+			return signOf(b.getJobTime() - a.getJobTime());
 	}
 	public int signOf(double a)
 	{
