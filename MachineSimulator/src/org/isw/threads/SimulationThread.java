@@ -21,7 +21,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 		this.compCombo = compCombo;
 		this.pmOpportunity = pmOpportunity;
 
-		}
+	}
 	/**
 	 * We shall run the simulation 1000 times,each simulation being Macros.SHIFT_DURATION hours (real time) in duration.
 	 * For each simulation PM is done only once and is carried out in between job executions.
@@ -51,21 +51,20 @@ public class SimulationThread implements Callable<SimulationResult> {
 					//Smallest unit is one hour for now
 					if(cmTTR==0)
 						cmTTR=1;
-					Job cmJob = new Job("CM",cmTTR,simCompList[i].getCMCost(), Job.JOB_CM);
-					cmJob.setFixedCost(simCompList[i].getCompCost());;
+					Job cmJob = new Job("CM",cmTTR,simCompList[i].getCMCost(), simCompList[i].getCMFixedCost(), simCompList[i].getCompCost(),Job.JOB_CM);
 					cmJob.setCompNo(i);
 					try{
-					simSchedule.addCMJob(cmJob, cmTTF);
+						simSchedule.addCMJob(cmJob, cmTTF);
 					}
 					catch(Exception e){
 						e.printStackTrace();
 					}
-					}
+				}
 			}
 			long time = 0;
 			while(time< Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR && !simSchedule.isEmpty()){
 				try{
-				simSchedule.decrement(1);
+					simSchedule.decrement(1);
 				}
 				catch(IOException e){
 					e.printStackTrace();
@@ -74,44 +73,45 @@ public class SimulationThread implements Callable<SimulationResult> {
 				//Calculate the cost depending upon the job type
 				Job current = simSchedule.peek(); 
 				switch(current.getJobType()){
-					case Job.JOB_NORMAL:
-						procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-						break;
-					case Job.JOB_PM:
-						pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-						current.setFixedCost(0);
-						pmAvgTime += 1;
-						break;
-					case Job.JOB_CM:
-						cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-						current.setFixedCost(0);
-						break;
+				case Job.JOB_NORMAL:
+					procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
+					break;
+				case Job.JOB_PM:
+					pmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
+					current.setFixedCost(0);
+					pmAvgTime += 1;
+					break;
+				case Job.JOB_CM:
+					cmCost += current.getCompCost() + current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
+					current.setFixedCost(0);
+					current.setCompCost(0);
+					break;
 				}
 
 				if(current.getJobTime()<=0){
 					try{
-					simSchedule.remove();
+						simSchedule.remove();
 					}
 					catch(IOException e){
 						e.printStackTrace();
 						System.exit(0);
 					}
-					}
+				}
 				time++;
 			}
 			try{
-			//Calculate penaltyCost for leftover jobs
-		   while(!simSchedule.isEmpty()){
-			   penaltyCost += simSchedule.remove().getPenaltyCost()*Macros.SHIFT_DURATION;
-		   }
+				//Calculate penaltyCost for leftover jobs
+				while(!simSchedule.isEmpty()){
+					penaltyCost += simSchedule.remove().getPenaltyCost()*Macros.SHIFT_DURATION;
+				}
 			}
 			catch(IOException e){
 				e.printStackTrace();
 				System.exit(0);
 			}
-		   //Calculate totalCost for the shift
-		totalCost += procCost + pmCost + cmCost + penaltyCost;
-		
+			//Calculate totalCost for the shift
+			totalCost += procCost + pmCost + cmCost + penaltyCost;
+
 		}
 		totalCost /= noOfSimulations;
 		pmAvgTime /= noOfSimulations;
@@ -135,7 +135,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 				if(cnt==0){
 					pmJob.setFixedCost(simCompList[i].getPMFixedCost());
 				}
-					simSchedule.addPMJob(pmJob,pmOpportunity+cnt);
+				simSchedule.addPMJob(pmJob,pmOpportunity+cnt);
 				cnt++;
 			}
 		}

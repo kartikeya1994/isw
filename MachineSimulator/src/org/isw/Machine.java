@@ -121,7 +121,7 @@ public class Machine {
 			e.printStackTrace();
 		}
 	}
-	private static Component[] parseExcel(int age,int n) {
+	private static Component[] parseExcel(int age, int n) {
 		/**
 		 * Parse the component excel file into a list of components.
 		 * Total number of components should be 14 for our experiment.
@@ -135,11 +135,13 @@ public class Machine {
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
 			
-			for(int i=4;i<n+4;i++)
+			for(int i=4;i<4+n;i++)
 			{
 				Row row = sheet.getRow(i);
 				Component comp = new Component();
 				comp.compName = row.getCell(1).getStringCellValue();
+				comp.compCost = row.getCell(15).getNumericCellValue();
+				
 				comp.p1 = row.getCell(2).getNumericCellValue();
 				comp.p2 = row.getCell(3).getNumericCellValue();
 				comp.p3 = row.getCell(4).getNumericCellValue();
@@ -156,7 +158,9 @@ public class Machine {
 				comp.pmSigma = row.getCell(12).getNumericCellValue();
 				comp.pmRF = row.getCell(13).getNumericCellValue();
 				comp.pmCost = row.getCell(14).getNumericCellValue();
-				comp.pmFixedCost = row.getCell(15).getNumericCellValue();
+				
+				comp.pmFixedCost = row.getCell(16).getNumericCellValue();
+				comp.cmFixedCost = row.getCell(17).getNumericCellValue();
 				comp.initAge = age;
 				c[i-4] = comp;
 			}

@@ -279,8 +279,8 @@ public class Maintenance
 				}
 				else{
 					//Since no maintenance is going on add CM job directly
-					Job cmJob = new Job("CM",compTTF.ttr,component.get(compTTF.machineID)[compTTF.componentID].getCMCost(),Job.JOB_CM);
-					cmJob.setFixedCost(component.get(compTTF.machineID)[compTTF.componentID].getCompCost());
+					Job cmJob = new Job("CM",compTTF.ttr,component.get(compTTF.machineID)[compTTF.componentID].getCMCost(),
+							component.get(compTTF.machineID)[compTTF.componentID].getCMFixedCost(), component.get(compTTF.machineID)[compTTF.componentID].getCompCost(),Job.JOB_CM);
 					cmJob.setCompNo(compTTF.componentID);
 					schedule.get(compTTF.machineID).addCMJob(cmJob, compTTF.ttf);
 				}

@@ -26,6 +26,7 @@ public class Component implements Serializable {
 	public double cmSigma;
 	public double cmRF;
 	public double cmCost;
+	public double cmFixedCost;
 	//PM
 	// TTR
 	public double pmMu;
@@ -80,5 +81,8 @@ public class Component implements Serializable {
 	}
 	public double getPMFixedCost(){
 		return pmFixedCost;
+	}
+	public double getCMFixedCost(){
+		return cmFixedCost;
 	}
 }

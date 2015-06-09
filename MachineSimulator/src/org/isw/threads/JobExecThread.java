@@ -33,13 +33,13 @@ public class JobExecThread extends Thread{
 					comp.initAge++;
 				break;
 			case Job.JOB_PM:
-				Machine.pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
+				Machine.pmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
 				Machine.pmDownTime++;
 				Machine.downTime++;
 				
 				break;
 			case Job.JOB_CM:
-				Machine.cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
+				Machine.cmCost += current.getCompCost() + current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
 				Machine.downTime++;
 				Machine.cmDownTime++;
@@ -91,7 +91,7 @@ public class JobExecThread extends Thread{
 		}
 	int i = jobList.indexOf(jobList.peek());
 	while(i < jobList.getSize()){
-		Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost();
+		Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost()*Macros.SHIFT_DURATION;
 	}
 	
 	}
