@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
@@ -73,6 +74,21 @@ public class FlagPacket implements Serializable{
 		}
 
 		return ret;
+	}
+	public static FlagPacket receiveUDP(DatagramSocket socket) throws IOException{
+		    FlagPacket ret = null;
+			byte[] bufIn = new byte[256];
+			DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
+			socket.receive(packet); 
+			byte[] data=packet.getData();
+			ByteArrayInputStream in = new ByteArrayInputStream(data);
+			DataInputStream is = new DataInputStream(in);
+			int flag = is.readInt();
+			ret = new FlagPacket(flag);
+			ret.ip = packet.getAddress();
+			ret.port = packet.getPort();
+			is.close();
+			return ret;
 	}
 	
 	public static FlagPacket receiveTCP(ServerSocket tcpSocket, int timeout)

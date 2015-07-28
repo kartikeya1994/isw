@@ -6,19 +6,21 @@ public class SimulationResult implements Serializable {
   /**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
   public double cost;
-  double pmAvgTime;
-  int compCombo;
-  int pmOpportunity;
+  public int[] pmLabour;
+  public double pmAvgTime;
+  public int compCombo;
+  public int pmOpportunity;
   public long t; //to be used for calculations by maintenance dept
   public int id; //to be used for calculations by maintenance dept
-  public SimulationResult(double cost,double pmAvgTime,int compCombo,int pmOpportunity){
+  public SimulationResult(double cost,double pmAvgTime,int compCombo,int pmOpportunity,int labour[]){
 	  this.cost = cost;
 	  this.pmAvgTime = pmAvgTime;
 	  this.compCombo = compCombo;
 	  this.pmOpportunity = pmOpportunity;
-			 
+	  this.pmLabour = new int[3];
+	  System.arraycopy( labour, 0, pmLabour, 0, labour.length );
   }
   public double getCost(){
 	  return cost;
@@ -35,6 +37,9 @@ public class SimulationResult implements Serializable {
 public void setCost(double cost) {
 	this.cost = cost;
 	
+}
+public int pmLabourCount() {
+	return pmLabour[0]+pmLabour[1]+pmLabour[2];
 }
 
 

@@ -20,29 +20,16 @@ public class ListenerThread extends Thread
 	public void run()
 	{
 		MulticastSocket socket;
-		int machineCount = 0;
 		try
 		{
-			socket = new MulticastSocket(Macros.SCHEDULING_DEPT_MULTICAST_PORT);
-			socket.joinGroup(InetAddress.getByName(Macros.SCHEDULING_DEPT_GROUP));
+			socket = new MulticastSocket(Macros.MAINTENANCE_DEPT_MULTICAST_PORT);
+			socket.joinGroup(InetAddress.getByName(Macros.MAINTENANCE_DEPT_GROUP));
 			while(true)
 			{
 				FlagPacket fp = FlagPacket.receiveMulticast(socket);
-				switch(fp.flag){
-				case Macros.REQUEST_SCHEDULING_DEPT_IP:
+				if(fp.flag ==Macros.REQUEST_MAINTENANCE_DEPT_IP){
 					ClientHandlerThread worker = new ClientHandlerThread(socket, fp, machineList);
-					worker.start();
-					break;
-				case Macros.REQUEST_MACHINE_LIST:
-					System.out.println("Request for machineList");
-					MachineList.send(machineList, fp.ip, fp.port);
-				case Macros.REQUEST_TIME:
-					if(machineCount++ == machineList.count()){
-						machineCount = 0;
-						DatagramPacket timePacket = FlagPacket.makePacket(fp.ip.getHostAddress(), fp.port, Macros.REPLY_TIME);
-						socket.send(timePacket);
-					}
-					
+					worker.start();	
 				}	
 				
 			}

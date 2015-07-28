@@ -1,8 +1,4 @@
 package org.isw;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -20,7 +16,9 @@ import org.isw.threads.ListenerThread;
 
 public class Machine {
 
-	static InetAddress serverIP;
+	static InetAddress schedulerIP;
+	static InetAddress maintenanceIP;
+	
 	static int machineNo;
 	public static int shiftCount;
 	public static Component[] compList;
@@ -39,8 +37,11 @@ public class Machine {
 	public static long pmDownTime;
 	public static long runTime;
 	public static long idleTime;
+	
 	public static void main(String[] args) {
-		boolean registered=false;
+		boolean maintenanceRegistered=false;
+		boolean iswRegistered = false;
+		boolean schedulerRegistered = false;
 		Macros.loadMacros();
 		System.out.println("Enter age of machine in hours:");
 		Scanner in = new Scanner(System.in);
@@ -49,52 +50,50 @@ public class Machine {
 		int n = in.nextInt();
 		try
 		{
-			
-			//create outbound packet with HELLO message
-			final ByteArrayOutputStream baos=new ByteArrayOutputStream();
-			final DataOutputStream dos=new DataOutputStream(baos);
-			dos.writeInt(Macros.REQUEST_SCHEDULING_DEPT_IP);
-			dos.close();
-			final byte[] buf=baos.toByteArray();
-			InetAddress group = InetAddress.getByName(Macros.MACHINE_SCHEDULING_GROUP);
-			DatagramPacket packetOut, packetIn;
-			packetOut = new DatagramPacket(buf, buf.length, group, Macros.SCHEDULING_DEPT_MULTICAST_PORT);
-
+			DatagramPacket schedulerPacket  = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_ISW_IP);
+			DatagramPacket iswPacket = FlagPacket.makePacket(Macros.ISW_GROUP, Macros.ISW_MULTICAST_PORT, Macros.MACHINE_FLAG|Macros.REQUEST_ISW_IP);
+			DatagramPacket maintenancePacket = FlagPacket.makePacket(Macros.MAINTENANCE_DEPT_GROUP, Macros.MAINTENANCE_DEPT_MULTICAST_PORT, Macros.REQUEST_MAINTENANCE_DEPT_IP);
+			FlagPacket packetIn;
 			//create socket
 			DatagramSocket socket = new DatagramSocket(Macros.MACHINE_PORT);
 			ServerSocket tcpSocket = new ServerSocket(Macros.MACHINE_PORT_TCP);
 			socket.setSoTimeout(3000);
 
-			while(!registered)
+			while(!schedulerRegistered || !iswRegistered || !maintenanceRegistered)
 			{
 				System.out.println("Finding server...");
-				socket.send(packetOut);
-
-				byte[] resbuf = new byte[256];
-				packetIn = new DatagramPacket(resbuf, resbuf.length);
+				if(!maintenanceRegistered)
+					socket.send(schedulerPacket);
+				if(!iswRegistered)
+					socket.send(iswPacket);
+				if(!schedulerRegistered)
+					socket.send(maintenancePacket);
+				
 				try
 				{
-					socket.receive(packetIn); //blocking call for 1000ms
+					packetIn = FlagPacket.receiveUDP(socket);//blocking call for 1000ms
 				}catch(SocketTimeoutException stoe)
 				{
 					System.out.println("Timed out.");
-					continue;
+					continue; 
 				}
-				final byte[] reply=packetIn.getData();
-				final ByteArrayInputStream bais=new ByteArrayInputStream(reply);
-				final DataInputStream dis=new DataInputStream(bais);
-
-				if(dis.readInt() == Macros.REPLY_SCHEDULING_DEPT_IP)
-				{
-					registered=true;
-					serverIP=packetIn.getAddress();
-					System.out.println("Connected to server: "+serverIP.toString());
-
-					//socket.close();
+				
+				switch (packetIn.flag){
+				case Macros.REPLY_MAINTENANCE_DEPT_IP:
+					maintenanceIP = packetIn.ip;
+					maintenanceRegistered = true;
+					break;
+				case Macros.REPLY_SCHEDULING_DEPT_IP:
+					schedulerIP = packetIn.ip;
+					schedulerRegistered = true;
+					break;
+				case Macros.REPLY_ISW_IP:	
+					Logger.init(packetIn.ip);
+					iswRegistered = true;
+					break;
 				}
-				else
-					continue;
 			}
+			
 			//machineNo = Integer.parseInt(args[0]);
 			compList = parseExcel(age,n);
 			downTime = 0;
@@ -112,7 +111,7 @@ public class Machine {
 			procCost=0;
 			runTime =0;
 			idleTime = 0;
-			ListenerThread listener = new ListenerThread(serverIP,socket,tcpSocket);
+			ListenerThread listener = new ListenerThread(schedulerIP,maintenanceIP,socket,tcpSocket);
 			listener.start();
 
 
@@ -121,6 +120,7 @@ public class Machine {
 			e.printStackTrace();
 		}
 	}
+	
 	private static Component[] parseExcel(int age, int n) {
 		/**
 		 * Parse the component excel file into a list of components.
@@ -134,35 +134,49 @@ public class Machine {
 			FileInputStream file = new FileInputStream(new File("Components.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
-			
-			for(int i=4;i<4+n;i++)
+			XSSFSheet labourSheet = workbook.getSheetAt(1);
+			for(int i=5;i<5+n;i++)
 			{
 				Row row = sheet.getRow(i);
 				Component comp = new Component();
+				//--------CM data------------
+				//0 is assembly name
 				comp.compName = row.getCell(1).getStringCellValue();
-				comp.compCost = row.getCell(15).getNumericCellValue();
-				
-				comp.p1 = row.getCell(2).getNumericCellValue();
-				comp.p2 = row.getCell(3).getNumericCellValue();
-				comp.p3 = row.getCell(4).getNumericCellValue();
-				
-				comp.cmEta = row.getCell(5).getNumericCellValue();
-				comp.cmBeta = row.getCell(6).getNumericCellValue();
-				
-				comp.cmMu = row.getCell(7).getNumericCellValue();
-				comp.cmSigma = row.getCell(8).getNumericCellValue();
+				comp.initAge = row.getCell(2).getNumericCellValue();
+				comp.cmEta = row.getCell(3).getNumericCellValue();
+				comp.cmBeta = row.getCell(4).getNumericCellValue();
+				comp.cmMuRep = row.getCell(5).getNumericCellValue();
+				comp.cmSigmaRep = row.getCell(6).getNumericCellValue();
+				comp.cmMuSupp = row.getCell(7).getNumericCellValue();
+				comp.cmSigmaRep = row.getCell(8).getNumericCellValue();
 				comp.cmRF = row.getCell(9).getNumericCellValue();
-				comp.cmCost = row.getCell(10).getNumericCellValue();
+				comp.cmCostSpare = row.getCell(10).getNumericCellValue();
+				comp.cmCostOther = row.getCell(11).getNumericCellValue();
+				//12 is empty
+				//13 is empty
 				
-				comp.pmMu = row.getCell(11).getNumericCellValue();
-				comp.pmSigma = row.getCell(12).getNumericCellValue();
-				comp.pmRF = row.getCell(13).getNumericCellValue();
-				comp.pmCost = row.getCell(14).getNumericCellValue();
-				
-				comp.pmFixedCost = row.getCell(16).getNumericCellValue();
-				comp.cmFixedCost = row.getCell(17).getNumericCellValue();
-				comp.initAge = age;
-				c[i-4] = comp;
+				//--------PM data------------
+				//14 is assembly name
+				//15 is component name
+				//16 is init age
+				comp.pmMuRep = row.getCell(17).getNumericCellValue();
+				comp.pmSigmaRep = row.getCell(18).getNumericCellValue();
+				comp.pmMuSupp = row.getCell(19).getNumericCellValue();
+				comp.pmSigmaSupp = row.getCell(20).getNumericCellValue();
+				comp.pmRF = row.getCell(21).getNumericCellValue();
+				comp.pmCostSpare = row.getCell(22).getNumericCellValue();
+				comp.pmCostOther = row.getCell(23).getNumericCellValue();
+				row = labourSheet.getRow(i);
+				comp.pmLabour = new int[3];
+				comp.pmLabour[0] = (int)row.getCell(3).getNumericCellValue();
+				comp.pmLabour[1] = (int)row.getCell(5).getNumericCellValue();
+				comp.pmLabour[2] = (int)row.getCell(7).getNumericCellValue();
+				comp.cmLabour = new int[3];
+				comp.cmLabour[0] = (int)row.getCell(2).getNumericCellValue();
+				comp.cmLabour[1] = (int)row.getCell(4).getNumericCellValue();
+				comp.cmLabour[2] = (int)row.getCell(6).getNumericCellValue();
+				c[i-5] = comp;
+			
 			}
 			file.close();
 			

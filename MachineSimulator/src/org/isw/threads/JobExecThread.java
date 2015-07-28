@@ -1,8 +1,11 @@
 package org.isw.threads;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 
 import org.isw.Component;
+import org.isw.FlagPacket;
 import org.isw.Job;
 import org.isw.Machine;
 import org.isw.Macros;
@@ -10,8 +13,12 @@ import org.isw.Schedule;
 
 public class JobExecThread extends Thread{
 	Schedule jobList;
-	public JobExecThread(Schedule jobList){
+	DatagramSocket socket;
+	DatagramPacket timePacket;
+	public JobExecThread(Schedule jobList , DatagramSocket socket){
 		this.jobList = jobList;
+		this.socket = socket;
+		timePacket = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_TIME);
 	}
 	public void run(){
 	int sum=0;
@@ -39,7 +46,7 @@ public class JobExecThread extends Thread{
 				
 				break;
 			case Job.JOB_CM:
-				Machine.cmCost += current.getCompCost() + current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
+				Machine.cmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
 				Machine.downTime++;
 				Machine.cmDownTime++;
@@ -81,8 +88,18 @@ public class JobExecThread extends Thread{
 				System.exit(0);
 			}
 			}
+		
 		sum++;
 		Machine.runTime++;
+		try {
+			byte[] bufIn = new byte[128];
+			DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
+			socket.send(timePacket);
+			socket.receive(packet);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 	if(jobList.isEmpty()){

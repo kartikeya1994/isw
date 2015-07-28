@@ -6,27 +6,14 @@ public class CustomComparator implements Comparator<SimulationResult> {
 
 	@Override
 	public int compare(SimulationResult a, SimulationResult b) {
-		if(a.t == b.t)
-		{
-			if(a.cost == b.cost)
-			{
-				return signOf(a.pmAvgTime - b.pmAvgTime);
-			}
-			else
-				return signOf(a.cost - b.cost);
-		}
-		else
-			return (int)(b.t - a.t);
-		
+		int i = Double.compare(a.t, b.t);
+		if(i!=0) return i;
+		i = Double.compare(b.cost, a.cost);
+		if(i!=0) return i;
+		i = Integer.compare(a.pmLabourCount(), b.pmLabourCount());
+		if(i!=0) return i;
+		return Double.compare(a.pmAvgTime, b.pmAvgTime);		
 	}
-	public int signOf(double a)
-	{
-		if(a>0)
-			return 1;
-		else if(a<0)
-			return -1;
-		else
-			return 0;
-	}
+
 
 }

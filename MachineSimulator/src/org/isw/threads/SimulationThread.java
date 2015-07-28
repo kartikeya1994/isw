@@ -1,6 +1,7 @@
 package org.isw.threads;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
 import org.isw.Component;
@@ -13,6 +14,7 @@ import org.isw.SimulationResult;
 public class SimulationThread implements Callable<SimulationResult> {
 	Schedule schedule; // Job Schedule received by scheduler
 	int compCombo; //Combination of components to perform PM on.
+	int pmLabour[]; //Number of labourers required.
 	int pmOpportunity;
 	int noOfSimulations = Macros.SIMULATION_COUNT;
 
@@ -20,7 +22,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 		this.schedule = schedule;
 		this.compCombo = compCombo;
 		this.pmOpportunity = pmOpportunity;
-
+		this.pmLabour = new int[3];
 	}
 	/**
 	 * We shall run the simulation 1000 times,each simulation being Macros.SHIFT_DURATION hours (real time) in duration.
@@ -47,11 +49,24 @@ public class SimulationThread implements Callable<SimulationResult> {
 			for(int i=0;i<simCompList.length;i++){
 				long cmTTF = (long)(simCompList[i].getCMTTF()*Macros.TIME_SCALE_FACTOR);
 				if(cmTTF < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR){
+					ArrayList<Job> pmJobs =	simSchedule.getPMJobs();
+					boolean flag = false;
+					for(Job pmJob : pmJobs){
+					int tempIndex = simSchedule.indexOf(pmJob);
+					int compCombo = pmJob.getCompCombo();
+					long time =	schedule.getFinishingTime(tempIndex-1);
+					if(cmTTF>= time && ((1<<i)&compCombo)!=0)
+						flag = true;
+					}
+					if(flag)
+						continue;
+				
 					long cmTTR = (long)(simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR);
 					//Smallest unit is one hour for now
 					if(cmTTR==0)
 						cmTTR=1;
-					Job cmJob = new Job("CM",cmTTR,simCompList[i].getCMCost(), simCompList[i].getCMFixedCost(), simCompList[i].getCompCost(),Job.JOB_CM);
+					Job cmJob = new Job("CM",cmTTR,simCompList[i].getCMLabourCost(),Job.JOB_CM);
+					cmJob.setFixedCost(simCompList[i].getCMFixedCost());
 					cmJob.setCompNo(i);
 					try{
 						simSchedule.addCMJob(cmJob, cmTTF);
@@ -82,9 +97,8 @@ public class SimulationThread implements Callable<SimulationResult> {
 					pmAvgTime += 1;
 					break;
 				case Job.JOB_CM:
-					cmCost += current.getCompCost() + current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
+					cmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
 					current.setFixedCost(0);
-					current.setCompCost(0);
 					break;
 				}
 
@@ -115,7 +129,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 		}
 		totalCost /= noOfSimulations;
 		pmAvgTime /= noOfSimulations;
-		return new SimulationResult(totalCost,pmAvgTime,compCombo,pmOpportunity);
+		return new SimulationResult(totalCost,pmAvgTime,compCombo,pmOpportunity,pmLabour);
 	}
 	/*Add PM job for the given combination of components.
 	 * The PM jobs are being split into smaller PM jobs for each component.
@@ -130,8 +144,11 @@ public class SimulationThread implements Callable<SimulationResult> {
 				//Smallest unit is one hour
 				if(pmttr == 0)
 					pmttr=1;
-				Job pmJob = new Job("PM",pmttr,simCompList[i].getPMCost(),Job.JOB_PM);
+				Job pmJob = new Job("PM",pmttr,simCompList[i].getPMLabourCost(),Job.JOB_PM);
 				pmJob.setCompCombo(compCombo);
+				pmLabour[0]+= simCompList[i].getPMLabour()[0];
+				pmLabour[1]+= simCompList[i].getPMLabour()[1];
+				pmLabour[2]+= simCompList[i].getPMLabour()[2];
 				if(cnt==0){
 					pmJob.setFixedCost(simCompList[i].getPMFixedCost());
 				}

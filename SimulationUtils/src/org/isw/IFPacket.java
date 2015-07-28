@@ -11,8 +11,8 @@ import java.net.Socket;
 public class IFPacket implements Serializable
 {
 	private static final long serialVersionUID = -8976546963278613092L;
-	SimulationResult results[];
-	Component[] compList;
+	public SimulationResult results[];
+	public Component[] compList;
 	public Schedule jobList;
 	public InetAddress ip;
 	public int port;

@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketAddress;
 import java.util.Properties;
 
 
@@ -24,20 +25,40 @@ public class Macros {
 	public static final int REQUEST_PREVIOUS_SHIFT = 10;
 	public static final int MAINTENANCE_DEPT_IP = 7;
 	public static final int PROCESS_COMPLETE = 11;
+	public static final int REQUEST_TIME = 12;
+	public static final int REPLY_TIME = 13;
+	public static final int REPLY_ISW_IP = 14;
+	public static final int REQUEST_ISW_IP = 15;
+	public static final int MACHINE_FLAG = 16;
+	public static final int SCHEDULING_DEPT_FLAG = 32;
+	public static final int MAINTENANCE_DEPT_FLAG = 64;
+	public static final int REQUEST_MAINTENANCE_DEPT_IP = 17;
+	public static final int REPLY_MAINTENANCE_DEPT_IP = 18;
 	
 	public static final int SCHEDULING_DEPT_PORT = 8889;
 	public static final int SCHEDULING_DEPT_PORT_TCP = 8890;
 	public static final int MACHINE_PORT = 8891;
 	public static final int MACHINE_PORT_TCP = 8892;
-	public static final int MAINTENANCE_DEPT_PORT_TCP = 8893;
+	public static final int MAINTENANCE_DEPT_PORT = 8893;
+	public static final int MAINTENANCE_DEPT_PORT_TCP = 8894;
+	
 	public static final int SCHEDULING_DEPT_MULTICAST_PORT = 8888;
-	public static final String MACHINE_SCHEDULING_GROUP = "224.1.1.1";
-	public static final String MAINTENANCE_SCHEDULING_GROUP = "224.1.1.2";
+	public static final int ISW_MULTICAST_PORT = 8887;
+	public static final int MAINTENANCE_DEPT_MULTICAST_PORT = 8886;
+	
+	public static final String SCHEDULING_DEPT_GROUP = "224.1.1.1";
+	public static final String ISW_GROUP = "224.1.1.3";
+	public static final String MAINTENANCE_DEPT_GROUP = "224.1.1.4";
+	
+	
+	
+	
+	
 	public static int TIME_SCALE_FACTOR = 1;
 	public static int SHIFT_DURATION = 8;
 	public static int SIMULATION_COUNT = 1000;
+	
 	public static void loadMacros(){
-		
 		try {
 			Properties prop = new Properties();
 			InputStream input = new FileInputStream("config.properties");

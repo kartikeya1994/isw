@@ -14,36 +14,40 @@ public class Component implements Serializable {
 	 */
 	public static final long serialVersionUID = 1L;
 	public String compName;
-	public double p1;
-	public double p2;
-	public double p3;
+
 	//CM
 	// TOF
 	public double cmEta;
 	public double cmBeta;
 	// TTR
-	public double cmMu;
-	public double cmSigma;
+	public double cmMuRep;
+	public double cmSigmaRep;
+	public double cmMuSupp;
+	public double cmSigmaSupp;
 	public double cmRF;
-	public double cmCost;
-	public double cmFixedCost;
+	public double cmCostSpare;
+	public double cmCostOther;
 	//PM
 	// TTR
-	public double pmMu;
-	public double pmSigma;
+	public double pmMuRep;
+	public double pmSigmaRep;
+	public double pmMuSupp;
+	public double pmSigmaSupp;
 	public double pmRF;
-	public double pmCost;
-	public double pmFixedCost;
-	
-	public double compCost;
+	public double pmCostSpare;
+	public double pmCostOther;
+
+	public int[] pmLabour;
+	public int[] cmLabour;
+	public double[] labourCost;
 	public double initAge;
 
 	public double getPMTTR(){
-		return normalRandom(pmMu,pmSigma);
+		return normalRandom(pmMuRep,pmSigmaRep) + normalRandom(pmMuSupp,pmSigmaSupp);
 	}
 	
 	public double getCMTTR(){
-		return normalRandom(cmMu,cmSigma);
+		return normalRandom(cmMuRep,cmSigmaRep) + normalRandom(cmMuSupp,cmSigmaSupp);
 	}
 	
 	public double getCMTTF(){
@@ -68,21 +72,26 @@ public class Component implements Serializable {
 		return (Math.pow(b-((Math.log(1-x.nextDouble())/a)),(1/p)))-t0;
 	}
 
-	public double getCMCost() {
-		return cmCost;
+	public double getPMFixedCost() {
+		return pmCostSpare+pmCostOther;
 	}
 
-	public double getPMCost() {
-		return pmCost;
+	public double getCMFixedCost() {
+		return cmCostSpare+cmCostOther;
 	}
 
-	public double getCompCost() {
-		return compCost;
+	public double getCMLabourCost() {
+		return cmLabour[0]*labourCost[0] + cmLabour[1]*labourCost[1] + cmLabour[2]*labourCost[2];
 	}
-	public double getPMFixedCost(){
-		return pmFixedCost;
+
+	public double getPMLabourCost() {
+		return pmLabour[0]*labourCost[0] + pmLabour[1]*labourCost[1] + pmLabour[2]*labourCost[2];
 	}
-	public double getCMFixedCost(){
-		return cmFixedCost;
+
+	public int[] getPMLabour() {
+		return pmLabour;
 	}
+
+	
+
 }
