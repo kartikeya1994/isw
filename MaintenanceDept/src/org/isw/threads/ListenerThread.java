@@ -30,7 +30,14 @@ public class ListenerThread extends Thread
 				if(fp.flag ==Macros.REQUEST_MAINTENANCE_DEPT_IP){
 					ClientHandlerThread worker = new ClientHandlerThread(socket, fp, machineList);
 					worker.start();	
-				}	
+				}
+				
+				else if (fp.flag == Macros.START_MAINTENANCE_PLANNING)
+				{
+					// start planning after receiving signal from central logging
+					MaintenanceThread mt = new MaintenanceThread(machineList);
+					mt.start();
+				}
 				
 			}
 

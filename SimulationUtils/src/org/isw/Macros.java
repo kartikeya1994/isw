@@ -34,6 +34,7 @@ public class Macros {
 	public static final int MAINTENANCE_DEPT_FLAG = 64;
 	public static final int REQUEST_MAINTENANCE_DEPT_IP = 17;
 	public static final int REPLY_MAINTENANCE_DEPT_IP = 18;
+	public static final int START_MAINTENANCE_PLANNING = 19;
 	
 	public static final int SCHEDULING_DEPT_PORT = 8889;
 	public static final int SCHEDULING_DEPT_PORT_TCP = 8890;

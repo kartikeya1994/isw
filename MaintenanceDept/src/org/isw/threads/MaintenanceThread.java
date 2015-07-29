@@ -19,6 +19,7 @@ import org.isw.Component;
 import org.isw.CustomComparator;
 import org.isw.IFPacket;
 import org.isw.Job;
+import org.isw.LabourAvailability;
 import org.isw.MachineList;
 import org.isw.Macros;
 import org.isw.Schedule;
@@ -37,7 +38,7 @@ public class MaintenanceThread  extends Thread{
 	static ArrayList<Component[]> component = new ArrayList<Component[]>();
 	static int numOfMachines;
 	static PriorityQueue<CompTTF> ttfList;
-	static ArrayList<LabourAssignment> pmLabourAssignment;
+	static LabourAvailability pmLabourAssignment = new LabourAvailability(pmMaxLabour, Macros.SHIFT_DURATION);
 	
 	public MaintenanceThread(MachineList machineList){
 		this.machineList = machineList;
@@ -68,6 +69,7 @@ public class MaintenanceThread  extends Thread{
 
 			numOfMachines = 0;
 			while(ips.hasMoreElements()){
+				//get intensity factors from all machines in machine list
 				numOfMachines++;
 				pool.submit(new FetchIFTask(tcpSocket, ips.nextElement(), Macros.MACHINE_PORT_TCP));
 			}
@@ -75,13 +77,13 @@ public class MaintenanceThread  extends Thread{
 			
 			System.out.println("Fetching IFs and schedules from " + numOfMachines + " connected machines...");
 			
-			table = new ArrayList<SimulationResult>();
+			table = new ArrayList<SimulationResult>(); // consolidated table of IFs 
 			ip = new ArrayList<InetAddress>();
 			port = new ArrayList<Integer>();
 			schedule = new ArrayList<Schedule>();
 			component = new ArrayList<Component[]>();
 			ttfList = new PriorityQueue<CompTTF>();
-			pmLabourAssignment = new ArrayList<LabourAssignment>();
+
 			for(int i = 0; i < numOfMachines; i++)
 			{
 				IFPacket p = pool.take().get(); //fetch results of all tasks
@@ -93,14 +95,20 @@ public class MaintenanceThread  extends Thread{
 				component.add(p.compList);
 				for(int j=0;j<p.results.length;j++)
 				{
-					p.results[j].id = i; //assign machine id
-					if(p.results[j].pmOpportunity <= 0){
-						p.results[j].t = 0; //assign calculated t
-					}else{
-						p.results[j].t = sched.getFinishingTime(p.results[j].pmOpportunity-1);
+					p.results[j].id = i; //assign machine id to uniquely identify machine
+					for(int pmOpp=0; pmOpp < p.results[j].pmOpportunity.length; pmOpp++)
+					{
+						// calculate start times for each job in SimulationResult
+						if(p.results[j].pmOpportunity[pmOpp] <= 0){
+							p.results[j].startTimes[pmOpp] = 0; //assign calculated t
+						}
+						else{
+							// start time of PM job is finishing time of job before it
+							p.results[j].startTimes[pmOpp] = sched.getFinishingTime(p.results[j].pmOpportunity[pmOpp]-1);
+						}
 					}
-					if(p.results[j].pmOpportunity >= 0){
-					table.add(p.results[j]);
+					if(!p.results[j].noPM){
+						table.add(p.results[j]);
 					}
 				}
 			}
@@ -112,131 +120,27 @@ public class MaintenanceThread  extends Thread{
 		{
 			e.printStackTrace();
 		}
+		
+		//sort
+		Collections.sort(table, new CustomComparator(component)); //higher IF and lower labour requirement
 
-		//create PM incorporated schedule
-		long[] pmTimeArray = new long[schedule.size()];
-		int[] compCombos = new int[schedule.size()];
-
-		Collections.sort(table, new CustomComparator()); //sort according to lower t, higher IF and lower PM time
-
-		int busyTime = 0;
 		HashMap<Integer, Boolean> toPerformPM = new HashMap<Integer,Boolean>(); //only one PM per machine per shift.
+		
 		for(int i=0;i<table.size();i++)
 		{
 			SimulationResult row = table.get(i);
+			
+			// check if PM is already being planned for machine (only 1 PM per shift)
+			// or if schedule is empty
 			if(!toPerformPM.containsKey(row.id) && !schedule.get(row.id).isEmpty())
 			{
-				checkLabourAssignment(row);
-				//incorporate the job into schedule of machine
-				long pmtime = addPMJobs(schedule.get(row.id),component.get(row.id),row.compCombo,row.pmOpportunity);
-				setLabourAssignment(row,row.t+pmtime);
+				// generate PM TTRs of all com
+				if(!checkLabourAssignment(row))
+					continue;
+				//incorporate the PM job(s) into schedule of machine
+				addPMJobs(schedule.get(row.id),component.get(row.id),row);
 				toPerformPM.put(row.id, true);
-				pmTimeArray[row.id] = row.t;
-				compCombos[row.id] = row.compCombo;
-				busyTime += pmtime;
 			}
-		}
-		
-		for(int i=0; i<numOfMachines;i++){
-			for(int j=0;j<component.get(i).length;j++){
-				long ttf = (long)(component.get(i)[j].getCMTTF()*Macros.TIME_SCALE_FACTOR);
-				//If TTF is greater than shift time or schedule length, ignore.
-			if(ttf>= Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR || ttf >= schedule.get(i).getSum())
-				continue;
-			//if PM is performed for a component before ttf of that component, ignore.
-			ArrayList<Job> pmJobs =	schedule.get(i).getPMJobs();
-			boolean flag = false;
-			for(Job pmJob : pmJobs){
-			int tempIndex = schedule.get(i).indexOf(pmJob);
-			int compCombo = pmJob.getCompCombo();
-			long time =	schedule.get(i).getFinishingTime(tempIndex-1);
-			if(ttf>= time && ((1<<j)&compCombo)!=0)
-				flag = true;
-			}
-			if(flag)
-				continue;
-			long ttr = (long)(component.get(i)[j].getCMTTR()*Macros.TIME_SCALE_FACTOR);
-			if(ttr == 0)
-				ttr = 1;
-			ttfList.add(new CompTTF(ttf,ttr,i,j));	
-			}
-		}
-		
-		while(!ttfList.isEmpty()){
-			CompTTF compTTF = ttfList.remove();
-			System.out.println(compTTF.ttf);
-			int index = schedule.get(compTTF.machineID).jobIndexAt(compTTF.ttf);
-			Job job = schedule.get(compTTF.machineID).jobAt(index);
-			/**If breakdown occurs on a machine while PM/CM is going on shift the ttf to occur after
-			 * the PM/CM ends
-			 * **/ 
-			if(job.getJobType() == Job.JOB_PM || job.getJobType() == Job.JOB_CM)
-			{
-				//TODO: Calculate new time
-				long newTime = schedule.get(compTTF.machineID).getFinishingTime(index);
-				if(newTime >= schedule.get(compTTF.machineID).getSum() || newTime >= Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
-					continue;
-				ttfList.add(new CompTTF(newTime,compTTF.ttr,compTTF.machineID,compTTF.componentID));
-				continue;
-			}
-			
-			boolean pmFlag = false;
-			boolean cmFlag = false;
-			int cmIndex = 0;
-			int cmJobIndex = 0;
-			int pmIndex =0;
-			int pmJobIndex =0;
-			//Loop through all machines and check for overlaps.
-			for(int i = 0;i < schedule.size();i++){
-				if(compTTF.machineID == i || schedule.get(i).getSum() <= compTTF.ttf || schedule.get(i).isEmpty())
-					continue;
-				int index1 = schedule.get(i).jobIndexAt(compTTF.ttf); 
-				Job job1 = schedule.get(i).jobAt(index1);
-				switch(job1.getJobType()){
-					case Job.JOB_CM:
-						cmFlag = true;
-						cmIndex = i;
-						cmJobIndex = index1;
-						break;
-					case Job.JOB_PM:
-						pmFlag = true;
-						pmIndex = i;
-						pmJobIndex = index1;
-						break;
-				}		
-			
-				if(cmFlag){
-					/**If CM is being performed on a different machine wait for CM to complete i.e 
-					 * shift breakdown time to occur after CM job.
-					 * FIXME: Ignoring for now.
-					 * **/
-					long newTime = schedule.get(cmIndex).getFinishingTime(cmJobIndex);
-					if(newTime>=Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR||newTime>=schedule.get(compTTF.machineID).getSum())
-						continue;
-					int jobIndex = schedule.get(compTTF.machineID).jobIndexAt(compTTF.ttf);
-					schedule.get(compTTF.machineID).addWaitJob(compTTF.ttf, newTime-compTTF.ttf, jobIndex);
-					ttfList.add(new CompTTF(newTime,compTTF.ttr,compTTF.machineID,compTTF.componentID));
-				}
-				else if(pmFlag){
-					/**If PM is being performed on a different machine, interrupt that PM and add a waiting job
-					 * and then add the CM job for our machine.
-					 **/
-					schedule.get(pmIndex).addWaitJob(compTTF.ttf, compTTF.ttr,pmJobIndex);
-					Job cmJob = new Job("CM",compTTF.ttr,component.get(compTTF.machineID)[compTTF.componentID].getCMCost(),Job.JOB_CM);
-					cmJob.setFixedCost(component.get(compTTF.machineID)[compTTF.componentID].getCompCost());
-					cmJob.setCompNo(compTTF.componentID);
-					schedule.get(compTTF.machineID).addCMJob(cmJob, compTTF.ttf);
-				}
-				else{
-					//Since no maintenance is going on add CM job directly
-					Job cmJob = new Job("CM",compTTF.ttr,component.get(compTTF.machineID)[compTTF.componentID].getCMCost(),
-							component.get(compTTF.machineID)[compTTF.componentID].getCMFixedCost(), component.get(compTTF.machineID)[compTTF.componentID].getCompCost(),Job.JOB_CM);
-					cmJob.setCompNo(compTTF.componentID);
-					schedule.get(compTTF.machineID).addCMJob(cmJob, compTTF.ttf);
-				}
-			}
-			
-		
 		}
 		
 		System.out.println("PM + CM incorporated schedule- ");
@@ -254,71 +158,43 @@ public class MaintenanceThread  extends Thread{
 		System.out.println("Successfully sent PM incorporated schedules to all connected machines.\nShift can now begin.");
 	}
 
-	private static void setLabourAssignment(SimulationResult row, long endTime) {
-		for(LabourAssignment labourAssignment : pmLabourAssignment){
-			if(row.t >= labourAssignment.startTime && row.t <= labourAssignment.endTime){
-				int labour[] = new int[]{labourAssignment.labour[0]-row.pmLabour[0],
-										 labourAssignment.labour[1]-row.pmLabour[1],
-										 labourAssignment.labour[2]-row.pmLabour[2]};
-				LabourAssignment la  = new LabourAssignment(labour,row.t,endTime);
-				pmLabourAssignment.add(la);
-				
-			}
-		}
-		int labour[] = new int[]{ pmMaxLabour[0]-row.pmLabour[0],
-				 pmMaxLabour[1]-row.pmLabour[1],
-				 pmMaxLabour[2]-row.pmLabour[2]};
-				 LabourAssignment la  = new LabourAssignment(labour,row.t,endTime);
-				 pmLabourAssignment.add(la);
-		
-		
-	}
-
-	private static boolean checkLabourAssignment(SimulationResult row) {
-		for(LabourAssignment labourAssignment : pmLabourAssignment){
-			if(row.t >= labourAssignment.startTime && row.t <= labourAssignment.startTime){
-				for(int i=0;i<3;i++){
-					if (row.pmLabour[i] < labourAssignment.labour[i])
-						return false;
-					}
-				return true;
-				
-			}
-		}
-		for(int i=0;i<3;i++){
-			if (row.pmLabour[i] < pmMaxLabour[i])
-				return false;
-		}
-		return true;
-		// TODO Auto-generated method stub
-		
-	}
-
-	private static long addPMJobs(Schedule schedule,Component[] compList, int compCombo, int pmOpportunity) {
+	private static void addPMJobs(Schedule schedule,Component[] compList, SimulationResult row) {
+		/*
+		 * Add PM jobs to given schedule.
+		 */
 		int cnt = 0;
-		long pmTime;
-		for(int i=0;i< compList.length;i++){
-			int pos = 1<<i;
-			if((pos&compCombo)!=0){
-				long pmttr = (long)(compList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR);
-				//Smallest unit is one hour
-				if(pmttr == 0)
-					pmttr=1;
-				Job pmJob = new Job("PM",pmttr,compList[i].getPMCost(),Job.JOB_PM);
-				
-				pmJob.setCompCombo(compCombo);
-				if(cnt==0){
-					pmJob.setFixedCost(compList[i].getPMFixedCost());
+		int[] pmOpportunity = row.pmOpportunity;
+		int[] compCombo = row.compCombo;
+		
+		for(int pmOpp = 0; pmOpp<pmOpportunity.length; pmOpp++)
+		{
+			for(int i=0;i< compList.length;i++)
+			{
+				int pos = 1<<i;
+				if((pos&compCombo[pmOpp])!=0) //for each component in combo, add a PM job
+				{
+					long pmttr = (long)(compList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR);
+					//Smallest unit is one hour
+					if(pmttr == 0)
+						pmttr=1;
+					Job pmJob = new Job("PM",pmttr,compList[i].getPMCost(),Job.JOB_PM);
+					pmJob.setCompCombo(compCombo[pmOpp]);
+					if(cnt==0){
+						// consider fixed cost only once, for the first job
+						pmJob.setFixedCost(compList[i].getPMFixedCost());
+					}
+					
+					// add job to schedule
+					schedule.addPMJob(pmJob,pmOpportunity[pmOpp]+cnt);
+					// reserve required labour for above job
+					setLabourAssignment(row.startTimes[pmOpp], row.startTimes[pmOpp]+pmttr, compList[i].getPMLabour());
+					cnt++;
 				}
-				schedule.addPMJob(pmJob,pmOpportunity+cnt);
-				pmTime+=pmttr;
-				cnt++;
 			}
 		}
-		return pmTime;
 	}
-
 }
+
 class CompTTF implements Comparable<CompTTF>{
 	public long ttf;
 	public int machineID;
