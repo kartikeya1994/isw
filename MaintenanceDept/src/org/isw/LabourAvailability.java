@@ -9,14 +9,14 @@ public class LabourAvailability {
 	 */
 	ArrayList<Tuple> timeline;
 	
-	public LabourAvailability(int[] maxLabour, int shiftDuration)
+	public LabourAvailability(int[] maxLabour, double shiftDuration)
 	{
 		timeline = new ArrayList<Tuple>();
 		Tuple tuple = new Tuple(0, shiftDuration, maxLabour);
 		timeline.add(tuple);
 	}
 	
-	public boolean checkAvailability(int startTime, int endTime, int[] labour)
+	public boolean checkAvailability(double startTime, double endTime, int[] labour)
 	{
 		/*
 		 * If given labour is available between start and end time
@@ -40,7 +40,7 @@ public class LabourAvailability {
 		return true;
 	}
 	
-	public void employLabour(int startTime, int endTime, int[] labour)
+	public void employLabour(double startTime, double endTime, int[] labour)
 	{
 		/*
 		 * Subtract specified amount of labour from available labour between start and end time
@@ -120,11 +120,11 @@ public class LabourAvailability {
 
 class Tuple
 {
-	public int start;
-	public int end;
+	public double start;
+	public double end;
 	public int[] labour;
 	
-	public Tuple(int start, int end, int[] labour)
+	public Tuple(double start, double end, int[] labour)
 	{
 		this.start = start;
 		this.end = end;

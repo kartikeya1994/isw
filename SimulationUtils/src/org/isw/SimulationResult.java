@@ -14,16 +14,17 @@ public class SimulationResult implements Serializable {
 	public int[] pmOpportunity;
 	public boolean noPM; // When there is no PM job to do
 
-	public long startTimes[]; //to be set and used for calculations by maintenance dept during planning
+	public double startTimes[]; //to be set and used for calculations by maintenance dept during planning
 	public int id; //to be set and used for calculations by maintenance dept during planning
-
+	public double pmTTRs[][];
+	
 	public SimulationResult(double cost, double pmAvgTime, int[] compCombo,int[] pmOpportunity, boolean noPM){
 		this.cost = cost;
 		this.pmAvgTime = pmAvgTime;
 		this.compCombo = compCombo;
 		this.pmOpportunity = pmOpportunity;
 		this.noPM = noPM;
-		this.startTimes = new long[pmOpportunity.length];
+		this.startTimes = new double[pmOpportunity.length];
 	}
 	public double getCost(){
 		return cost;

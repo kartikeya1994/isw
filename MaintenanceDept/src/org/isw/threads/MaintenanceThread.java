@@ -36,6 +36,7 @@ public class MaintenanceThread  extends Thread{
 	static ArrayList<Integer> port = new ArrayList<Integer>();
 	static ArrayList<Schedule> schedule = new ArrayList<Schedule>();
 	static ArrayList<Component[]> component = new ArrayList<Component[]>();
+	static ArrayList<double[]> pmTTRList = new ArrayList<double[]>();
 	static int numOfMachines;
 	static PriorityQueue<CompTTF> ttfList;
 	static LabourAvailability pmLabourAssignment = new LabourAvailability(pmMaxLabour, Macros.SHIFT_DURATION);
@@ -93,6 +94,8 @@ public class MaintenanceThread  extends Thread{
 				Schedule sched = p.jobList;
 				schedule.add(sched);
 				component.add(p.compList);
+				pmTTRList.add(new double[p.compList.length]);
+				
 				for(int j=0;j<p.results.length;j++)
 				{
 					p.results[j].id = i; //assign machine id to uniquely identify machine
@@ -129,17 +132,48 @@ public class MaintenanceThread  extends Thread{
 		for(int i=0;i<table.size();i++)
 		{
 			SimulationResult row = table.get(i);
-			
+			Component[] compList = component.get(row.id);
+			row.pmTTRs = new double[row.pmOpportunity.length][compList.length];
 			// check if PM is already being planned for machine (only 1 PM per shift)
 			// or if schedule is empty
 			if(!toPerformPM.containsKey(row.id) && !schedule.get(row.id).isEmpty())
 			{
-				// generate PM TTRs of all com
-				if(!checkLabourAssignment(row))
-					continue;
-				//incorporate the PM job(s) into schedule of machine
-				addPMJobs(schedule.get(row.id),component.get(row.id),row);
-				toPerformPM.put(row.id, true);
+				// generate PM TTRs of all components undergoing PM for this row
+				boolean meetsReqForAllOpp = true;
+				for(int pmOpp = 0; pmOpp<row.pmOpportunity.length; pmOpp++)
+				{
+					boolean meetsReq = true;
+					double startTime = row.startTimes[pmOpp]; //start time of opportunity
+					for(int compno=0;i< compList.length;i++)
+					{
+						int pos = 1<<compno;
+						if((pos&row.compCombo[pmOpp])!=0) //for each component in combo, generate TTR
+						{
+							row.pmTTRs[pmOpp][compno] = (double)(compList[compno].getPMTTR()*Macros.TIME_SCALE_FACTOR); //store PM TTR
+							
+							//check if particular component PM meets labour req
+							if(!pmLabourAssignment.checkAvailability(startTime, startTime+row.pmTTRs[pmOpp][compno], compList[compno].getPMLabour()))
+							{	
+								meetsReq = false;
+								break; // even if one component fails to meet requirement
+							}
+							startTime += row.pmTTRs[pmOpp][compno];
+						}
+					}
+					if(!meetsReq)
+					{
+						// add series of PM jobs at that opportunity.
+						meetsReqForAllOpp = false;
+						break;
+					}
+				}
+				
+				if(meetsReqForAllOpp)
+				{
+					//incorporate the PM job(s) into schedule of machine
+					addPMJobs(schedule.get(row.id),component.get(row.id),row);
+					toPerformPM.put(row.id, true);
+				}
 			}
 		}
 		
@@ -168,16 +202,17 @@ public class MaintenanceThread  extends Thread{
 		
 		for(int pmOpp = 0; pmOpp<pmOpportunity.length; pmOpp++)
 		{
+			double startTime = row.startTimes[pmOpp];
 			for(int i=0;i< compList.length;i++)
 			{
 				int pos = 1<<i;
 				if((pos&compCombo[pmOpp])!=0) //for each component in combo, add a PM job
 				{
-					long pmttr = (long)(compList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR);
+					long pmttr = (long)row.pmTTRs[pmOpp][i];
 					//Smallest unit is one hour
-					if(pmttr == 0)
+					if(pmttr < 1)
 						pmttr=1;
-					Job pmJob = new Job("PM",pmttr,compList[i].getPMCost(),Job.JOB_PM);
+					Job pmJob = new Job("PM",pmttr,compList[i].getPMLabourCost(),Job.JOB_PM);
 					pmJob.setCompCombo(compCombo[pmOpp]);
 					if(cnt==0){
 						// consider fixed cost only once, for the first job
@@ -187,7 +222,7 @@ public class MaintenanceThread  extends Thread{
 					// add job to schedule
 					schedule.addPMJob(pmJob,pmOpportunity[pmOpp]+cnt);
 					// reserve required labour for above job
-					setLabourAssignment(row.startTimes[pmOpp], row.startTimes[pmOpp]+pmttr, compList[i].getPMLabour());
+					pmLabourAssignment.employLabour(startTime, startTime+pmttr, compList[i].getPMLabour());
 					cnt++;
 				}
 			}
