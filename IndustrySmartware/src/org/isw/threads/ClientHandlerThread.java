@@ -16,6 +16,8 @@ import org.isw.Macros;
 import org.isw.Main;
 import org.isw.ui.ComponentTableView;
 
+import com.guigarage.flatterfx.FlatterFX;
+
 class ClientHandlerThread extends Thread {
 
 	MulticastSocket socket;
@@ -48,12 +50,13 @@ class ClientHandlerThread extends Thread {
 								// TODO Auto-generated method stub
 								 Stage stage = new Stage();
 						         stage.setTitle("Select components:");
-						         stage.setScene(new Scene(new ComponentTableView(), 800, 600));
+						         stage.setScene(new Scene(new ComponentTableView(), 1200, 600));
 						         stage.show();
 							}
 							
 						});
 						Main.machineBox.getChildren().add(machine);
+						FlatterFX.style();
 					}
 					
 				});

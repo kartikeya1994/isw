@@ -80,7 +80,7 @@ public class ListenerThread extends Thread
 						System.out.println("Running Simulations");
 						long starttime = System.currentTimeMillis();
 						SimulationResult[] results = null;
-						results = runSimulation(jl.getPMOpportunities());
+						//results = runSimulation(jl.getPMOpportunities());
 						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));
 						System.out.println("Sending simulation results to Maintenance");
 						IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
@@ -94,7 +94,7 @@ public class ListenerThread extends Thread
 						while(!threadPool.isTerminated()); 
 						Machine.shiftCount++;
 						FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);
-					} catch (ClassNotFoundException | InterruptedException | ExecutionException e) {
+					} catch (ClassNotFoundException e) {
 						e.printStackTrace();
 					}
 					break;
@@ -133,7 +133,7 @@ public class ListenerThread extends Thread
 		
 	}
 
-	private SimulationResult[] runSimulation(ArrayList<Integer> pmoList) throws InterruptedException, ExecutionException {
+	/*private SimulationResult[] runSimulation(ArrayList<Integer> pmoList) throws InterruptedException, ExecutionException {
 		if(pmoList.isEmpty()){
 		SimulationResult[] results ={new SimulationResult(Double.MAX_VALUE,0,1,-1,null)};
 		return results;
@@ -174,7 +174,7 @@ public class ListenerThread extends Thread
 		threadPool.shutdown();
 		while(!threadPool.isTerminated());
 		return results;
-	}
+	}*/
 
 
 }

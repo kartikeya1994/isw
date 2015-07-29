@@ -13,16 +13,16 @@ import org.isw.SimulationResult;
 
 public class SimulationThread implements Callable<SimulationResult> {
 	Schedule schedule; // Job Schedule received by scheduler
-	int compCombo; //Combination of components to perform PM on.
-	int pmLabour[]; //Number of labourers required.
-	int pmOpportunity;
+	int compCombo[]; //Combination of components to perform PM on.
+	int pmOpportunity[];
 	int noOfSimulations = Macros.SIMULATION_COUNT;
+	boolean noPM;
 
-	public SimulationThread(Schedule schedule, int compCombo, int pmOpportunity){
+	public SimulationThread(Schedule schedule, int compCombo[], int pmOpportunity[],boolean noPM){
 		this.schedule = schedule;
 		this.compCombo = compCombo;
 		this.pmOpportunity = pmOpportunity;
-		this.pmLabour = new int[3];
+		this.noPM = noPM;
 	}
 	/**
 	 * We shall run the simulation 1000 times,each simulation being Macros.SHIFT_DURATION hours (real time) in duration.
@@ -41,7 +41,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 			Schedule simSchedule = new Schedule(schedule);
 			Component[] simCompList = Machine.compList.clone();
 			/*Add PM job to the schedule*/
-			if(pmOpportunity >=0 ){
+			if(!noPM){
 				addPMJobs(simSchedule,simCompList);
 			}
 			/*Calculate the TTF for every component and add it's corresponding CM job 
@@ -129,7 +129,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 		}
 		totalCost /= noOfSimulations;
 		pmAvgTime /= noOfSimulations;
-		return new SimulationResult(totalCost,pmAvgTime,compCombo,pmOpportunity,pmLabour);
+		return new SimulationResult(totalCost,pmAvgTime,compCombo,pmOpportunity,noPM);
 	}
 	/*Add PM job for the given combination of components.
 	 * The PM jobs are being split into smaller PM jobs for each component.
@@ -137,23 +137,22 @@ public class SimulationThread implements Callable<SimulationResult> {
 	 * */
 	private void addPMJobs(Schedule simSchedule,Component[] simCompList) {
 		int cnt = 0;
+		for(int pmOppo : pmOpportunity){
 		for(int i=0;i< simCompList.length;i++){
 			int pos = 1<<i;
-			if((pos&compCombo)!=0){
+			if((pos&compCombo[pmOppo])!=0){
 				long pmttr = (long)(simCompList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR);
 				//Smallest unit is one hour
 				if(pmttr == 0)
 					pmttr=1;
 				Job pmJob = new Job("PM",pmttr,simCompList[i].getPMLabourCost(),Job.JOB_PM);
-				pmJob.setCompCombo(compCombo);
-				pmLabour[0]+= simCompList[i].getPMLabour()[0];
-				pmLabour[1]+= simCompList[i].getPMLabour()[1];
-				pmLabour[2]+= simCompList[i].getPMLabour()[2];
+				pmJob.setCompCombo(compCombo[pmOppo]);
 				if(cnt==0){
 					pmJob.setFixedCost(simCompList[i].getPMFixedCost());
 				}
-				simSchedule.addPMJob(pmJob,pmOpportunity+cnt);
+				simSchedule.addPMJob(pmJob,pmOpportunity[pmOppo]+cnt);
 				cnt++;
+			}
 			}
 		}
 	}

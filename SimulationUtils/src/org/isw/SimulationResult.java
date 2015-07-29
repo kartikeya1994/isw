@@ -60,5 +60,9 @@ public class SimulationResult implements Serializable {
 		}
 		return count;
 	}
+	public int getChormosome() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
 }

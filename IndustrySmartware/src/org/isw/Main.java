@@ -46,7 +46,7 @@ public class Main extends Application {
 			grid.add(maintenanceStatus, 3, 0);
 			vbox.getChildren().add(grid);
 			vbox.getChildren().add(machineBox);
-			
+			FlatterFX.style();
 			Scene scene = new Scene(vbox,800,600);
 			//FlatterFX.style();
 			//scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());

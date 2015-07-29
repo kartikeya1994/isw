@@ -4,6 +4,11 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="con" path="org.eclipse.fx.ide.jdt.core.JAVAFX_CONTAINER"/>
 	<classpathentry kind="lib" path="libs/flatter-0.7.jar"/>
+	<classpathentry kind="lib" path="libs/poi-3.10-FINAL-20140208.jar"/>
+	<classpathentry kind="lib" path="libs/poi-ooxml-3.10-FINAL-20140208.jar"/>
+	<classpathentry kind="lib" path="libs/poi-ooxml-schemas-3.10-FINAL-20140208.jar"/>
+	<classpathentry kind="lib" path="libs/xmlbeans-5.3.0-m7.jar"/>
+	<classpathentry kind="lib" path="libs/dom4j-1.6.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/SimulationUtils"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
