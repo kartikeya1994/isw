@@ -105,6 +105,9 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	}
 	
 	public synchronized void decrement(long delta) throws IOException{
+		/*
+		 * Decrements the first job and the total time sum by delta
+		 */
 		jobs.get(0).decrement(delta);
 		sum -= delta;
 		if(sum < 0){

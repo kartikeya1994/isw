@@ -43,11 +43,7 @@ public class Machine {
 		boolean iswRegistered = false;
 		boolean schedulerRegistered = false;
 		Macros.loadMacros();
-		System.out.println("Enter age of machine in hours:");
-		Scanner in = new Scanner(System.in);
-		int age = in.nextInt();
-		System.out.println("No of components");
-		int n = in.nextInt();
+		
 		try
 		{
 			DatagramPacket schedulerPacket  = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_ISW_IP);
@@ -59,14 +55,14 @@ public class Machine {
 			ServerSocket tcpSocket = new ServerSocket(Macros.MACHINE_PORT_TCP);
 			socket.setSoTimeout(3000);
 
-			while(!schedulerRegistered || !iswRegistered || !maintenanceRegistered)
+			while(!schedulerRegistered || !iswRegistered || !maintenanceRegistered) // loop until registered with all
 			{
 				System.out.println("Finding server...");
-				if(!maintenanceRegistered)
+				if(!maintenanceRegistered) // register machine with maintenance
 					socket.send(schedulerPacket);
-				if(!iswRegistered)
+				if(!iswRegistered) //register machine with central logging
 					socket.send(iswPacket);
-				if(!schedulerRegistered)
+				if(!schedulerRegistered) // register machine with scheduler
 					socket.send(maintenancePacket);
 				
 				try
@@ -96,6 +92,7 @@ public class Machine {
 			
 			//machineNo = Integer.parseInt(args[0]);
 			compList = parseExcel(age,n);
+			//Variables required for the simulation results
 			downTime = 0;
 			jobsDone = 0;
 			cmJobsDone = pmJobsDone = 0;

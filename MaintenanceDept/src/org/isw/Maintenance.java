@@ -11,11 +11,12 @@ import org.isw.threads.ListenerThread;
 
 public class Maintenance 
 {
+	/*
+	 * Register with central logging and start listener thread
+	 */
 
 	static DatagramSocket socket;
 	
-	
-
 	public static void main(String[] args)
 	{
 		Macros.loadMacros();
@@ -24,6 +25,8 @@ public class Maintenance
 			boolean registered = false;
 			DatagramPacket iswPacket = FlagPacket.makePacket(Macros.ISW_GROUP, Macros.ISW_MULTICAST_PORT, Macros.REQUEST_ISW_IP|Macros.MAINTENANCE_DEPT_FLAG);
 			while(!registered){
+				
+				//register with central logging
 				socket.send(iswPacket);
 
 				FlagPacket packetIn;

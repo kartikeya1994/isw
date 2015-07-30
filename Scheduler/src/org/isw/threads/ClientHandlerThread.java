@@ -7,7 +7,11 @@ import org.isw.FlagPacket;
 import org.isw.MachineList;
 import org.isw.Macros;
 
-class ClientHandlerThread extends Thread {
+class ClientHandlerThread extends Thread
+{
+	/*
+	 * Add incoming machine to machine list and reply with Scheduling Dept IP
+	 */
 
 	MulticastSocket socket;
 	FlagPacket packet;

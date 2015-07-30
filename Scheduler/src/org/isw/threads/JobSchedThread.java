@@ -31,8 +31,6 @@ import org.isw.Schedule;
 
 public class JobSchedThread extends Thread
 {
-	final static int SCHED_PUT = 3;
-	final static int SCHED_GET = 4;
 	MachineList machineList;
 	Random r = new Random();
 	DatagramSocket socket;
@@ -49,31 +47,32 @@ public class JobSchedThread extends Thread
 
 	public void run()
 	{	
-		
-
-		try {
+		try 
+		{
 			socket = new DatagramSocket(Macros.SCHEDULING_DEPT_PORT);
 			tcpSocket = new ServerSocket(Macros.SCHEDULING_DEPT_PORT_TCP);
 		} catch (SocketException e1) {
 			e1.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		int cnt = 0;
-		parseJobs();
+		parseJobs(); // from Excel sheet
+		
 		while(cnt++ < shiftCount)
 		{	
+			// Priority Queue fetches schedules with least total job time
 			PriorityQueue<Schedule> pq = new PriorityQueue<Schedule>();
-			Enumeration<InetAddress> en = machineList.getIPs();
-			while(en.hasMoreElements())
+			Enumeration<InetAddress> machineIPs = machineList.getIPs();
+			while(machineIPs.hasMoreElements())
 			{	
-				InetAddress ip = en.nextElement();
+				InetAddress ip = machineIPs.nextElement();
 				try {
 					//request pending jobs from previous shift from machine
 					final ByteArrayOutputStream baos=new ByteArrayOutputStream();
 					final DataOutputStream daos=new DataOutputStream(baos);
-					daos.writeInt(Macros.REQUEST_PREVIOUS_SHIFT);
+					daos.writeInt(Macros.REQUEST_PREVIOUS_SHIFT); // request pending jobs of previous shift of machine
 					daos.close();
 					final byte[] bufOut=baos.toByteArray();
 					DatagramPacket packetOut = new DatagramPacket(bufOut, bufOut.length, ip, Macros.MACHINE_PORT);
@@ -87,7 +86,7 @@ public class JobSchedThread extends Thread
 					ObjectInputStream is = new ObjectInputStream(in);
 					Schedule jl = (Schedule) is.readObject();	
 					jl.setAddress(ip);
-					pq.add(jl);	
+					pq.add(jl);	// add pending job lists to priority queue
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (ClassNotFoundException e) {
@@ -98,15 +97,20 @@ public class JobSchedThread extends Thread
 
 			System.out.println("Job list: ");
 			for(int i=0;i<jobArray.size();i++){
-				Schedule min = pq.remove();
+				/*
+				 * Generate new schedule: Get schedule with minimum total time,
+				 * and add the first job in jobArray to it.
+				 */
+				Schedule min = pq.remove(); 
 				min.addJob(jobArray.get(i));
 				System.out.print(jobArray.get(i).getJobName()+": "+String.valueOf(jobArray.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR)+" ");
 				pq.add(min);
 			}
 
-			while(!pq.isEmpty()){
+			while(!pq.isEmpty())
+			{
 				try {
-					//send job list to machine
+					//send job lists to machines
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 					ObjectOutputStream os = new ObjectOutputStream(outputStream);
 					os.writeObject(pq.peek());
@@ -133,18 +137,23 @@ public class JobSchedThread extends Thread
 				}
 
 			}
-
+			// schedules are sent
+			// wait till all machines send REQUEST_NEXT_SHIFT
 			FlagPacket fp;
 			int count =0;
 			while(count < machineList.count()){
 				fp = FlagPacket.receiveTCP(tcpSocket,0);
-				if(fp.flag == Macros.REQUEST_NEXT_SHIFT)
+				if(fp.flag == Macros.REQUEST_NEXT_SHIFT) // shift is over
 					count++;
 			}
 		}
+		
+		// Simulation Complete
 		System.out.println("Process Complete");
 		Enumeration<InetAddress> en = machineList.getIPs();
-		while(en.hasMoreElements()){
+		while(en.hasMoreElements())
+		{
+			// Tell all machines that simulation is complete
 			DatagramPacket dp = FlagPacket.makePacket(en.nextElement().getHostAddress(), Macros.MACHINE_PORT, Macros.PROCESS_COMPLETE);
 			try {
 				socket.send(dp);
@@ -152,18 +161,21 @@ public class JobSchedThread extends Thread
 				e.printStackTrace();
 			}
 		}
-		
+
 	}
-	
-	
-	private void parseJobs() {
+
+	private void parseJobs() 
+	{
+		/*
+		 * Get jobs from Excel sheet
+		 */
 		jobArray = new ArrayList<Job>();
 		try
 		{
 			FileInputStream file = new FileInputStream(new File("Jobs.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
-			
+
 			for(int i=1;i<=12;i++)
 			{
 				Row row = sheet.getRow(i);
@@ -183,24 +195,19 @@ public class JobSchedThread extends Thread
 		{
 			e.printStackTrace();
 		}	
-		//sort jobs in ascending order of job time
+		//sort jobs in descending order of job time
 		Collections.sort(jobArray, new JobComparator());
 	}
 }
 
 class JobComparator implements Comparator<Job> {
+	/*
+	 * Sort jobs in descending order of job time
+	 */
 	@Override
 	public int compare(Job a, Job b) 
 	{
-			return signOf(b.getJobTime() - a.getJobTime());
+		return Double.compare(b.getJobTime(),a.getJobTime());
 	}
-	public int signOf(double a)
-	{
-		if(a>0)
-			return 1;
-		else if(a<0)
-			return -1;
-		else
-			return 0;
-	}
+	
 }

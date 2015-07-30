@@ -20,20 +20,26 @@ public class JobExecThread extends Thread{
 		this.socket = socket;
 		timePacket = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_TIME);
 	}
+	
 	public void run(){
-	int sum=0;
+		int time=0;
 
-	while(!jobList.isEmpty() && sum < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR){
-		
-		Job current = jobList.peek(); 
-		try{
-		jobList.decrement(1);
-		}
-		catch(IOException e){
-			e.printStackTrace();
-			System.exit(0);
-		}
-		switch(current.getJobType()){
+		while(!jobList.isEmpty() && time < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR){
+
+			Job current = jobList.peek(); 
+			try{
+				jobList.decrement(1);
+			}
+			catch(IOException e){
+				e.printStackTrace();
+				System.exit(0);
+			}
+			
+			switch(current.getJobType())
+			{
+			/*
+			 * Increment costs according to models depending upon job type
+			 */
 			case Job.JOB_NORMAL:
 				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				for(Component comp : Machine.compList)
@@ -43,7 +49,6 @@ public class JobExecThread extends Thread{
 				Machine.pmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
 				Machine.pmDownTime++;
 				Machine.downTime++;
-				
 				break;
 			case Job.JOB_CM:
 				Machine.cmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
@@ -54,64 +59,70 @@ public class JobExecThread extends Thread{
 			case Job.WAIT_FOR_MT:
 				Machine.downTime++;
 				Machine.waitTime++;
-		}
-		if(current.getJobTime()<=0){
-			//Job ends here
-			switch(current.getJobType()){
-			case Job.JOB_PM:
-				for(int i =0; i<Machine.compList.length;i++){
-					int pos=1<<i;
-					int bitmask = current.getCompCombo();
-					if((pos&bitmask) != 0){
-						Component comp = Machine.compList[i];
-						comp.initAge = (1-comp.pmRF)*comp.initAge;
-						Machine.compPMJobsDone[i]++;
+			}
+			
+			if(current.getJobTime()<=0)
+			{
+				//Job ends here
+				switch(current.getJobType())
+				{
+				case Job.JOB_PM:
+					// decrease the age for each component that underwent PM
+					for(int i =0; i<Machine.compList.length;i++){
+						int pos=1<<i;
+						int bitmask = current.getCompCombo();
+						if((pos&bitmask) != 0){
+							Component comp = Machine.compList[i];
+							comp.initAge = (1-comp.pmRF)*comp.initAge;
+							Machine.compPMJobsDone[i]++;
+						}
 					}
+					Machine.pmJobsDone++;
+					break;
+					
+				case Job.JOB_CM:
+					// 
+					Component comp = Machine.compList[current.getCompNo()];
+					comp.initAge = (1 - comp.cmRF)*comp.initAge;
+					Machine.cmJobsDone++;
+					Machine.compCMJobsDone[current.getCompNo()]++;
+					break;
+				case Job.JOB_NORMAL:
+					Machine.jobsDone++;
+					break;
 				}
-				Machine.pmJobsDone++;
-				break;
-			case Job.JOB_CM:	
-				Component comp = Machine.compList[current.getCompNo()];
-				comp.initAge = (1 - comp.cmRF)*comp.initAge;
-				Machine.cmJobsDone++;
-				Machine.compCMJobsDone[current.getCompNo()]++;
-				break;
-			case Job.JOB_NORMAL:
-				Machine.jobsDone++;
-				break;
+				try{
+					System.out.println("Job "+ jobList.remove().getJobName()+" complete");
+				}
+				catch(IOException e){
+					e.printStackTrace();
+					System.exit(0);
+				}
 			}
-			try{
-			System.out.println("Job "+ jobList.remove().getJobName()+" complete");
-			}
-			catch(IOException e){
+
+			time++;
+			Machine.runTime++;
+			try {
+				byte[] bufIn = new byte[128];
+				DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
+				socket.send(timePacket);
+				socket.receive(packet);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
-				System.exit(0);
 			}
-			}
-		
-		sum++;
-		Machine.runTime++;
-		try {
-			byte[] bufIn = new byte[128];
-			DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
-			socket.send(timePacket);
-			socket.receive(packet);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
 		}
-		
-	}
-	if(jobList.isEmpty()){
-		Machine.idleTime += Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR - sum;
-		return;
+		if(jobList.isEmpty()){
+			Machine.idleTime += Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR - time;
+			return;
 		}
-	int i = jobList.indexOf(jobList.peek());
-	while(i < jobList.getSize()){
-		Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost()*Macros.SHIFT_DURATION;
+		int i = jobList.indexOf(jobList.peek());
+		while(i < jobList.getSize()){
+			Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost()*Macros.SHIFT_DURATION;
+		}
+
 	}
-	
-	}
-	
+
 
 }

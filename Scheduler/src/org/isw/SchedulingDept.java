@@ -22,6 +22,7 @@ public class SchedulingDept
 			DatagramSocket socket = new DatagramSocket(Macros.SCHEDULING_DEPT_PORT);
 			DatagramPacket iswPacket = FlagPacket.makePacket(Macros.ISW_GROUP, Macros.ISW_MULTICAST_PORT, Macros.REQUEST_ISW_IP|Macros.SCHEDULING_DEPT_FLAG);
 			while(!registered){
+				// register with central logging
 				socket.send(iswPacket);
 				FlagPacket packetIn;
 				try
