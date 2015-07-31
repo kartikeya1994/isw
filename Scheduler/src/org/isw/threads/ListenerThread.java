@@ -32,18 +32,22 @@ public class ListenerThread extends Thread
 				 */
 				FlagPacket fp = FlagPacket.receiveMulticast(socket);
 				switch(fp.flag){
-				case Macros.REQUEST_SCHEDULING_DEPT_IP:
-					// Register incoming machine and reply with own IP
-					ClientHandlerThread worker = new ClientHandlerThread(socket, fp, machineList);
-					worker.start();
+				
+					case Macros.REQUEST_SCHEDULING_DEPT_IP:
+						// Register incoming machine and reply with own IP
+						ClientHandlerThread worker = new ClientHandlerThread(socket, fp, machineList);
+						worker.start();
 					break;
-				case Macros.REQUEST_TIME:
-					// COMPLETE THIS
-					if(machineCount++ == machineList.count()){
+					case Macros.REQUEST_TIME:
+						// COMPLETE THIS
+						if(machineCount++ == machineList.count()){
 						machineCount = 0;
 						DatagramPacket timePacket = FlagPacket.makePacket(fp.ip.getHostAddress(), fp.port, Macros.REPLY_TIME);
 						socket.send(timePacket);
 					}
+						break;
+					case Macros.START_SCHEDULING:
+						
 				}	
 			}
 

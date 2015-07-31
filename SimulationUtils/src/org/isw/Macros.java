@@ -46,6 +46,7 @@ public class Macros {
 	public static final int MACHINE_WAITING_FOR_CM_LABOUR = 28;
 	public static final int MACHINE_PM = 29;
 	public static final int MACHINE_CM = 30;
+	public static final int START_SCHEDULING = 31;
 	
 	
 	public static final int MAINTENANCE_DEPT_MULTICAST_PORT = 8886;
@@ -62,6 +63,7 @@ public class Macros {
 	public static final String SCHEDULING_DEPT_GROUP = "224.1.1.1";
 	public static final String ISW_GROUP = "224.1.1.3";
 	public static final String MAINTENANCE_DEPT_GROUP = "224.1.1.4";
+	
 	
 	
 	

@@ -1,10 +1,14 @@
 package org.isw;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
+import java.util.Arrays;
 
 import org.isw.threads.ListenerThread;
 
@@ -96,8 +100,32 @@ public class Machine
 					break;
 				}
 			}
-			
-			
+			boolean init = false;
+			while(!init){
+				byte[] bufIn = new byte[4096*8];
+				DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
+				//Receive signals from Scheduling Dept
+				try
+				{
+				socket.receive(packet); 
+				}
+				catch(SocketTimeoutException stoe) {
+					System.out.println("Timed out.");
+					continue; 
+				}
+				byte[] reply=packet.getData();
+				byte [] header = Arrays.copyOfRange(reply, 0, 12);
+				final ByteArrayInputStream bais=new ByteArrayInputStream(header);
+				DataInputStream dias =new DataInputStream(bais);
+				Macros.SHIFT_DURATION = dias.readInt();
+				Macros.TIME_SCALE_FACTOR = dias.readInt();
+				Macros.SIMULATION_COUNT = dias.readInt();
+				byte[] data = Arrays.copyOfRange(reply, 12, reply.length);
+				ByteArrayInputStream in = new ByteArrayInputStream(data);
+				ObjectInputStream is = new ObjectInputStream(in);
+				compList = (Component[])is.readObject();
+				init = true;
+			}
 			
 			//Variables required for the simulation results
 			downTime = 0;
@@ -121,6 +149,9 @@ public class Machine
 
 		}catch(IOException e)
 		{
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

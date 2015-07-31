@@ -1,6 +1,10 @@
 package org.isw;
 	
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
@@ -26,6 +30,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.isw.threads.ListenerThread;
 
 
@@ -34,13 +41,17 @@ public class Main extends Application {
 	public static Text maintenanceStatus;
 	public static TilePane machineBox;
 	public static HashMap<InetAddress,Component[]> machines;
+	public static InetAddress schedulerIP;
+	public static InetAddress maintenanceIP;
 	Scene scene1,scene2;
 	Stage stage;
 	DatagramSocket udpSocket;
+	public static double[] labourCost;
 	@Override
 	public void start(Stage primaryStage) {
 		
 		try {
+			parseExcel();
 			 udpSocket = new DatagramSocket(Macros.ISW_PORT);
 			 stage = primaryStage;
 			 scene1 = getScene1();
@@ -59,18 +70,44 @@ public class Main extends Application {
 		listener.start();
 	}
 	
+	private void parseExcel() throws IOException {
+		FileInputStream file = new FileInputStream(new File("components.xlsx"));
+		XSSFWorkbook workbook = new XSSFWorkbook(file);
+		XSSFSheet labourSheet = workbook.getSheetAt(1);		
+		Row row = labourSheet.getRow(2);
+		labourCost = new double[3];
+		labourCost[0] = row.getCell(1).getNumericCellValue();
+		labourCost[1] = row.getCell(2).getNumericCellValue();
+		labourCost[2] = row.getCell(3).getNumericCellValue();
+	}
+
 	private Scene getScene2() {
 		
 		GridPane pane = new GridPane();
 		pane.setHgap(10);
         pane.setVgap(10);
 		Label label1 = new Label("Number of days to simulate:");
-		TextField days = new TextField ();
+		TextField days = new TextField ("365");
 		pane.add(label1, 0, 0);
 		pane.add(days, 1, 0);
 		pane.add(new Label("Shift duration"),0 , 1);
-		TextField shiftDuration = new TextField();
+		pane.add(new Label("Skilled labourers"), 0, 2);
+		pane.add(new Label("Semi-skilled laboureres"), 0, 3);
+		pane.add(new Label("Unskilled labourers"),0,4);
+		pane.add(new Label("Time scale factor"), 0, 5);
+		pane.add(new Label("Simulation count"),0,6);
+		TextField shiftDuration = new TextField("8");
 		pane.add(shiftDuration,1,1);
+		TextField skilled = new TextField("2");
+		TextField semiskilled = new TextField("4");
+		TextField unskilled = new TextField("8");
+		TextField scaleFactor = new TextField("1");
+		TextField simulationCount = new TextField("1000");
+		pane.add(skilled,1,2);
+		pane.add(semiskilled,1,3);
+		pane.add(unskilled,1,4);
+		pane.add(scaleFactor, 1, 5);
+		pane.add(simulationCount, 1, 6);
 		BorderPane bp = new BorderPane();
 		bp.setCenter(pane);
 		bp.setPadding(new Insets(20));
@@ -82,27 +119,71 @@ public class Main extends Application {
 
 			@Override
 			public void handle(ActionEvent event) {
-				for(Entry<InetAddress, Component[]> entry: machines.entrySet()){
-					if(entry.getValue() != null){
-						
-					      try {
-					    	  ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							ObjectOutputStream oos = new ObjectOutputStream(baos);
-							oos.writeObject(entry.getValue());
-							byte[] data = baos.toByteArray();
-							oos.close();
-							DatagramPacket packet = new DatagramPacket(data,data.length,entry.getKey(),Macros.MACHINE_PORT); 
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
+				try {
+					initMachines();
+					initMaintenance();
+					initScheduler();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 				
+						
+			}
+
+			private void initScheduler() throws NumberFormatException, IOException {
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				DataOutputStream dos = new DataOutputStream(baos);
+				dos.writeInt(Integer.parseInt(shiftDuration.getText()));
+				dos.writeInt(Integer.parseInt(days.getText()));
+				dos.writeInt(Integer.parseInt(scaleFactor.getText()));
+				byte compdata[] = baos.toByteArray();
+				DatagramPacket packet = new DatagramPacket(compdata,compdata.length,schedulerIP,Macros.SCHEDULING_DEPT_PORT);;
+				udpSocket.send(packet);
+			}
+
+			private void initMaintenance() throws NumberFormatException, IOException {
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				DataOutputStream dos = new DataOutputStream(baos);
+				dos.writeInt(Integer.parseInt(shiftDuration.getText()));
+				dos.writeInt(Integer.parseInt(scaleFactor.getText()));
+				dos.writeInt(Integer.parseInt(skilled.getText()));
+				dos.writeInt(Integer.parseInt(semiskilled.getText()));
+				dos.writeInt(Integer.parseInt(unskilled.getText()));
+				byte[] data = baos.toByteArray();
+				DatagramPacket packet = new DatagramPacket(data,data.length,maintenanceIP,Macros.MACHINE_PORT); 
+				udpSocket.send(packet);
+			}
+
+			private void initMachines() throws IOException {
+				for(Entry<InetAddress, Component[]> entry: machines.entrySet()){
+					if(entry.getValue() != null){
+					    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							ObjectOutputStream oos = new ObjectOutputStream(baos);
+							oos.writeObject(entry.getValue());
+							byte[] compdata = baos.toByteArray();
+							oos.close();
+							baos.reset();
+							DataOutputStream dos = new DataOutputStream(baos);
+							dos.writeInt(Integer.parseInt(shiftDuration.getText()));
+							dos.writeInt(Integer.parseInt(scaleFactor.getText()));
+							dos.writeInt(Integer.parseInt(simulationCount.getText()));
+							byte[] configdata = baos.toByteArray();
+							dos.close();
+							baos.reset();
+							baos.write(configdata);
+							baos.write(compdata);
+							byte[] data = baos.toByteArray();
+							DatagramPacket packet = new DatagramPacket(data,data.length,entry.getKey(),Macros.MACHINE_PORT); 
+							udpSocket.send(packet);
+					     
+					}
+				}
 				
 			}
 			
 		});
+		
 		back.setOnAction(new EventHandler<ActionEvent>(){
 			@Override
 			public void handle(ActionEvent event) {

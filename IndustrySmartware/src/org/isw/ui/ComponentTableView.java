@@ -12,6 +12,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TableColumn;
@@ -28,16 +29,23 @@ import org.isw.Main;
 
 public class ComponentTableView extends VBox {
 	public ComponentTableView(InetAddress ip){
+		super(10);
 		CheckBox isMachineSelected = new CheckBox("Select Machine");
 		isMachineSelected.setSelected(false);
 		TableView<Component> componentTable = new TableView<Component>();
 		TableColumn<Component,Boolean> checkColumn = new TableColumn<Component,Boolean>("Select");
 		checkColumn.setCellValueFactory(cellData -> cellData.getValue().active);
-		checkColumn.setCellFactory(CheckBoxTableCell.forTableColumn(checkColumn));
-		componentTable.getColumns().addAll(checkColumn,createPMColumns(),createCMColumns());
+		checkColumn.setCellFactory(tc -> new CheckBoxTableCell<>());
+		checkColumn.setEditable(true);
+		TableColumn<Component,String> compNameColumn = new TableColumn<Component,String>(); 
+		compNameColumn.setCellValueFactory(cellData -> cellData.getValue().compNameP);
+		TableColumn<Component,Number> initAge = new TableColumn<Component,Number>();
+		initAge.setCellValueFactory(cellData -> cellData.getValue().initAgeP);
+		componentTable.getColumns().addAll(checkColumn,compNameColumn,initAge,createPMColumns(),createCMColumns());
 		Button saveButton = new Button("Save");
+		componentTable.setEditable(true);
 		Component[] components = parseExcel() ;
-		
+		//Fix boolean thingy
 		saveButton.setOnAction(new EventHandler<ActionEvent>(){
 
 			@Override
@@ -59,7 +67,9 @@ public class ComponentTableView extends VBox {
 		ObservableList<Component> componentData = FXCollections.observableArrayList();
 		componentData.addAll(components);
 		componentTable.setItems(componentData);
-		this.getChildren().addAll(componentTable,saveButton);
+		this.setPadding(new Insets(20));
+		
+		this.getChildren().addAll(componentTable,isMachineSelected,saveButton);
 	}
 
 	private TableColumn createPMColumns() {
@@ -126,11 +136,12 @@ public class ComponentTableView extends VBox {
 		 * Total number of components should be 14 for our experiment.
 		 * Different component excel file for different machineNo (Stick
 		 * to one for now)
-		 * **/
+		 * 
+		 * */
 		Component[] c = new Component[14];
 		try
 		{
-			FileInputStream file = new FileInputStream(new File("Components.xlsx"));
+			FileInputStream file = new FileInputStream(new File("components.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
 			XSSFSheet labourSheet = workbook.getSheetAt(1);
@@ -138,6 +149,7 @@ public class ComponentTableView extends VBox {
 			{
 				Row row = sheet.getRow(i);
 				Component comp = new Component();
+				comp.labourCost = Main.labourCost;
 				//--------CM data------------
 				//0 is assembly name
 				comp.compName = row.getCell(1).getStringCellValue();
@@ -147,7 +159,7 @@ public class ComponentTableView extends VBox {
 				comp.cmMuRep = row.getCell(5).getNumericCellValue();
 				comp.cmSigmaRep = row.getCell(6).getNumericCellValue();
 				comp.cmMuSupp = row.getCell(7).getNumericCellValue();
-				comp.cmSigmaRep = row.getCell(8).getNumericCellValue();
+				comp.cmSigmaSupp = row.getCell(8).getNumericCellValue();
 				comp.cmRF = row.getCell(9).getNumericCellValue();
 				comp.cmCostSpare = row.getCell(10).getNumericCellValue();
 				comp.cmCostOther = row.getCell(11).getNumericCellValue();
@@ -176,7 +188,6 @@ public class ComponentTableView extends VBox {
 				comp.cmLabour[2] = (int)row.getCell(6).getNumericCellValue();
 				comp.initProps();
 				c[i-5] = comp;
-			
 			}
 			file.close();
 			

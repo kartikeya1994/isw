@@ -7,6 +7,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 import org.apache.commons.math3.random.GaussianRandomGenerator;
 import org.apache.commons.math3.random.JDKRandomGenerator;
@@ -46,7 +48,8 @@ public class Component implements Serializable {
 	public int[] cmLabour;
 	public double[] labourCost;
 	public double initAge;
-	
+	public StringProperty compNameP;
+	public DoubleProperty initAgeP;
 	public BooleanProperty active;
 	public DoubleProperty pmMuRepP;
 	public DoubleProperty pmSigmaRepP;
@@ -119,7 +122,10 @@ public class Component implements Serializable {
 	}
 
 	public void initProps() {
+		
 		active = new SimpleBooleanProperty(false);
+		compNameP = new SimpleStringProperty(compName);
+		initAgeP = new SimpleDoubleProperty(initAge);
 		cmEtaP = new SimpleDoubleProperty(cmEta);
 		cmBetaP = new SimpleDoubleProperty(cmBeta);
 		cmMuRepP = new SimpleDoubleProperty(cmMuRep);

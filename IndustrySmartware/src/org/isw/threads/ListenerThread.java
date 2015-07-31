@@ -39,6 +39,7 @@ public class ListenerThread extends Thread
 					}
 					else if((fp.flag & Macros.SCHEDULING_DEPT_FLAG) !=0 ){
 						DatagramPacket packet = FlagPacket.makePacket(fp.ip.getHostAddress(), fp.port, Macros.REPLY_ISW_IP);
+						Main.schedulerIP = fp.ip;
 						socket.send(packet);
 						 Platform.runLater(new Runnable() {
 						        @Override
@@ -50,6 +51,7 @@ public class ListenerThread extends Thread
 					}
 					else if((fp.flag & Macros.MAINTENANCE_DEPT_FLAG) !=0){
 						DatagramPacket packet = FlagPacket.makePacket(fp.ip.getHostAddress(), fp.port, Macros.REPLY_ISW_IP);
+						Main.maintenanceIP = fp.ip;
 						socket.send(packet);
 						 Platform.runLater(new Runnable() {
 						        @Override

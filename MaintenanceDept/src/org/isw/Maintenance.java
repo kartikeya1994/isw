@@ -1,5 +1,7 @@
 package org.isw;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -16,7 +18,7 @@ public class Maintenance
 	 */
 	
 	static DatagramSocket socket;
-	
+	static int maxLabour[] = new int[3];
 	public static void main(String[] args)
 	{
 		Macros.loadMacros();
@@ -40,7 +42,6 @@ public class Maintenance
 				}
 				
 				if (packetIn.flag == Macros.REPLY_ISW_IP){
-					socket.close();
 					registered=true;
 					Logger.init(packetIn.ip);
 				}
@@ -54,7 +55,34 @@ public class Maintenance
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+		boolean init = false;
+		while(!init){
+			try{
+			byte[] bufIn = new byte[4096*8];
+			DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
+			//Receive signals from Scheduling Dept
+			try
+			{
+				socket.receive(packet); 
+			}
+			catch(SocketTimeoutException stoe) {
+				System.out.println("Timed out.");
+				continue; 
+			} 
+			byte[] reply=packet.getData();
+			final ByteArrayInputStream bais=new ByteArrayInputStream(reply);
+			DataInputStream dias =new DataInputStream(bais);
+			Macros.SHIFT_DURATION = dias.readInt();
+			Macros.TIME_SCALE_FACTOR = dias.readInt();
+			maxLabour[0] = dias.readInt();
+			maxLabour[1] = dias.readInt();
+			maxLabour[2] = dias.readInt();
+			socket.close();
+			init = true;
+			} catch(IOException e){
+				
+			} 
+			}
 		MachineList machineList = new MachineList();
 		ListenerThread listener = new ListenerThread(machineList);
 		listener.start();
