@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.isw.Component;
 import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.Machine;
@@ -29,13 +30,15 @@ public class ListenerThread extends Thread
 	InetAddress schedulerIP;
 	DatagramSocket udpSocket;
 	ServerSocket tcpSocket;
+	Component[] compList;
 	private InetAddress maintenanceIP =null;
 
-	public ListenerThread(InetAddress schedulerIP, InetAddress maintenanceIP, DatagramSocket udpSocket,ServerSocket tcpSocket) {
+	public ListenerThread(InetAddress schedulerIP, InetAddress maintenanceIP, DatagramSocket udpSocket,ServerSocket tcpSocket, Component[] compList) {
 		this.schedulerIP = schedulerIP;
 		this.udpSocket = udpSocket;
 		this.tcpSocket = tcpSocket;
 		this.maintenanceIP = maintenanceIP;
+		this.compList = compList;
 	}
 
 	public void run()
@@ -106,7 +109,7 @@ public class ListenerThread extends Thread
 						
 						//Execute schedule received by maintenance
 						ExecutorService threadPool = Executors.newSingleThreadExecutor();
-						threadPool.execute(new JobExecThread(jl,udpSocket));
+						threadPool.execute(new JobExecThread(jl, udpSocket, tcpSocket, maintenanceIP, compList));
 						threadPool.shutdown();
 						while(!threadPool.isTerminated()); 
 						Machine.shiftCount++;

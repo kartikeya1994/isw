@@ -1,6 +1,7 @@
 package org.isw;
 
 import java.io.Serializable;
+import java.util.Queue;
 
 public class Job implements Serializable {
 	/**
@@ -9,15 +10,15 @@ public class Job implements Serializable {
 	public static final int JOB_NORMAL = 1;
 	public static final int JOB_PM = 2;
 	public static final int JOB_CM = 3;
-	public static final int WAIT_FOR_MT = 4;
 	private static final long serialVersionUID = 1L;
 	long jobTime;
 	String jobName;
 	int jobType;
-	int compNo;
-	int compCombo;
-
+	int compNo; // in case of CM
+	
 	double fixedCost; //fixed cost for CM or PM
+	Queue<Long> pmTTRs;
+	Queue<Integer> compNos;
 
 	double jobCost; // cost per hour for CM or PM, or job processing cost
 	double penaltyCost;
@@ -30,14 +31,11 @@ public class Job implements Serializable {
 		penaltyCost = 0;
 	}
 	
-	
-	
 	public Job(Job source) {
 		this.jobTime = source.jobTime;
 		this.jobName = source.jobName;
 		this.jobType = source.jobType;
 		this.jobCost = source.jobCost;
-		compCombo = source.compCombo;
 		compNo = source.compNo;
 		fixedCost = source.fixedCost;
 		penaltyCost = source.penaltyCost;
@@ -89,12 +87,6 @@ public class Job implements Serializable {
 		compNo = no;
 		
 	}
-	public int getCompCombo() {
-		return compCombo;
-	}
-
-	public void setCompCombo(int compCombo) {
-		this.compCombo = compCombo;
-	}
+	
 		
 }

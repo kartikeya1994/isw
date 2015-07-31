@@ -213,7 +213,7 @@ public class MaintenanceThread  extends Thread{
 					if(pmttr < 1)
 						pmttr=1;
 					Job pmJob = new Job("PM",pmttr,compList[i].getPMLabourCost(),Job.JOB_PM);
-					pmJob.setCompCombo(compCombo[pmOpp]);
+					pmJob.setCompNo(i);
 					if(cnt==0){
 						// consider fixed cost only once, for the first job
 						pmJob.setFixedCost(compList[i].getPMFixedCost());

@@ -53,9 +53,9 @@ public class SimulationThread implements Callable<SimulationResult> {
 					boolean flag = false;
 					for(Job pmJob : pmJobs){
 					int tempIndex = simSchedule.indexOf(pmJob);
-					int compCombo = pmJob.getCompCombo();
+					int compNo = pmJob.getCompNo();
 					long time =	schedule.getFinishingTime(tempIndex-1);
-					if(cmTTF>= time && ((1<<i)&compCombo)!=0)
+					if(cmTTF>= time && i==compNo)
 						flag = true;
 					}
 					if(flag)
@@ -146,7 +146,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 				if(pmttr == 0)
 					pmttr=1;
 				Job pmJob = new Job("PM",pmttr,simCompList[i].getPMLabourCost(),Job.JOB_PM);
-				pmJob.setCompCombo(compCombo[pmOppo]);
+				pmJob.setCompNo(i);
 				if(cnt==0){
 					pmJob.setFixedCost(simCompList[i].getPMFixedCost());
 				}

@@ -14,7 +14,7 @@ public class Maintenance
 	/*
 	 * Register with central logging and start listener thread
 	 */
-
+	
 	static DatagramSocket socket;
 	
 	public static void main(String[] args)

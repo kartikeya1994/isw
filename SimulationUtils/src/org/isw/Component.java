@@ -91,7 +91,16 @@ public class Component implements Serializable {
 	public int[] getPMLabour() {
 		return pmLabour;
 	}
-
 	
-
+	public int[] getCMLabour() {
+		return cmLabour;
+	}
+	
+	public static long notZero(double input)
+	{
+		long output = (long) input;
+		if(output == 0)
+			output = 1;
+		return output;
+	}
 }

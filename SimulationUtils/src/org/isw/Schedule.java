@@ -40,6 +40,10 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		sum+=job.getJobTime();
 	}
 	
+	public void addJobTop(Job job){
+		jobs.add(0, job);
+	}
+	
 	public int numOfJobs()
 	{
 		return jobs.size();
@@ -150,7 +154,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		}
 		return i-1;
 	}
-
+/*
 	public void addWaitJob(long startTime, long waitTime, int jobIndex) {
 		Job job = jobs.remove(jobIndex);
 		long time = getFinishingTime(jobIndex-1);
@@ -170,6 +174,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		}
 		sum += waitTime;
 	}
+	*/
 
 	public long getFinishingTime(int index){
 		long sum = 0;

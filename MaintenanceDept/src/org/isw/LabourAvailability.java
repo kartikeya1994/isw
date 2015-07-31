@@ -7,12 +7,12 @@ public class LabourAvailability {
 	/*
 	 * Manages number of available labours at any point of time in a shift
 	 */
-	ArrayList<Tuple> timeline;
+	ArrayList<MaintenanceTuple> timeline;
 	
 	public LabourAvailability(int[] maxLabour, double shiftDuration)
 	{
-		timeline = new ArrayList<Tuple>();
-		Tuple tuple = new Tuple(0, shiftDuration, maxLabour);
+		timeline = new ArrayList<MaintenanceTuple>();
+		MaintenanceTuple tuple = new MaintenanceTuple(0, shiftDuration, maxLabour);
 		timeline.add(tuple);
 	}
 	
@@ -23,7 +23,7 @@ public class LabourAvailability {
 		 */
 		for(int i=0; i<timeline.size(); i++)
 		{
-			Tuple curr = timeline.get(i);
+			MaintenanceTuple curr = timeline.get(i);
 			
 			if(curr.end < startTime)
 				continue;
@@ -47,7 +47,7 @@ public class LabourAvailability {
 		 */
 		for(int i=0; i<timeline.size(); i++)
 		{
-			Tuple curr = timeline.get(i);
+			MaintenanceTuple curr = timeline.get(i);
 			
 			// no overlap
 			if(curr.end < startTime)
@@ -67,8 +67,8 @@ public class LabourAvailability {
 			else if (curr.start <= startTime && curr.end >= endTime)
 			{
 				// (startTime, endTime) is completely contained in curr
-				Tuple former = new Tuple(curr.start, startTime, Arrays.copyOf(curr.labour, 3));
-				Tuple latter = new Tuple(endTime, curr.end, Arrays.copyOf(curr.labour, 3));
+				MaintenanceTuple former = new MaintenanceTuple(curr.start, startTime, Arrays.copyOf(curr.labour, 3));
+				MaintenanceTuple latter = new MaintenanceTuple(endTime, curr.end, Arrays.copyOf(curr.labour, 3));
 				
 				timeline.add(i, former);
 				i+=2;
@@ -86,7 +86,7 @@ public class LabourAvailability {
 				// partial overlap
 				if(curr.start < startTime)
 				{
-					Tuple latter = new Tuple(startTime, curr.end, Arrays.copyOf(curr.labour,3));
+					MaintenanceTuple latter = new MaintenanceTuple(startTime, curr.end, Arrays.copyOf(curr.labour,3));
 					latter.labour[0] -= labour[0];
 					latter.labour[1] -= labour[1];
 					latter.labour[2] -= labour[2];
@@ -96,7 +96,7 @@ public class LabourAvailability {
 				}
 				else if(curr.end > endTime)
 				{
-					Tuple latter = new Tuple(endTime, curr.end, Arrays.copyOf(curr.labour, 3));
+					MaintenanceTuple latter = new MaintenanceTuple(endTime, curr.end, Arrays.copyOf(curr.labour, 3));
 					curr.labour[0] -= labour[0];
 					curr.labour[1] -= labour[1];
 					curr.labour[2] -= labour[2];
@@ -110,24 +110,10 @@ public class LabourAvailability {
 	
 	public void print()
 	{
-		for(Tuple t : timeline)
+		for(MaintenanceTuple t : timeline)
 		{
 			System.out.format("[%d,%d] - (%d,%d,%d)\n", t.start, t.end,t.labour[0],t.labour[1],t.labour[2]);
 		}
 	}
 	
-}
-
-class Tuple
-{
-	public double start;
-	public double end;
-	public int[] labour;
-	
-	public Tuple(double start, double end, int[] labour)
-	{
-		this.start = start;
-		this.end = end;
-		this.labour = labour;
-	}
 }

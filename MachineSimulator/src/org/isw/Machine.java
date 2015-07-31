@@ -14,10 +14,13 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.isw.threads.ListenerThread;
 
-public class Machine {
+public class Machine 
+{
+	static int machineStatus = IDLE;
 
 	static InetAddress schedulerIP;
 	static InetAddress maintenanceIP;
+	public static ServerSocket tcpSocket;
 	
 	static int machineNo;
 	public static int shiftCount;
@@ -38,6 +41,16 @@ public class Machine {
 	public static long runTime;
 	public static long idleTime;
 	
+	public static void setStatus(int status)
+	{
+		machineStatus = status;
+	}
+	
+	public static int getStatus()
+	{
+		return machineStatus;
+	}
+	
 	public static void main(String[] args) {
 		boolean maintenanceRegistered=false;
 		boolean iswRegistered = false;
@@ -52,7 +65,7 @@ public class Machine {
 			FlagPacket packetIn;
 			//create socket
 			DatagramSocket socket = new DatagramSocket(Macros.MACHINE_PORT);
-			ServerSocket tcpSocket = new ServerSocket(Macros.MACHINE_PORT_TCP);
+			tcpSocket = new ServerSocket(Macros.MACHINE_PORT_TCP);
 			socket.setSoTimeout(3000);
 
 			while(!schedulerRegistered || !iswRegistered || !maintenanceRegistered) // loop until registered with all
@@ -108,7 +121,7 @@ public class Machine {
 			procCost=0;
 			runTime =0;
 			idleTime = 0;
-			ListenerThread listener = new ListenerThread(schedulerIP,maintenanceIP,socket,tcpSocket);
+			ListenerThread listener = new ListenerThread(schedulerIP, maintenanceIP, socket, tcpSocket, compList);
 			listener.start();
 
 
@@ -184,6 +197,4 @@ public class Machine {
 		}
 		return c;
 	}
-
-
 }

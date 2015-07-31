@@ -35,6 +35,17 @@ public class Macros {
 	public static final int REQUEST_MAINTENANCE_DEPT_IP = 17;
 	public static final int REPLY_MAINTENANCE_DEPT_IP = 18;
 	public static final int START_MAINTENANCE_PLANNING = 19;
+	public static final int REQUEST_MAINTENANCE = 20;
+	public static final int MAINTENANCE_UNAVAILABLE = 21;
+	public static final int MAINTENANCE_AVAILABLE = 22;
+	public static final int LABOUR_GRANTED = 23;
+	public static final int LABOUR_DENIED = 24;
+	public static final int MACHINE_IDLE = 25;
+	public static final int MACHINE_RUNNING_JOB = 26;
+	public static final int MACHINE_WAITING_FOR_PM_LABOUR = 27;
+	public static final int MACHINE_WAITING_FOR_CM_LABOUR = 28;
+	public static final int MACHINE_PM = 29;
+	public static final int MACHINE_CM = 30;
 	
 	public static final int SCHEDULING_DEPT_PORT = 8889;
 	public static final int SCHEDULING_DEPT_PORT_TCP = 8890;
@@ -42,6 +53,7 @@ public class Macros {
 	public static final int MACHINE_PORT_TCP = 8892;
 	public static final int MAINTENANCE_DEPT_PORT = 8893;
 	public static final int MAINTENANCE_DEPT_PORT_TCP = 8894;
+	public static final int MAINTEANCE_DEPT_ALLOTMENT_PORT_TCP = 8895;
 	
 	public static final int SCHEDULING_DEPT_MULTICAST_PORT = 8888;
 	public static final int ISW_MULTICAST_PORT = 8887;
