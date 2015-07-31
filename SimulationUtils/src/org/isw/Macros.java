@@ -47,21 +47,17 @@ public class Macros {
 	public static final int MACHINE_PM = 29;
 	public static final int MACHINE_CM = 30;
 	
+	
+	public static final int MAINTENANCE_DEPT_MULTICAST_PORT = 8886;
+	public static final int ISW_MULTICAST_PORT = 8887;
+	public static final int SCHEDULING_DEPT_MULTICAST_PORT = 8888;
 	public static final int SCHEDULING_DEPT_PORT = 8889;
 	public static final int SCHEDULING_DEPT_PORT_TCP = 8890;
 	public static final int MACHINE_PORT = 8891;
 	public static final int MACHINE_PORT_TCP = 8892;
 	public static final int MAINTENANCE_DEPT_PORT = 8893;
 	public static final int MAINTENANCE_DEPT_PORT_TCP = 8894;
-
-	public static final int MAINTEANCE_DEPT_ALLOTMENT_PORT_TCP = 8895;
-
 	public static final int ISW_PORT = 8895;
-
-	
-	public static final int SCHEDULING_DEPT_MULTICAST_PORT = 8888;
-	public static final int ISW_MULTICAST_PORT = 8887;
-	public static final int MAINTENANCE_DEPT_MULTICAST_PORT = 8886;
 	
 	public static final String SCHEDULING_DEPT_GROUP = "224.1.1.1";
 	public static final String ISW_GROUP = "224.1.1.3";

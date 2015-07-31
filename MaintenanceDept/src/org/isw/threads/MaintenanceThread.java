@@ -17,11 +17,14 @@ import java.util.concurrent.Executors;
 
 import org.isw.Component;
 import org.isw.CustomComparator;
+import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.Job;
 import org.isw.LabourAvailability;
 import org.isw.MachineList;
 import org.isw.Macros;
+import org.isw.MaintenanceRequestPacket;
+import org.isw.MaintenanceTuple;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
 
@@ -29,8 +32,7 @@ public class MaintenanceThread  extends Thread{
 	MachineList machineList;
 	static DatagramSocket socket;
 	static ServerSocket tcpSocket;
-	static int[] pmMaxLabour;
-	int[] cmMaxLabour;
+	static int[] maxLabour;
 	static ArrayList<SimulationResult> table = new ArrayList<SimulationResult>();
 	static ArrayList<InetAddress> ip = new ArrayList<InetAddress>();
 	static ArrayList<Integer> port = new ArrayList<Integer>();
@@ -39,14 +41,14 @@ public class MaintenanceThread  extends Thread{
 	static ArrayList<double[]> pmTTRList = new ArrayList<double[]>();
 	static int numOfMachines;
 	static PriorityQueue<CompTTF> ttfList;
-	static LabourAvailability pmLabourAssignment = new LabourAvailability(pmMaxLabour, Macros.SHIFT_DURATION);
+	static LabourAvailability pmLabourAssignment = new LabourAvailability(maxLabour, Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
 	
 	public MaintenanceThread(MachineList machineList){
 		this.machineList = machineList;
 		
 		try {
 			socket = new DatagramSocket(Macros.MAINTENANCE_DEPT_PORT);
-			tcpSocket = new ServerSocket(Macros.MACHINE_PORT_TCP);
+			tcpSocket = new ServerSocket(Macros.MAINTENANCE_DEPT_PORT_TCP);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -70,7 +72,7 @@ public class MaintenanceThread  extends Thread{
 
 			numOfMachines = 0;
 			while(ips.hasMoreElements()){
-				//get intensity factors from all machines in machine list
+				//get intensity factors and schedules from all machines in machine list
 				numOfMachines++;
 				pool.submit(new FetchIFTask(tcpSocket, ips.nextElement(), Macros.MACHINE_PORT_TCP));
 			}
@@ -87,7 +89,8 @@ public class MaintenanceThread  extends Thread{
 
 			for(int i = 0; i < numOfMachines; i++)
 			{
-				IFPacket p = pool.take().get(); //fetch results of all tasks
+				//fetch results from thread pool
+				IFPacket p = pool.take().get(); 
 				System.out.println("Machine " + p.ip + "\n" + p);
 				ip.add(p.ip);
 				port.add(p.port);
@@ -123,7 +126,7 @@ public class MaintenanceThread  extends Thread{
 		{
 			e.printStackTrace();
 		}
-		
+		 
 		//sort
 		Collections.sort(table, new CustomComparator(component)); //higher IF and lower labour requirement
 
@@ -133,34 +136,42 @@ public class MaintenanceThread  extends Thread{
 		{
 			SimulationResult row = table.get(i);
 			Component[] compList = component.get(row.id);
-			row.pmTTRs = new double[row.pmOpportunity.length][compList.length];
+			row.pmTTRs = new long[row.pmOpportunity.length][compList.length];
 			// check if PM is already being planned for machine (only 1 PM per shift)
 			// or if schedule is empty
 			if(!toPerformPM.containsKey(row.id) && !schedule.get(row.id).isEmpty())
 			{
 				// generate PM TTRs of all components undergoing PM for this row
 				boolean meetsReqForAllOpp = true;
+				int[][] seriesLabour = new int[row.pmOpportunity.length][3];
+				long[] seriesTTR = new long[row.pmOpportunity.length];
 				for(int pmOpp = 0; pmOpp<row.pmOpportunity.length; pmOpp++)
-				{
-					boolean meetsReq = true;
-					double startTime = row.startTimes[pmOpp]; //start time of opportunity
+				{					
+					seriesLabour[pmOpp][0] = 0;
+					seriesLabour[pmOpp][1] = 0;
+					seriesLabour[pmOpp][2] = 0;
+					seriesTTR[pmOpp] = 0;
+					
 					for(int compno=0;i< compList.length;i++)
 					{
 						int pos = 1<<compno;
 						if((pos&row.compCombo[pmOpp])!=0) //for each component in combo, generate TTR
 						{
-							row.pmTTRs[pmOpp][compno] = (double)(compList[compno].getPMTTR()*Macros.TIME_SCALE_FACTOR); //store PM TTR
+							row.pmTTRs[pmOpp][compno] = Component.notZero(compList[compno].getPMTTR()*Macros.TIME_SCALE_FACTOR); //store PM TTR
 							
-							//check if particular component PM meets labour req
-							if(!pmLabourAssignment.checkAvailability(startTime, startTime+row.pmTTRs[pmOpp][compno], compList[compno].getPMLabour()))
-							{	
-								meetsReq = false;
-								break; // even if one component fails to meet requirement
-							}
-							startTime += row.pmTTRs[pmOpp][compno];
+							seriesTTR[pmOpp] += row.pmTTRs[pmOpp][compno];
+							
+							// find max labour requirement for PM series
+							int[] labour1 = compList[compno].getPMLabour();
+							if(seriesLabour[pmOpp][0] < labour1[0])
+								seriesLabour[pmOpp][0] = labour1[0];
+							if(seriesLabour[pmOpp][1] < labour1[1])
+								seriesLabour[pmOpp][1] = labour1[1];
+							if(seriesLabour[pmOpp][2] < labour1[2])
+								seriesLabour[pmOpp][2] = labour1[2];
 						}
 					}
-					if(!meetsReq)
+					if(!pmLabourAssignment.checkAvailability(row.startTimes[pmOpp], row.startTimes[pmOpp]+seriesTTR[pmOpp], seriesLabour[pmOpp]))
 					{
 						// add series of PM jobs at that opportunity.
 						meetsReqForAllOpp = false;
@@ -171,8 +182,12 @@ public class MaintenanceThread  extends Thread{
 				if(meetsReqForAllOpp)
 				{
 					//incorporate the PM job(s) into schedule of machine
-					addPMJobs(schedule.get(row.id),component.get(row.id),row);
+					addPMJobs(schedule.get(row.id), component.get(row.id),row);
 					toPerformPM.put(row.id, true);
+					
+					//reserve labour
+					for(int pmOpp = 0; pmOpp<row.pmOpportunity.length; pmOpp++)
+						pmLabourAssignment.employLabour(row.startTimes[pmOpp], row.startTimes[pmOpp]+seriesTTR[pmOpp], seriesLabour[pmOpp]);
 				}
 			}
 		}
@@ -190,6 +205,38 @@ public class MaintenanceThread  extends Thread{
 		threadPool.shutdown();
 		while(!threadPool.isTerminated()); //block till all tasks are done
 		System.out.println("Successfully sent PM incorporated schedules to all connected machines.\nShift can now begin.");
+		
+		// shift has begun
+		// receive and process requests for labour
+		
+		LabourAvailability labourAvailability = new LabourAvailability(maxLabour, Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
+		
+		while(true)
+		{
+			MaintenanceRequestPacket packet = MaintenanceRequestPacket.receiveTCP(tcpSocket, 0);
+			
+			if(packet.mtTuple.start == -1) // packet sent by Scheduling Dept indicating shift is over
+			{
+				// shift is over
+				break;
+			}
+			
+			else
+			{
+				if(labourAvailability.checkAvailability(packet.mtTuple))
+				{
+					//labour is available. Grant request and reserve labour
+					labourAvailability.employLabour(packet.mtTuple);
+					FlagPacket.sendTCP(Macros.LABOUR_GRANTED, packet.machineIP, packet.machinePort);
+					
+				}
+				else
+				{
+					//deny request
+					FlagPacket.sendTCP(Macros.LABOUR_DENIED, packet.machineIP, packet.machinePort);
+				}
+			}
+		}
 	}
 
 	private static void addPMJobs(Schedule schedule,Component[] compList, SimulationResult row) {
@@ -202,16 +249,13 @@ public class MaintenanceThread  extends Thread{
 		
 		for(int pmOpp = 0; pmOpp<pmOpportunity.length; pmOpp++)
 		{
-			double startTime = row.startTimes[pmOpp];
 			for(int i=0;i< compList.length;i++)
 			{
 				int pos = 1<<i;
 				if((pos&compCombo[pmOpp])!=0) //for each component in combo, add a PM job
 				{
-					long pmttr = (long)row.pmTTRs[pmOpp][i];
-					//Smallest unit is one hour
-					if(pmttr < 1)
-						pmttr=1;
+					long pmttr = Component.notZero(row.pmTTRs[pmOpp][i]);
+					
 					Job pmJob = new Job("PM",pmttr,compList[i].getPMLabourCost(),Job.JOB_PM);
 					pmJob.setCompNo(i);
 					if(cnt==0){
@@ -221,8 +265,7 @@ public class MaintenanceThread  extends Thread{
 					
 					// add job to schedule
 					schedule.addPMJob(pmJob,pmOpportunity[pmOpp]+cnt);
-					// reserve required labour for above job
-					pmLabourAssignment.employLabour(startTime, startTime+pmttr, compList[i].getPMLabour());
+
 					cnt++;
 				}
 			}
@@ -244,17 +287,5 @@ class CompTTF implements Comparable<CompTTF>{
 	@Override 
 	public int compareTo(CompTTF other) {
 		return Long.compare(ttf, other.ttf);
-	}
-	
-}
-
-class LabourAssignment{
-	int[] labour;
-	long startTime;
-	long endTime;
-	public LabourAssignment(int[] labour,long startTime, long endTime){
-		this.labour = labour;
-		this.startTime = startTime;
-		this.endTime = endTime;
 	}
 }

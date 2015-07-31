@@ -27,6 +27,8 @@ import org.isw.FlagPacket;
 import org.isw.Job;
 import org.isw.MachineList;
 import org.isw.Macros;
+import org.isw.MaintenanceRequestPacket;
+import org.isw.MaintenanceTuple;
 import org.isw.Schedule;
 
 public class JobSchedThread extends Thread
@@ -146,6 +148,9 @@ public class JobSchedThread extends Thread
 				if(fp.flag == Macros.REQUEST_NEXT_SHIFT) // shift is over
 					count++;
 			}
+			
+			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
+			mrp.sendTCP();
 		}
 		
 		// Simulation Complete

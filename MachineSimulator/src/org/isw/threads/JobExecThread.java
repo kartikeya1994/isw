@@ -41,7 +41,7 @@ public class JobExecThread extends Thread{
 		FailureEvent upcomingFailure = null;
 		for(int compNo=0; compNo<Machine.compList.length; compNo++)
 		{
-			long ft = Component.notZero(Machine.compList[compNo].getCMTTF());
+			long ft = (long)Machine.compList[compNo].getCMTTF();
 			if(ft < Macros.SHIFT_DURATION)
 			{
 				// this component fails in this shift
@@ -54,7 +54,8 @@ public class JobExecThread extends Thread{
 			upcomingFailure =  failureEvents.pop();
 		}
 
-		while(!jobList.isEmpty() && time < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR){
+		while(!jobList.isEmpty() && time < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
+		{
 
 			Job current = jobList.peek(); 
 
@@ -88,7 +89,7 @@ public class JobExecThread extends Thread{
 
 				// send labour request
 				MaintenanceTuple mtTuple = new MaintenanceTuple(time, time+current.getJobTime(), labour_req);
-				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTEANCE_DEPT_ALLOTMENT_PORT_TCP, mtTuple);
+				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, mtTuple);
 				mrp.sendTCP();
 
 				FlagPacket flagPacket = FlagPacket.receiveTCP(tcpSocket, 0);
@@ -114,6 +115,8 @@ public class JobExecThread extends Thread{
 
 			else if(current.getJobType() == Job.JOB_NORMAL)
 			{
+				Machine.setStatus(Macros.MACHINE_RUNNING_JOB);
+				current.setStatus(Job.STARTED);
 				// no failure, no maintenance. Just increment cost models normally.
 				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				for(Component comp : Machine.compList)
@@ -129,6 +132,22 @@ public class JobExecThread extends Thread{
 					continue;
 				}
 
+				// since an actual PM job is a series of PM jobs of each comp in compCombo
+				// we set all jobs in series to SERIES_STARED
+				if(current.getStatus() == Job.NOT_STARTED)
+				{
+					current.setStatus(Job.STARTED);
+					for(int i=1; i<jobList.getSize(); i++)
+					{
+						Job j = jobList.jobAt(i);
+						if(j.getJobType() != Job.JOB_PM)
+							break;
+						j.setStatus(Job.SERIES_STARTED);
+					}
+				}
+				else if(current.getStatus() == Job.SERIES_STARTED)
+					current.setStatus(Job.STARTED);
+
 				Machine.pmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
 				Machine.pmDownTime++;
@@ -136,6 +155,7 @@ public class JobExecThread extends Thread{
 			}
 			else if(current.getJobType() == Job.JOB_CM && Machine.getStatus() == Macros.MACHINE_CM)
 			{
+				current.setStatus(Job.STARTED);
 				Machine.cmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
 				Machine.downTime++;
@@ -144,12 +164,16 @@ public class JobExecThread extends Thread{
 
 			// decrement job time by unit time
 			try{
-				jobList.decrement(1);
+				if(Machine.getStatus()==Macros.MACHINE_RUNNING_JOB || Machine.getStatus()==Macros.MACHINE_CM || Machine.getStatus()==Macros.MACHINE_PM)
+					jobList.decrement(1);
 			}
 			catch(IOException e){
 				e.printStackTrace();
 				System.exit(0);
 			}
+
+			time++;
+			Machine.runTime++;
 
 			// if job has completed remove job from schedule
 			if(current.getJobTime()<=0)
@@ -157,12 +181,12 @@ public class JobExecThread extends Thread{
 				switch(current.getJobType())
 				{
 				case Job.JOB_PM:
-					
+
 					Component comp1 = Machine.compList[current.getCompNo()];
 					comp1.initAge = (1-comp1.pmRF)*comp1.initAge;
 					Machine.compPMJobsDone[current.getCompNo()]++;
-						
-					
+
+
 					Machine.pmJobsDone++;
 
 					// recompute component failures
@@ -170,14 +194,14 @@ public class JobExecThread extends Thread{
 					upcomingFailure = null;
 					for(int compNo=0; compNo<Machine.compList.length; compNo++)
 					{
-						long ft = Component.notZero(Machine.compList[compNo].getCMTTF());
-						if(ft < Macros.SHIFT_DURATION)
+						long ft = time + (long) Machine.compList[compNo].getCMTTF()*Macros.TIME_SCALE_FACTOR;
+						if(ft < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
 						{
 							// this component fails in this shift
-							failureEvents.add(new FailureEvent(compNo, ft*Macros.TIME_SCALE_FACTOR));
+							failureEvents.add(new FailureEvent(compNo, ft));
 						}
 					}
-					
+
 					if(!failureEvents.isEmpty())
 					{
 						Collections.sort(failureEvents, new FailureEventComparator());
@@ -197,11 +221,11 @@ public class JobExecThread extends Thread{
 					upcomingFailure = null;
 					for(int compNo=0; compNo<Machine.compList.length; compNo++)
 					{
-						long ft = Component.notZero(Machine.compList[compNo].getCMTTF());
-						if(ft < Macros.SHIFT_DURATION)
+						long ft = time + (long) Machine.compList[compNo].getCMTTF()*Macros.TIME_SCALE_FACTOR;
+						if(ft < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
 						{
 							// this component fails in this shift
-							failureEvents.add(new FailureEvent(compNo, ft*Macros.TIME_SCALE_FACTOR));
+							failureEvents.add(new FailureEvent(compNo, ft));
 						}
 					}
 					if(!failureEvents.isEmpty())
@@ -209,7 +233,6 @@ public class JobExecThread extends Thread{
 						Collections.sort(failureEvents, new FailureEventComparator());
 						upcomingFailure =  failureEvents.pop();
 					}
-
 					break;
 
 				case Job.JOB_NORMAL:
@@ -217,16 +240,20 @@ public class JobExecThread extends Thread{
 					break;
 				}
 				try{
+					// job is complete, remove from joblist
 					System.out.println("Job "+ jobList.remove().getJobName()+" complete");
+					// update Machine status on job completion
+					if(jobList.isEmpty())
+						Machine.setStatus(Macros.MACHINE_IDLE);
+					else
+						Machine.setStatus(Macros.MACHINE_RUNNING_JOB);
+
 				}
 				catch(IOException e){
 					e.printStackTrace();
 					System.exit(0);
 				}
 			}
-
-			time++;
-			Machine.runTime++;
 
 			try {
 				byte[] bufIn = new byte[128];
@@ -250,7 +277,7 @@ public class JobExecThread extends Thread{
 	}
 
 
-	static class FailureEvent
+	class FailureEvent
 	{
 		public int compNo;
 		public long repairTime;

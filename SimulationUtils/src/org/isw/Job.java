@@ -1,7 +1,6 @@
 package org.isw;
 
 import java.io.Serializable;
-import java.util.Queue;
 
 public class Job implements Serializable {
 	/**
@@ -10,15 +9,20 @@ public class Job implements Serializable {
 	public static final int JOB_NORMAL = 1;
 	public static final int JOB_PM = 2;
 	public static final int JOB_CM = 3;
+	
+	// job status
+	public static final int NOT_STARTED=1;
+	public static final int STARTED = 2;
+	public static final int SERIES_STARTED = 3;
+	
 	private static final long serialVersionUID = 1L;
 	long jobTime;
 	String jobName;
 	int jobType;
 	int compNo; // in case of CM
+	int jobStatus;
 	
 	double fixedCost; //fixed cost for CM or PM
-	Queue<Long> pmTTRs;
-	Queue<Integer> compNos;
 
 	double jobCost; // cost per hour for CM or PM, or job processing cost
 	double penaltyCost;
@@ -27,6 +31,7 @@ public class Job implements Serializable {
 		this.jobName = jobName;
 		this.jobType = jobType;
 		this.jobCost = jobCost;
+		this.jobStatus = NOT_STARTED;
 		fixedCost = 0;
 		penaltyCost = 0;
 	}
@@ -36,6 +41,7 @@ public class Job implements Serializable {
 		this.jobName = source.jobName;
 		this.jobType = source.jobType;
 		this.jobCost = source.jobCost;
+		this.jobStatus = source.jobStatus;
 		compNo = source.compNo;
 		fixedCost = source.fixedCost;
 		penaltyCost = source.penaltyCost;
@@ -64,6 +70,15 @@ public class Job implements Serializable {
 	
 	public int getJobType(){
 		return jobType;
+	}
+	
+	public void setStatus(int status){
+		this.jobStatus = status;
+	}
+	
+	public int getStatus()
+	{
+		return this.jobStatus;
 	}
 	
 	/**

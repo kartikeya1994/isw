@@ -42,6 +42,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	
 	public void addJobTop(Job job){
 		jobs.add(0, job);
+		sum+=job.getJobTime();
 	}
 	
 	public int numOfJobs()
@@ -93,6 +94,14 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 			throw new IOException();
 		}
 		return job;
+	}
+	
+	public void remove(int i) throws IOException{
+		Job job = jobs.remove(i);
+		sum -= job.getJobTime();
+		if(sum < 0){
+			throw new IOException();
+		}
 	}
 	
 	@Override

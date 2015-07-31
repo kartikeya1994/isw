@@ -2,11 +2,11 @@ package org.isw;
 
 public class MaintenanceTuple
 {
-	public double start;
-	public double end;
+	public long start;
+	public long end;
 	public int[] labour;
 	
-	public MaintenanceTuple(double start, double end, int[] labour)
+	public MaintenanceTuple(long start, long end, int[] labour)
 	{
 		this.start = start;
 		this.end = end;
@@ -16,5 +16,10 @@ public class MaintenanceTuple
 	public MaintenanceTuple()
 	{
 		
+	}
+	
+	public MaintenanceTuple(int start)
+	{
+		this.start = -1;
 	}
 }

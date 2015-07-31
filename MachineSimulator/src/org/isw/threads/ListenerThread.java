@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 
 import org.isw.FlagPacket;
 import org.isw.IFPacket;
+import org.isw.Job;
 import org.isw.Machine;
 import org.isw.Macros;
 import org.isw.Schedule;
@@ -118,6 +119,17 @@ public class ListenerThread extends Thread
 					break;
 					
 				case Macros.REQUEST_PREVIOUS_SHIFT:
+					// remove PM jobs that have not been started
+					for(int i=0; i<jl.getSize(); i++)
+					{
+						Job j = jl.jobAt(i);
+						if(j.getJobType()==Job.JOB_PM && j.getStatus()==Job.NOT_STARTED)
+						{
+							jl.remove(i);
+							i--;
+						}
+					}
+					
 					//send jobs pending from last shift to scheduler
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 					ObjectOutputStream os = new ObjectOutputStream(outputStream);

@@ -12,7 +12,12 @@ public class MaintenanceRequestPacket
 {
 	InetAddress maintenanceIP;
 	int maintenancePort;
-	MaintenanceTuple mtTuple;
+	public MaintenanceTuple mtTuple;
+	
+	public InetAddress machineIP;
+	public int machinePort;
+	
+	
 	
 	public MaintenanceRequestPacket(InetAddress maintenanceIP, int maintenancePort, MaintenanceTuple mtTuple)
 	{
@@ -26,20 +31,22 @@ public class MaintenanceRequestPacket
 		this.mtTuple = mtTuple;
 	}
 	
-	public static MaintenanceTuple receiveTCP(ServerSocket tcpSocket, int timeout)
+	public static MaintenanceRequestPacket receiveTCP(ServerSocket tcpSocket, int timeout)
 	{
 		MaintenanceRequestPacket ret = null;
 		try
 		{
 			tcpSocket.setSoTimeout(timeout);
-			Socket tcpSchedSock = tcpSocket.accept();
-			ObjectInputStream ois = new ObjectInputStream(tcpSchedSock.getInputStream());
+			Socket tcpMachineSock = tcpSocket.accept();
+			ObjectInputStream ois = new ObjectInputStream(tcpMachineSock.getInputStream());
 			Object o = ois.readObject();
 
 			if(o instanceof MaintenanceRequestPacket) 
 			{
 
 				ret = (MaintenanceRequestPacket)o;
+				ret.machineIP = tcpMachineSock.getInetAddress();
+				ret.machinePort = tcpMachineSock.getPort();
 			}
 			else 
 			{
@@ -47,13 +54,13 @@ public class MaintenanceRequestPacket
 				return null;
 			}
 			ois.close();
-			tcpSchedSock.close();
+			tcpMachineSock.close();
 		}catch(Exception e)
 		{
 			System.out.println("Failed to receive MaintenanceRequestPacket.");
 		}
 
-		return ret.mtTuple;
+		return ret;
 	}
 
 	public void sendTCP()
