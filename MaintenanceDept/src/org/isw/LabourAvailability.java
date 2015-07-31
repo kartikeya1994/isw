@@ -118,6 +118,11 @@ public class LabourAvailability {
 		}
 	}
 	
+	/*public long findWhenAvailable(long after, long duration, int[] labour)
+	{
+		
+	}*/
+	
 	public void print()
 	{
 		for(MaintenanceTuple t : timeline)

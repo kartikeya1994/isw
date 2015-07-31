@@ -118,7 +118,7 @@ public class ListenerThread extends Thread
 					}
 					break;
 					
-				case Macros.REQUEST_PREVIOUS_SHIFT:
+				case Macros.REQUEST_PREVIOUS_SHIFT: // send pending jobs to Scheduling Dept.
 					// remove PM jobs that have not been started
 					for(int i=0; i<jl.getSize(); i++)
 					{
@@ -130,6 +130,42 @@ public class ListenerThread extends Thread
 						}
 					}
 					
+					/*
+					 *  if partial PM series is present, set all jobs to NOT_STARTED
+					 *  and recalculate seriesTTR and seriesLabour
+					 */
+					if(jl.jobAt(0).getJobType()==Job.JOB_PM)
+					{
+						long seriesTTR = 0;
+						int[] seriesLabour = {0,0,0};
+						for(int i=0; i<jl.getSize(); i++)
+						{
+							// change jobStatus to NOT_STARTED
+							Job j = jl.jobAt(i);
+							if(j.getJobType()!=Job.JOB_PM)
+								break;
+							j.setStatus(Job.NOT_STARTED);
+							
+							// recompute seriesTTR and seriesLabour
+							seriesTTR += j.getJobTime();
+							if(seriesLabour[0]<j.getSeriesLabour()[0])
+								seriesLabour[0] = j.getSeriesLabour()[0];
+							if(seriesLabour[1]<j.getSeriesLabour()[1])
+								seriesLabour[1] = j.getSeriesLabour()[1];
+							if(seriesLabour[2]<j.getSeriesLabour()[2])
+								seriesLabour[2] = j.getSeriesLabour()[2];
+						}
+						
+						for(int i=0; i<jl.getSize(); i++)
+						{
+							Job j = jl.jobAt(i);
+							if(j.getJobType()!=Job.JOB_PM)
+								break;
+							j.setSeriesTTR(seriesTTR);
+							j.setSeriesLabour(seriesLabour);
+						}
+					}
+
 					//send jobs pending from last shift to scheduler
 					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 					ObjectOutputStream os = new ObjectOutputStream(outputStream);

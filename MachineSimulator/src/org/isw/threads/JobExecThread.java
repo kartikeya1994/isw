@@ -63,7 +63,7 @@ public class JobExecThread extends Thread{
 			 * Perform action according to what job is running
 			 * Increment costs or wait for labour to arrive for CM/PM
 			 */
-			if(current.getJobType()!= Job.JOB_CM && upcomingFailure!=null && time == upcomingFailure.failureTime)
+			if((current.getJobType()!= Job.JOB_CM||current.getJobType()!= Job.JOB_PM) && upcomingFailure!=null && time == upcomingFailure.failureTime)
 			{
 				/*
 				 * Machine fails. 
@@ -74,7 +74,6 @@ public class JobExecThread extends Thread{
 				cmJob.setCompNo(upcomingFailure.compNo);
 				jobList.addJobTop(cmJob);
 				Machine.setStatus(Macros.MACHINE_WAITING_FOR_CM_LABOUR);
-				continue;
 			}
 
 			if(Machine.getStatus() == Macros.MACHINE_WAITING_FOR_CM_LABOUR || Machine.getStatus() == Macros.MACHINE_WAITING_FOR_PM_LABOUR)
@@ -88,7 +87,13 @@ public class JobExecThread extends Thread{
 					labour_req = Machine.compList[current.getCompNo()].getPMLabour();
 
 				// send labour request
-				MaintenanceTuple mtTuple = new MaintenanceTuple(time, time+current.getJobTime(), labour_req);
+				MaintenanceTuple mtTuple;
+				if(Machine.getStatus() == Macros.MACHINE_WAITING_FOR_CM_LABOUR)
+					mtTuple = new MaintenanceTuple(time, time+current.getJobTime(), labour_req);
+				else
+				{
+					mtTuple = new MaintenanceTuple(time, time+current.getSeriesTTR(), current.getSeriesLabour());
+				}
 				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, mtTuple);
 				mrp.sendTCP();
 

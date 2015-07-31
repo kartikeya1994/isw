@@ -23,7 +23,10 @@ public class Job implements Serializable {
 	int jobStatus;
 	
 	double fixedCost; //fixed cost for CM or PM
-
+	
+	long seriesTTR;
+	int[] seriesLabour;
+	
 	double jobCost; // cost per hour for CM or PM, or job processing cost
 	double penaltyCost;
 	public Job(String jobName, long jobTime,double  jobCost, int jobType) {
@@ -101,6 +104,22 @@ public class Job implements Serializable {
 	public void setCompNo(int no ){
 		compNo = no;
 		
+	}
+	
+	public long getSeriesTTR() {
+		return seriesTTR;
+	}
+
+	public void setSeriesTTR(long seriesTTR) {
+		this.seriesTTR = seriesTTR;
+	}
+
+	public int[] getSeriesLabour() {
+		return seriesLabour;
+	}
+
+	public void setSeriesLabour(int[] seriesLabour) {
+		this.seriesLabour = seriesLabour;
 	}
 	
 		

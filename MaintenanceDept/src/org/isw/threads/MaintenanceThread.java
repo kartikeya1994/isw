@@ -24,7 +24,6 @@ import org.isw.LabourAvailability;
 import org.isw.MachineList;
 import org.isw.Macros;
 import org.isw.MaintenanceRequestPacket;
-import org.isw.MaintenanceTuple;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
 
@@ -41,7 +40,7 @@ public class MaintenanceThread  extends Thread{
 	static ArrayList<double[]> pmTTRList = new ArrayList<double[]>();
 	static int numOfMachines;
 	static PriorityQueue<CompTTF> ttfList;
-	static LabourAvailability pmLabourAssignment = new LabourAvailability(maxLabour, Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
+	LabourAvailability pmLabourAssignment;
 	
 	public MaintenanceThread(MachineList machineList){
 		this.machineList = machineList;
@@ -126,6 +125,31 @@ public class MaintenanceThread  extends Thread{
 		{
 			e.printStackTrace();
 		}
+		
+		// labour availability during planning
+		pmLabourAssignment = new LabourAvailability(maxLabour, Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
+		
+		// reserve labour for jobs pending from previous shift
+		for(int i=0; i<schedule.size(); i++)
+		{
+			Schedule sched = schedule.get(i);
+			if(!sched.isEmpty() && sched.jobAt(0).getJobType()==Job.JOB_PM)
+			{
+				//pending PM job present in this schedule
+				
+				//reserve labour for it
+				pmLabourAssignment.employLabour(0, sched.jobAt(0).getSeriesTTR(), sched.jobAt(0).getSeriesLabour());
+			}
+			
+			if(!sched.isEmpty() && sched.jobAt(0).getJobType()==Job.JOB_CM)
+			{
+				//pending PM job present in this schedule
+				
+				//reserve labour for it
+				pmLabourAssignment.employLabour(0, sched.jobAt(0).getSeriesTTR(), sched.jobAt(0).getSeriesLabour());
+			}
+			
+		}
 		 
 		//sort
 		Collections.sort(table, new CustomComparator(component)); //higher IF and lower labour requirement
@@ -182,7 +206,7 @@ public class MaintenanceThread  extends Thread{
 				if(meetsReqForAllOpp)
 				{
 					//incorporate the PM job(s) into schedule of machine
-					addPMJobs(schedule.get(row.id), component.get(row.id),row);
+					addPMJobs(schedule.get(row.id), component.get(row.id), row, seriesTTR, seriesLabour);
 					toPerformPM.put(row.id, true);
 					
 					//reserve labour
@@ -208,8 +232,7 @@ public class MaintenanceThread  extends Thread{
 		
 		// shift has begun
 		// receive and process requests for labour
-		
-		LabourAvailability labourAvailability = new LabourAvailability(maxLabour, Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
+		LabourAvailability realTimeLabour = new LabourAvailability(maxLabour, Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
 		
 		while(true)
 		{
@@ -223,10 +246,10 @@ public class MaintenanceThread  extends Thread{
 			
 			else
 			{
-				if(labourAvailability.checkAvailability(packet.mtTuple))
+				if(realTimeLabour.checkAvailability(packet.mtTuple))
 				{
 					//labour is available. Grant request and reserve labour
-					labourAvailability.employLabour(packet.mtTuple);
+					realTimeLabour.employLabour(packet.mtTuple);
 					FlagPacket.sendTCP(Macros.LABOUR_GRANTED, packet.machineIP, packet.machinePort);
 					
 				}
@@ -239,7 +262,7 @@ public class MaintenanceThread  extends Thread{
 		}
 	}
 
-	private static void addPMJobs(Schedule schedule,Component[] compList, SimulationResult row) {
+	private static void addPMJobs(Schedule schedule,Component[] compList, SimulationResult row, long[] seriesTTR, int[][] seriesLabour) {
 		/*
 		 * Add PM jobs to given schedule.
 		 */
@@ -258,6 +281,8 @@ public class MaintenanceThread  extends Thread{
 					
 					Job pmJob = new Job("PM",pmttr,compList[i].getPMLabourCost(),Job.JOB_PM);
 					pmJob.setCompNo(i);
+					pmJob.setSeriesTTR(seriesTTR[pmOpp]);
+					pmJob.setSeriesLabour(seriesLabour[pmOpp]);
 					if(cnt==0){
 						// consider fixed cost only once, for the first job
 						pmJob.setFixedCost(compList[i].getPMFixedCost());
