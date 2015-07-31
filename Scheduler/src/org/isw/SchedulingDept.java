@@ -2,23 +2,18 @@ package org.isw;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Scanner;
 
-import org.isw.threads.JobSchedThread;
 import org.isw.threads.ListenerThread;
 
 public class SchedulingDept 
 {
 	public static int days;
+	public static InetAddress maintenanceIP;
 	public static void main(String args[])
 	{
 		DatagramSocket socket = null;
@@ -79,11 +74,25 @@ public class SchedulingDept
 			days = dias.readInt();
 			Macros.TIME_SCALE_FACTOR = dias.readInt();
 			init = true;
-			socket.close();
+			
 			} catch(IOException e){
 				
 			} 
 			}
+		try {
+			socket.setSoTimeout(0);
+			DatagramPacket fp = FlagPacket.makePacket(Macros.MAINTENANCE_DEPT_GROUP, Macros.MAINTENANCE_DEPT_MULTICAST_PORT,Macros.REQUEST_MAINTENANCE_DEPT_IP );
+			socket.send(fp);
+			FlagPacket reply = FlagPacket.receiveUDP(socket);
+			maintenanceIP = reply.ip;
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		listener.start();
 		
 		

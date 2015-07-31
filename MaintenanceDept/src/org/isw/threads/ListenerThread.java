@@ -28,9 +28,15 @@ public class ListenerThread extends Thread
 			{
 				FlagPacket fp = FlagPacket.receiveMulticast(socket);
 				if(fp.flag ==Macros.REQUEST_MAINTENANCE_DEPT_IP){
+					if(fp.port == Macros.SCHEDULING_DEPT_PORT){
+						DatagramPacket packetOut =FlagPacket.makePacket(fp.ip.getHostAddress(), fp.port, Macros.REPLY_MAINTENANCE_DEPT_IP);	
+						socket.send(packetOut);
+					}
+					else{
 					// listen for machines trying to connect
 					ClientHandlerThread worker = new ClientHandlerThread(socket, fp, machineList);
 					worker.start();	
+					}
 				}
 				
 				else if (fp.flag == Macros.START_MAINTENANCE_PLANNING)

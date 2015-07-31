@@ -30,6 +30,7 @@ import org.isw.Macros;
 import org.isw.MaintenanceRequestPacket;
 import org.isw.MaintenanceTuple;
 import org.isw.Schedule;
+import org.isw.SchedulingDept;
 
 public class JobSchedThread extends Thread
 {
@@ -149,7 +150,7 @@ public class JobSchedThread extends Thread
 					count++;
 			}
 			
-			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
+			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
 			mrp.sendTCP();
 		}
 		

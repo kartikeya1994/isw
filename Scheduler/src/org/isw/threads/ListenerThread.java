@@ -8,6 +8,7 @@ import java.net.MulticastSocket;
 import org.isw.FlagPacket;
 import org.isw.MachineList;
 import org.isw.Macros;
+import org.isw.SchedulingDept;
 
 public class ListenerThread extends Thread
 {
@@ -47,7 +48,7 @@ public class ListenerThread extends Thread
 					}
 						break;
 					case Macros.START_SCHEDULING:
-						
+						(new JobSchedThread(machineList,SchedulingDept.days/Macros.SHIFT_DURATION)).start();
 				}	
 			}
 

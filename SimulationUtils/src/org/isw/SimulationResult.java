@@ -60,9 +60,12 @@ public class SimulationResult implements Serializable {
 		}
 		return count;
 	}
-	public Object getChormosome() {
-		// TODO Auto-generated method stub
-		return null;
+	public int getChormosome(int length) {
+		int combo = compCombo[0];
+		for(int i = 1; i < compCombo.length ;i++){
+			combo = (combo<<length)|compCombo[i];
+		}
+		return combo;
 	}
 
 

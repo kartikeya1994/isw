@@ -123,12 +123,24 @@ public class Main extends Application {
 					initMachines();
 					initMaintenance();
 					initScheduler();
+					Thread.sleep(5);
+					startSimulation();
 				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
 						
+			}
+
+			private void startSimulation() throws IOException {
+				DatagramPacket packet = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.START_SCHEDULING);
+				udpSocket.send(packet);
+				packet = FlagPacket.makePacket(Macros.MAINTENANCE_DEPT_GROUP, Macros.MAINTENANCE_DEPT_MULTICAST_PORT, Macros.START_MAINTENANCE_PLANNING);
+				udpSocket.send(packet);
 			}
 
 			private void initScheduler() throws NumberFormatException, IOException {

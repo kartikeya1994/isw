@@ -58,6 +58,11 @@ public class SimulationThread implements Callable<SimulationResult> {
 					if(cmTTF>= time && i==compNo)
 						flag = true;
 					}
+					ArrayList<Job> cmJobs = simSchedule.getCMJobs();
+					for(Job cmJob : cmJobs){
+						if(i == cmJob.getCompNo())
+							flag = true;
+					}
 					if(flag)
 						continue;
 				

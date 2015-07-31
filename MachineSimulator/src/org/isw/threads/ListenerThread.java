@@ -12,7 +12,11 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,6 +25,7 @@ import org.isw.IFPacket;
 import org.isw.Job;
 import org.isw.Machine;
 import org.isw.Macros;
+import org.isw.MemeticAlgorithm;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
 
@@ -90,8 +95,18 @@ public class ListenerThread extends Thread
 						/* TODO:
 						 * Get simulation results by executing Memetic Algorithm
 						 * */
-						SimulationResult[] results = null;
-
+						ExecutorService threadPool = Executors.newSingleThreadExecutor();
+						CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
+						pool.submit(new SimulationThread(jl,null,null,true));
+						SimulationResult result = pool.take().get();
+						ArrayList<Integer> pmos = jl.getPMOpportunities();
+						int[] intArray = new int[pmos.size()];
+						for (int i = 0; i < intArray.length; i++) {
+						    intArray[i] = pmos.get(i);
+						}
+						MemeticAlgorithm ma = new MemeticAlgorithm(100,200,jl,intArray,result);
+						SimulationResult[] results = ma.execute();
+						
 						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));
 						System.out.println("Sending simulation results to Maintenance");
 						
@@ -105,7 +120,7 @@ public class ListenerThread extends Thread
 						System.out.println("Total time" + jl.getSum());
 						
 						//Execute schedule received by maintenance
-						ExecutorService threadPool = Executors.newSingleThreadExecutor();
+						 threadPool = Executors.newSingleThreadExecutor();
 						threadPool.execute(new JobExecThread(jl, udpSocket, tcpSocket, maintenanceIP));
 						threadPool.shutdown();
 						while(!threadPool.isTerminated()); 
@@ -114,6 +129,12 @@ public class ListenerThread extends Thread
 						//Request Scheduling Dept for next shift
 						FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);
 					} catch (ClassNotFoundException e) {
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (ExecutionException e) {
+						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					break;

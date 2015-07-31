@@ -259,4 +259,13 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		}
 		return pmJobs;
 	}
+
+	public ArrayList<Job> getCMJobs() {
+		ArrayList<Job> cmJobs = new ArrayList<Job>();
+		for(int i = jobs.size()-1; i>0; i--){
+				if(jobs.get(i).jobType == Job.JOB_CM)
+					cmJobs.add(jobs.get(i));
+		}
+		return cmJobs;
+	}
 }
