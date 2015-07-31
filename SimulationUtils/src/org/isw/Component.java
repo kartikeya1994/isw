@@ -3,6 +3,11 @@ package org.isw;
 import java.io.Serializable;
 import java.util.Random;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+
 import org.apache.commons.math3.random.GaussianRandomGenerator;
 import org.apache.commons.math3.random.JDKRandomGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -41,6 +46,27 @@ public class Component implements Serializable {
 	public int[] cmLabour;
 	public double[] labourCost;
 	public double initAge;
+	
+	public BooleanProperty active;
+	public DoubleProperty pmMuRepP;
+	public DoubleProperty pmSigmaRepP;
+	public DoubleProperty pmMuSuppP;
+	public DoubleProperty pmSigmaSuppP;
+	public DoubleProperty pmRFP;
+	public DoubleProperty pmCostSpareP;
+	public DoubleProperty pmCostOtherP;
+	//CM
+	// TOF
+	public DoubleProperty cmEtaP;
+	public DoubleProperty cmBetaP;
+	// TTR
+	public DoubleProperty cmMuRepP;
+	public DoubleProperty cmSigmaRepP;
+	public DoubleProperty cmMuSuppP;
+	public DoubleProperty cmSigmaSuppP;
+	public DoubleProperty cmRFP;
+	public DoubleProperty cmCostSpareP;
+	public DoubleProperty cmCostOtherP;
 
 	public double getPMTTR(){
 		return normalRandom(pmMuRep,pmSigmaRep) + normalRandom(pmMuSupp,pmSigmaSupp);
@@ -91,6 +117,30 @@ public class Component implements Serializable {
 	public int[] getPMLabour() {
 		return pmLabour;
 	}
+
+	public void initProps() {
+		active = new SimpleBooleanProperty(false);
+		cmEtaP = new SimpleDoubleProperty(cmEta);
+		cmBetaP = new SimpleDoubleProperty(cmBeta);
+		cmMuRepP = new SimpleDoubleProperty(cmMuRep);
+		cmSigmaRepP = new SimpleDoubleProperty(cmSigmaRep);
+		cmMuSuppP = new SimpleDoubleProperty(cmMuSupp);
+		cmSigmaSuppP = new SimpleDoubleProperty(cmSigmaSupp);
+		cmRFP = new SimpleDoubleProperty(cmRF);
+		cmCostSpareP = new SimpleDoubleProperty(cmCostSpare);
+		cmCostOtherP = new SimpleDoubleProperty(cmCostOther);
+	
+		pmMuRepP = new SimpleDoubleProperty(pmMuRep);
+		pmSigmaRepP = new SimpleDoubleProperty(pmSigmaRep);
+		pmMuSuppP = new SimpleDoubleProperty(pmMuSupp);
+		pmSigmaSuppP = new SimpleDoubleProperty(pmSigmaSupp);
+		pmRFP = new SimpleDoubleProperty(pmRF);
+		pmCostSpareP = new SimpleDoubleProperty(pmCostSpare);
+		pmCostOtherP = new SimpleDoubleProperty(pmCostOther);
+		
+	}
+
+
 	
 	public int[] getCMLabour() {
 		return cmLabour;

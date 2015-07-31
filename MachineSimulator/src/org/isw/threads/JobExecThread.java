@@ -23,13 +23,11 @@ public class JobExecThread extends Thread{
 	DatagramSocket socket;
 	DatagramPacket timePacket;
 	ServerSocket tcpSocket;
-	static Component[] compList;
 	InetAddress maintenanceIP;
-	public JobExecThread(Schedule jobList , DatagramSocket socket, ServerSocket tcpSocket, InetAddress maintenanceIP, Component[] compList){
+	public JobExecThread(Schedule jobList , DatagramSocket socket, ServerSocket tcpSocket, InetAddress maintenanceIP){
 		this.jobList = jobList;
 		this.socket = socket;
 		this.tcpSocket = tcpSocket;
-		this.compList = compList;
 		this.maintenanceIP = maintenanceIP;
 		timePacket = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_TIME);
 	}
@@ -41,9 +39,9 @@ public class JobExecThread extends Thread{
 		// find all machine failures and CM times for this shift
 		LinkedList<FailureEvent> failureEvents = new LinkedList<FailureEvent>();
 		FailureEvent upcomingFailure = null;
-		for(int compNo=0; compNo<compList.length; compNo++)
+		for(int compNo=0; compNo<Machine.compList.length; compNo++)
 		{
-			long ft = Component.notZero(compList[compNo].getCMTTF());
+			long ft = Component.notZero(Machine.compList[compNo].getCMTTF());
 			if(ft < Macros.SHIFT_DURATION)
 			{
 				// this component fails in this shift
@@ -70,8 +68,8 @@ public class JobExecThread extends Thread{
 				 * Machine fails. 
 				 * Add CM job to top of schedule and run it. 
 				 */
-				Job cmJob = new Job("CM", upcomingFailure.repairTime, compList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
-				cmJob.setFixedCost(compList[upcomingFailure.compNo].getCMFixedCost());
+				Job cmJob = new Job("CM", upcomingFailure.repairTime, Machine.compList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
+				cmJob.setFixedCost(Machine.compList[upcomingFailure.compNo].getCMFixedCost());
 				cmJob.setCompNo(upcomingFailure.compNo);
 				jobList.addJobTop(cmJob);
 				Machine.setStatus(Macros.MACHINE_WAITING_FOR_CM_LABOUR);
@@ -84,9 +82,9 @@ public class JobExecThread extends Thread{
 				int[] labour_req = null;
 				// determine labour requirement
 				if(current.getJobType() == Job.JOB_CM)
-					labour_req = compList[current.getCompNo()].getCMLabour();
+					labour_req = Machine.compList[current.getCompNo()].getCMLabour();
 				else if(current.getJobType() == Job.JOB_PM)
-					labour_req = compList[current.getCompNo()].getPMLabour();
+					labour_req = Machine.compList[current.getCompNo()].getPMLabour();
 
 				// send labour request
 				MaintenanceTuple mtTuple = new MaintenanceTuple(time, time+current.getJobTime(), labour_req);
@@ -159,36 +157,32 @@ public class JobExecThread extends Thread{
 				switch(current.getJobType())
 				{
 				case Job.JOB_PM:
-					// decrease the age for each component that underwent PM
-					for(int i =0; i<Machine.compList.length;i++){
-						int pos=1<<i;
-						int bitmask = current.getCompCombo();
-						if((pos&bitmask) != 0){
-							Component comp = Machine.compList[i];
-							comp.initAge = (1-comp.pmRF)*comp.initAge;
-							Machine.compPMJobsDone[i]++;
-						}
-					}
+					
+					Component comp1 = Machine.compList[current.getCompNo()];
+					comp1.initAge = (1-comp1.pmRF)*comp1.initAge;
+					Machine.compPMJobsDone[current.getCompNo()]++;
+						
+					
 					Machine.pmJobsDone++;
 
 					// recompute component failures
-					failureEvents = null;
+					failureEvents = new LinkedList<FailureEvent>();
 					upcomingFailure = null;
-					for(int compNo=0; compNo<compList.length; compNo++)
+					for(int compNo=0; compNo<Machine.compList.length; compNo++)
 					{
-						long ft = Component.notZero(compList[compNo].getCMTTF());
+						long ft = Component.notZero(Machine.compList[compNo].getCMTTF());
 						if(ft < Macros.SHIFT_DURATION)
 						{
 							// this component fails in this shift
 							failureEvents.add(new FailureEvent(compNo, ft*Macros.TIME_SCALE_FACTOR));
 						}
 					}
+					
 					if(!failureEvents.isEmpty())
 					{
 						Collections.sort(failureEvents, new FailureEventComparator());
 						upcomingFailure =  failureEvents.pop();
 					}
-
 					break;
 
 				case Job.JOB_CM:
@@ -199,11 +193,11 @@ public class JobExecThread extends Thread{
 					Machine.compCMJobsDone[current.getCompNo()]++;
 
 					// recompute component failures
-					failureEvents = null;
+					failureEvents = new LinkedList<FailureEvent>();
 					upcomingFailure = null;
-					for(int compNo=0; compNo<compList.length; compNo++)
+					for(int compNo=0; compNo<Machine.compList.length; compNo++)
 					{
-						long ft = Component.notZero(compList[compNo].getCMTTF());
+						long ft = Component.notZero(Machine.compList[compNo].getCMTTF());
 						if(ft < Macros.SHIFT_DURATION)
 						{
 							// this component fails in this shift
@@ -265,7 +259,7 @@ public class JobExecThread extends Thread{
 		public FailureEvent(int compNo, long failureTime)
 		{
 			this.compNo = compNo;
-			this.repairTime = Component.notZero(compList[compNo].getCMTTR()*Macros.TIME_SCALE_FACTOR);
+			this.repairTime = Component.notZero(Machine.compList[compNo].getCMTTR()*Macros.TIME_SCALE_FACTOR);
 			this.failureTime = failureTime;
 		}
 	}

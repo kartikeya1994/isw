@@ -2,10 +2,12 @@ package org.isw.threads;
 
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
+import java.util.List;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
@@ -38,11 +40,12 @@ class ClientHandlerThread extends Thread {
 			{
 				System.out.println("Newly joined: "+packet.ip);
 				machineList.add(packet.ip, packet.port);
+			    Main.machines.put(packet.ip,null);
 				Platform.runLater(new Runnable(){
 
 					@Override
 					public void run() {
-						Button machine = new Button();
+						Button machine = new Button(packet.ip.getHostAddress());
 						machine.setOnAction(new EventHandler<ActionEvent>(){
 
 							@Override
@@ -50,13 +53,12 @@ class ClientHandlerThread extends Thread {
 								// TODO Auto-generated method stub
 								 Stage stage = new Stage();
 						         stage.setTitle("Select components:");
-						         stage.setScene(new Scene(new ComponentTableView(), 1200, 600));
+						         stage.setScene(new Scene(new ComponentTableView(packet.ip), 1200, 600));
 						         stage.show();
 							}
 							
 						});
 						Main.machineBox.getChildren().add(machine);
-						FlatterFX.style();
 					}
 					
 				});

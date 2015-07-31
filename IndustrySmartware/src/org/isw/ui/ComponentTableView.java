@@ -2,106 +2,139 @@ package org.isw.ui;
 
 
 
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.InetAddress;
+import java.util.ArrayList;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.isw.Component;
+import org.isw.Main;
 
 
 public class ComponentTableView extends VBox {
-	public ComponentTableView(){
+	public ComponentTableView(InetAddress ip){
+		CheckBox isMachineSelected = new CheckBox("Select Machine");
+		isMachineSelected.setSelected(false);
 		TableView<Component> componentTable = new TableView<Component>();
 		TableColumn<Component,Boolean> checkColumn = new TableColumn<Component,Boolean>("Select");
-		checkColumn.setCellValueFactory((new PropertyValueFactory<Component,Boolean>("active")));
+		checkColumn.setCellValueFactory(cellData -> cellData.getValue().active);
 		checkColumn.setCellFactory(CheckBoxTableCell.forTableColumn(checkColumn));
 		componentTable.getColumns().addAll(checkColumn,createPMColumns(),createCMColumns());
 		Button saveButton = new Button("Save");
+		Component[] components = parseExcel() ;
+		
 		saveButton.setOnAction(new EventHandler<ActionEvent>(){
 
 			@Override
 			public void handle(ActionEvent event) {
-				
+				if(isMachineSelected.isSelected()){
+				ArrayList<Component> components = new ArrayList<Component>();
+					for(Component comp : componentTable.getItems()){
+						if(comp.active.get())
+							components.add(comp);
+					}
+					Main.machines.put(ip, (Component[]) components.toArray());
+				}
+				else{
+					Main.machines.put(ip, null);
+				}
 			}
 			
 		});
+		ObservableList<Component> componentData = FXCollections.observableArrayList();
+		componentData.addAll(components);
+		componentTable.setItems(componentData);
 		this.getChildren().addAll(componentTable,saveButton);
 	}
 
 	private TableColumn createPMColumns() {
 		TableColumn pm = new TableColumn("Preventive Maintainence");
 		TableColumn maintainability = new TableColumn("Maintainabilty");
-		TableColumn<Component,Double> pmMuRep = new TableColumn<Component, Double>("mu repair");
-		pmMuRep.setCellValueFactory(cellData -> cellData.getValue().pmMuRep);
-		TableColumn<Component,Double> pmSigmaRep = new TableColumn<Component, Double>("sigma repair)");
-		pmSigmaRep.setCellValueFactory(cellData -> cellData.getValue().pmSigmaRep);
+		TableColumn<Component,Number> pmMuRep = new TableColumn<Component, Number>("mu repair");
+		pmMuRep.setCellValueFactory(cellData -> cellData.getValue().pmMuRepP);
+		TableColumn<Component,Number> pmSigmaRep = new TableColumn<Component, Number>("sigma repair)");
+		pmSigmaRep.setCellValueFactory(cellData -> cellData.getValue().pmSigmaRepP);
 		maintainability.getColumns().addAll(pmMuRep,pmSigmaRep);
 		TableColumn supportability = new TableColumn("Supportabilty");
-		TableColumn<Component,Double> pmMuSupp = new TableColumn<Component, Double>("mu support");
-		pmMuSupp.setCellValueFactory(cellData -> cellData.getValue().pmMuSupp);
-		TableColumn<Component,Double> pmSigmaSupp = new TableColumn<Component, Double>("sigma support");
-		pmSigmaSupp.setCellValueFactory(cellData -> cellData.getValue().pmSigmaSupp);
-		maintainability.getColumns().addAll(pmMuSupp,pmSigmaSupp);	
-		TableColumn<Component,Double> rf = new TableColumn<Component, Double>("Restoration Factor");
-		rf.setCellValueFactory(cellData -> cellData.getValue().pmRF);
+		TableColumn<Component,Number> pmMuSupp = new TableColumn<Component, Number>("mu support");
+		pmMuSupp.setCellValueFactory(cellData -> cellData.getValue().pmMuSuppP);
+		TableColumn<Component,Number> pmSigmaSupp = new TableColumn<Component, Number>("sigma support");
+		pmSigmaSupp.setCellValueFactory(cellData -> cellData.getValue().pmSigmaSuppP);
+		supportability.getColumns().addAll(pmMuSupp,pmSigmaSupp);	
+		TableColumn<Component,Number> rf = new TableColumn<Component, Number>("Restoration Factor");
+		rf.setCellValueFactory(cellData -> cellData.getValue().pmRFP);
 		TableColumn cost = new TableColumn("Cost Models");
-		TableColumn<Component,Double> sparePartCost = new TableColumn<Component, Double>("Spare parts");
-		sparePartCost.setCellValueFactory(cellData -> cellData.getValue().pmCostSpare);
-		TableColumn<Component,Double> otherCost = new TableColumn<Component, Double>("Other");
-		otherCost.setCellValueFactory(cellData -> cellData.getValue().pmCostOther);
+		TableColumn<Component,Number> sparePartCost = new TableColumn<Component, Number>("Spare parts");
+		sparePartCost.setCellValueFactory(cellData -> cellData.getValue().pmCostSpareP);
+		TableColumn<Component,Number> otherCost = new TableColumn<Component, Number>("Other");
+		otherCost.setCellValueFactory(cellData -> cellData.getValue().pmCostOtherP);
 		cost.getColumns().addAll(sparePartCost,otherCost);
 		pm.getColumns().addAll(maintainability,supportability,rf,cost);
 		return pm;
 	}
+	
 	private TableColumn createCMColumns() {
 		TableColumn cm = new TableColumn("Corrective Maintainence");
 		TableColumn reliability = new TableColumn("Reliability");
-		TableColumn<Component,Double> cmEta = new TableColumn<Component, Double>("eta (Hr)");
-		TableColumn<Component,Double> cmBeta = new TableColumn<Component, Double>("beta (Hr)");
+		TableColumn<Component,Number> cmEta = new TableColumn<Component, Number>("eta (Hr)");
+		cmEta.setCellValueFactory(cellData -> cellData.getValue().cmEtaP);
+		TableColumn<Component,Number> cmBeta = new TableColumn<Component, Number>("beta (Hr)");
+		cmBeta.setCellValueFactory(cellData -> cellData.getValue().cmBetaP);
 		reliability.getColumns().addAll(cmEta,cmBeta);
 		TableColumn maintainability = new TableColumn("Maintainabilty");
-		TableColumn<Component,Double> cmMuRep = new TableColumn<Component, Double>("mu repair");
-		TableColumn<Component,Double> cmSigmaRep = new TableColumn<Component, Double>("sigma repair)");
+		TableColumn<Component,Number> cmMuRep = new TableColumn<Component, Number>("mu repair");
+		cmMuRep.setCellValueFactory(cellData -> cellData.getValue().cmMuRepP);
+		TableColumn<Component,Number> cmSigmaRep = new TableColumn<Component, Number>("sigma repair)");
+		cmSigmaRep.setCellValueFactory(cellData -> cellData.getValue().pmSigmaRepP);
 		maintainability.getColumns().addAll(cmMuRep,cmSigmaRep);
 		TableColumn supportability = new TableColumn("Supportabilty");
-		TableColumn<Component,Double> cmMuSupp = new TableColumn<Component, Double>("mu support");
-		TableColumn<Component,Double> cmSigmaSupp = new TableColumn<Component, Double>("sigma support");
-		maintainability.getColumns().addAll(cmMuSupp,cmSigmaSupp);	
-		TableColumn<Component,Double> rf = new TableColumn<Component, Double>("Restoration Factor");
+		TableColumn<Component,Number> cmMuSupp = new TableColumn<Component, Number>("mu support");
+		cmMuSupp.setCellValueFactory(cellData -> cellData.getValue().cmMuSuppP);
+		TableColumn<Component,Number> cmSigmaSupp = new TableColumn<Component, Number>("sigma support");
+		cmSigmaSupp.setCellValueFactory(cellData -> cellData.getValue().cmSigmaSuppP);
+		supportability.getColumns().addAll(cmMuSupp,cmSigmaSupp);	
+		TableColumn<Component,Number> rf = new TableColumn<Component, Number>("Restoration Factor");
+		rf.setCellValueFactory(cellData -> cellData.getValue().cmRFP);
 		TableColumn cost = new TableColumn("Cost Models");
-		TableColumn<Component,Double> sparePartCost = new TableColumn<Component, Double>("Spare parts");
-		TableColumn<Component,Double> otherCost = new TableColumn<Component, Double>("Other");
+		TableColumn<Component,Number> sparePartCost = new TableColumn<Component, Number>("Spare parts");
+		sparePartCost.setCellValueFactory(cellData -> cellData.getValue().cmCostSpareP);
+		TableColumn<Component,Number> otherCost = new TableColumn<Component, Number>("Other");
+		otherCost.setCellValueFactory(cellData -> cellData.getValue().cmCostOtherP);
 		cost.getColumns().addAll(sparePartCost,otherCost);
 		cm.getColumns().addAll(reliability,maintainability,supportability,rf,cost);
 		return cm;
 	}
 	
-	private static Component[] parseExcel(int n) {
+	private static Component[] parseExcel() {
 		/**
 		 * Parse the component excel file into a list of components.
 		 * Total number of components should be 14 for our experiment.
 		 * Different component excel file for different machineNo (Stick
 		 * to one for now)
 		 * **/
-		Component[] c = new Component[n];
+		Component[] c = new Component[14];
 		try
 		{
 			FileInputStream file = new FileInputStream(new File("Components.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
 			XSSFSheet labourSheet = workbook.getSheetAt(1);
-			for(int i=5;i<5+n;i++)
+			for(int i=5;i<19;i++)
 			{
 				Row row = sheet.getRow(i);
 				Component comp = new Component();
@@ -141,6 +174,7 @@ public class ComponentTableView extends VBox {
 				comp.cmLabour[0] = (int)row.getCell(2).getNumericCellValue();
 				comp.cmLabour[1] = (int)row.getCell(4).getNumericCellValue();
 				comp.cmLabour[2] = (int)row.getCell(6).getNumericCellValue();
+				comp.initProps();
 				c[i-5] = comp;
 			
 			}

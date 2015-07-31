@@ -53,7 +53,11 @@ public class Macros {
 	public static final int MACHINE_PORT_TCP = 8892;
 	public static final int MAINTENANCE_DEPT_PORT = 8893;
 	public static final int MAINTENANCE_DEPT_PORT_TCP = 8894;
+
 	public static final int MAINTEANCE_DEPT_ALLOTMENT_PORT_TCP = 8895;
+
+	public static final int ISW_PORT = 8895;
+
 	
 	public static final int SCHEDULING_DEPT_MULTICAST_PORT = 8888;
 	public static final int ISW_MULTICAST_PORT = 8887;
@@ -62,6 +66,7 @@ public class Macros {
 	public static final String SCHEDULING_DEPT_GROUP = "224.1.1.1";
 	public static final String ISW_GROUP = "224.1.1.3";
 	public static final String MAINTENANCE_DEPT_GROUP = "224.1.1.4";
+	
 	
 	
 	
