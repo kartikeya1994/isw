@@ -24,7 +24,8 @@ public class SimulationResult implements Serializable {
 		this.compCombo = compCombo;
 		this.pmOpportunity = pmOpportunity;
 		this.noPM = noPM;
-		this.startTimes = new long[pmOpportunity.length];
+		if(!noPM)
+			this.startTimes = new long[pmOpportunity.length];
 	}
 	public double getCost(){
 		return cost;

@@ -22,6 +22,7 @@ public class SchedulingDept
 			boolean registered = false;
 			socket = new DatagramSocket(Macros.SCHEDULING_DEPT_PORT);
 			DatagramPacket iswPacket = FlagPacket.makePacket(Macros.ISW_GROUP, Macros.ISW_MULTICAST_PORT, Macros.REQUEST_ISW_IP|Macros.SCHEDULING_DEPT_FLAG);
+			socket.setSoTimeout(3000);
 			while(!registered){
 				// register with central logging
 				socket.send(iswPacket);
@@ -52,6 +53,7 @@ public class SchedulingDept
 		
 		MachineList machineList = new MachineList();
 		ListenerThread listener = new ListenerThread(machineList);
+		listener.start();
 		
 		boolean init = false;
 		while(!init){
@@ -85,6 +87,7 @@ public class SchedulingDept
 			socket.send(fp);
 			FlagPacket reply = FlagPacket.receiveUDP(socket);
 			maintenanceIP = reply.ip;
+			socket.close();
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -93,7 +96,7 @@ public class SchedulingDept
 			e.printStackTrace();
 		}
 		
-		listener.start();
+	
 		
 		
 	}

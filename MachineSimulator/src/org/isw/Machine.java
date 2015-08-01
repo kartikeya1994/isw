@@ -53,11 +53,10 @@ public class Machine
 		boolean maintenanceRegistered=false;
 		boolean iswRegistered = false;
 		boolean schedulerRegistered = false;
-		Macros.loadMacros();
 		
 		try
 		{
-			DatagramPacket schedulerPacket  = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_ISW_IP);
+			DatagramPacket schedulerPacket  = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_SCHEDULING_DEPT_IP);
 			DatagramPacket iswPacket = FlagPacket.makePacket(Macros.ISW_GROUP, Macros.ISW_MULTICAST_PORT, Macros.MACHINE_FLAG|Macros.REQUEST_ISW_IP);
 			DatagramPacket maintenancePacket = FlagPacket.makePacket(Macros.MAINTENANCE_DEPT_GROUP, Macros.MAINTENANCE_DEPT_MULTICAST_PORT, Macros.REQUEST_MAINTENANCE_DEPT_IP);
 			FlagPacket packetIn;
@@ -68,7 +67,6 @@ public class Machine
 
 			while(!schedulerRegistered || !iswRegistered || !maintenanceRegistered) // loop until registered with all
 			{
-				System.out.println("Finding server...");
 				if(!maintenanceRegistered) // register machine with maintenance
 					socket.send(schedulerPacket);
 				if(!iswRegistered) //register machine with central logging
@@ -76,6 +74,7 @@ public class Machine
 				if(!schedulerRegistered) // register machine with scheduler
 					socket.send(maintenancePacket);
 				
+				System.out.println("Finding server...");
 				try
 				{
 					packetIn = FlagPacket.receiveUDP(socket);//blocking call for 1000ms
@@ -88,44 +87,22 @@ public class Machine
 				switch (packetIn.flag){
 				case Macros.REPLY_MAINTENANCE_DEPT_IP:
 					maintenanceIP = packetIn.ip;
+					System.out.println("Registered to maintenance: "+ maintenanceIP.getHostAddress());
 					maintenanceRegistered = true;
 					break;
 				case Macros.REPLY_SCHEDULING_DEPT_IP:
 					schedulerIP = packetIn.ip;
+					System.out.println("Registered to scheduler: "+ schedulerIP.getHostAddress());
 					schedulerRegistered = true;
 					break;
 				case Macros.REPLY_ISW_IP:	
 					Logger.init(packetIn.ip);
+					System.out.println("Registered to isw: "+ packetIn.ip.getHostAddress());
 					iswRegistered = true;
 					break;
 				}
 			}
-			boolean init = false;
-			while(!init){
-				byte[] bufIn = new byte[4096*8];
-				DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
-				//Receive signals from Scheduling Dept
-				try
-				{
-				socket.receive(packet); 
-				}
-				catch(SocketTimeoutException stoe) {
-					System.out.println("Timed out.");
-					continue; 
-				}
-				byte[] reply=packet.getData();
-				byte [] header = Arrays.copyOfRange(reply, 0, 12);
-				final ByteArrayInputStream bais=new ByteArrayInputStream(header);
-				DataInputStream dias =new DataInputStream(bais);
-				Macros.SHIFT_DURATION = dias.readInt();
-				Macros.TIME_SCALE_FACTOR = dias.readInt();
-				Macros.SIMULATION_COUNT = dias.readInt();
-				byte[] data = Arrays.copyOfRange(reply, 12, reply.length);
-				ByteArrayInputStream in = new ByteArrayInputStream(data);
-				ObjectInputStream is = new ObjectInputStream(in);
-				compList = (Component[])is.readObject();
-				init = true;
-			}
+			
 			
 			//Variables required for the simulation results
 			downTime = 0;
@@ -134,8 +111,6 @@ public class Machine
 			shiftCount = 0;
 			cmCost = 0;
 			pmCost = 0;
-			compCMJobsDone = new int[compList.length];
-			compPMJobsDone = new int[compList.length];
 			cmDownTime=0;
 			pmDownTime=0;
 			waitTime=0;
@@ -149,9 +124,6 @@ public class Machine
 
 		}catch(IOException e)
 		{
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

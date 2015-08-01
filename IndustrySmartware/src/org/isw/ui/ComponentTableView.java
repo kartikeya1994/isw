@@ -56,7 +56,11 @@ public class ComponentTableView extends VBox {
 						if(comp.active.get())
 							components.add(comp);
 					}
-					Main.machines.put(ip, (Component[]) components.toArray());
+					Component[] comps = new Component[components.size()];
+					for (int i = 0; i < comps.length; i++) {
+					   comps[i] = components.get(i);
+					}
+ 					Main.machines.put(ip, comps);
 				}
 				else{
 					Main.machines.put(ip, null);

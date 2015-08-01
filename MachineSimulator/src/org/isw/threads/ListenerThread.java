@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.isw.Component;
 import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.Job;
@@ -76,6 +77,21 @@ public class ListenerThread extends Thread
 				 * Machine requests for schedule of next shift (REQUEST_NEXT_SHIFT)
 				 * Scheduler requests for 
 				 */
+				case Macros.INIT:
+					byte [] config = Arrays.copyOfRange(reply, 4, 16);
+					final ByteArrayInputStream bis =new ByteArrayInputStream(config);
+					DataInputStream dis =new DataInputStream(bis);
+					Macros.SHIFT_DURATION = dis.readInt();
+					Macros.TIME_SCALE_FACTOR = dis.readInt();
+					Macros.SIMULATION_COUNT = dis.readInt();
+					byte[] compdata = Arrays.copyOfRange(reply, 16, reply.length);
+					ByteArrayInputStream compin = new ByteArrayInputStream(compdata);
+					ObjectInputStream compis = new ObjectInputStream(compin);
+					Machine.compList = (Component[])compis.readObject();
+					System.out.println(Machine.compList.length);
+					Machine.compCMJobsDone = new int[Machine.compList.length];
+					Machine.compPMJobsDone = new int[Machine.compList.length];
+					break;
 				case Macros.PROCESS_COMPLETE:
 					// simulation is over
 					writeResults();
@@ -155,7 +171,7 @@ public class ListenerThread extends Thread
 					 *  if partial PM series is present, set all jobs to NOT_STARTED
 					 *  and recalculate seriesTTR and seriesLabour
 					 */
-					if(jl.jobAt(0).getJobType()==Job.JOB_PM)
+					if(!jl.isEmpty() && jl.jobAt(0).getJobType()==Job.JOB_PM)
 					{
 						long seriesTTR = 0;
 						int[] seriesLabour = {0,0,0};
@@ -200,6 +216,9 @@ public class ListenerThread extends Thread
 		}catch(IOException e)
 		{
 			e.printStackTrace();
+		} catch (ClassNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
 	}
 	

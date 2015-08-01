@@ -21,9 +21,9 @@ public class Maintenance
 	static int maxLabour[] = new int[3];
 	public static void main(String[] args)
 	{
-		Macros.loadMacros();
 		try {
 			socket = new DatagramSocket(Macros.MAINTENANCE_DEPT_PORT);
+			socket.setSoTimeout(3000);
 			boolean registered = false;
 			DatagramPacket iswPacket = FlagPacket.makePacket(Macros.ISW_GROUP, Macros.ISW_MULTICAST_PORT, Macros.REQUEST_ISW_IP|Macros.MAINTENANCE_DEPT_FLAG);
 			while(!registered){
@@ -55,6 +55,9 @@ public class Maintenance
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		MachineList machineList = new MachineList();
+		ListenerThread listener = new ListenerThread(machineList);
+		listener.start();
 		boolean init = false;
 		while(!init){
 			try{
@@ -83,9 +86,7 @@ public class Maintenance
 				
 			} 
 			}
-		MachineList machineList = new MachineList();
-		ListenerThread listener = new ListenerThread(machineList);
-		listener.start();
+		
 	}
 		
 }	

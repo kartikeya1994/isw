@@ -150,7 +150,7 @@ public class Main extends Application {
 				dos.writeInt(Integer.parseInt(days.getText()));
 				dos.writeInt(Integer.parseInt(scaleFactor.getText()));
 				byte compdata[] = baos.toByteArray();
-				DatagramPacket packet = new DatagramPacket(compdata,compdata.length,schedulerIP,Macros.SCHEDULING_DEPT_PORT);;
+				DatagramPacket packet = new DatagramPacket(compdata,compdata.length,schedulerIP,Macros.SCHEDULING_DEPT_PORT);
 				udpSocket.send(packet);
 			}
 
@@ -163,7 +163,7 @@ public class Main extends Application {
 				dos.writeInt(Integer.parseInt(semiskilled.getText()));
 				dos.writeInt(Integer.parseInt(unskilled.getText()));
 				byte[] data = baos.toByteArray();
-				DatagramPacket packet = new DatagramPacket(data,data.length,maintenanceIP,Macros.MACHINE_PORT); 
+				DatagramPacket packet = new DatagramPacket(data,data.length,maintenanceIP,Macros.MAINTENANCE_DEPT_PORT); 
 				udpSocket.send(packet);
 			}
 
@@ -177,6 +177,7 @@ public class Main extends Application {
 							oos.close();
 							baos.reset();
 							DataOutputStream dos = new DataOutputStream(baos);
+							dos.writeInt(Macros.INIT);
 							dos.writeInt(Integer.parseInt(shiftDuration.getText()));
 							dos.writeInt(Integer.parseInt(scaleFactor.getText()));
 							dos.writeInt(Integer.parseInt(simulationCount.getText()));

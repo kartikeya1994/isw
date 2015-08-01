@@ -48,28 +48,28 @@ public class Component implements Serializable {
 	public int[] cmLabour;
 	public double[] labourCost;
 	public double initAge;
-	public StringProperty compNameP;
-	public DoubleProperty initAgeP;
-	public BooleanProperty active;
-	public DoubleProperty pmMuRepP;
-	public DoubleProperty pmSigmaRepP;
-	public DoubleProperty pmMuSuppP;
-	public DoubleProperty pmSigmaSuppP;
-	public DoubleProperty pmRFP;
-	public DoubleProperty pmCostSpareP;
-	public DoubleProperty pmCostOtherP;
+	public transient StringProperty compNameP;
+	public transient DoubleProperty initAgeP;
+	public transient BooleanProperty active;
+	public transient DoubleProperty pmMuRepP;
+	public transient DoubleProperty pmSigmaRepP;
+	public transient DoubleProperty pmMuSuppP;
+	public transient DoubleProperty pmSigmaSuppP;
+	public transient DoubleProperty pmRFP;
+	public transient DoubleProperty pmCostSpareP;
+	public transient DoubleProperty pmCostOtherP;
 	//CM
 	// TOF
-	public DoubleProperty cmEtaP;
-	public DoubleProperty cmBetaP;
+	public transient DoubleProperty cmEtaP;
+	public transient DoubleProperty cmBetaP;
 	// TTR
-	public DoubleProperty cmMuRepP;
-	public DoubleProperty cmSigmaRepP;
-	public DoubleProperty cmMuSuppP;
-	public DoubleProperty cmSigmaSuppP;
-	public DoubleProperty cmRFP;
-	public DoubleProperty cmCostSpareP;
-	public DoubleProperty cmCostOtherP;
+	public transient DoubleProperty cmMuRepP;
+	public transient DoubleProperty cmSigmaRepP;
+	public transient DoubleProperty cmMuSuppP;
+	public transient DoubleProperty cmSigmaSuppP;
+	public transient DoubleProperty cmRFP;
+	public transient DoubleProperty cmCostSpareP;
+	public transient DoubleProperty cmCostOtherP;
 
 	public double getPMTTR(){
 		return normalRandom(pmMuRep,pmSigmaRep) + normalRandom(pmMuSupp,pmSigmaSupp);
