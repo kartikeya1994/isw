@@ -113,14 +113,17 @@ public class ListenerThread extends Thread
 						 * */
 						ExecutorService threadPool = Executors.newSingleThreadExecutor();
 						CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
-						pool.submit(new SimulationThread(jl,null,null,true));
+						pool.submit(new SimulationThread(jl,null,null,true,-1));
 						SimulationResult result = pool.take().get();
+						threadPool.shutdown();
+						while(!threadPool.isTerminated());
 						ArrayList<Integer> pmos = jl.getPMOpportunities();
 						int[] intArray = new int[pmos.size()];
 						for (int i = 0; i < intArray.length; i++) {
 						    intArray[i] = pmos.get(i);
 						}
-						MemeticAlgorithm ma = new MemeticAlgorithm(100,200,jl,intArray,result);
+						
+						MemeticAlgorithm ma = new MemeticAlgorithm(intArray.length*Machine.compList.length*2,200,jl,intArray,result);
 						SimulationResult[] results = ma.execute();
 						
 						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));

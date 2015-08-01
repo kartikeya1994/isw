@@ -17,12 +17,13 @@ public class SimulationThread implements Callable<SimulationResult> {
 	int pmOpportunity[];
 	int noOfSimulations = Macros.SIMULATION_COUNT;
 	boolean noPM;
-
-	public SimulationThread(Schedule schedule, int compCombo[], int pmOpportunity[],boolean noPM){
+	int chromosomeID;
+	public SimulationThread(Schedule schedule, int compCombo[], int pmOpportunity[],boolean noPM,int chromosomeID){
 		this.schedule = schedule;
 		this.compCombo = compCombo;
 		this.pmOpportunity = pmOpportunity;
 		this.noPM = noPM;
+		this.chromosomeID = chromosomeID;
 	}
 	/**
 	 * We shall run the simulation 1000 times,each simulation being Macros.SHIFT_DURATION hours (real time) in duration.
@@ -54,7 +55,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 					for(Job pmJob : pmJobs){
 					int tempIndex = simSchedule.indexOf(pmJob);
 					int compNo = pmJob.getCompNo();
-					long time =	schedule.getFinishingTime(tempIndex-1);
+					long time =	simSchedule.getFinishingTime(tempIndex-1);
 					if(cmTTF>= time && i==compNo)
 						flag = true;
 					}
@@ -66,10 +67,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 					if(flag)
 						continue;
 				
-					long cmTTR = (long)(simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR);
-					//Smallest unit is one hour for now
-					if(cmTTR==0)
-						cmTTR=1;
+					long cmTTR = Component.notZero((simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR));
 					Job cmJob = new Job("CM",cmTTR,simCompList[i].getCMLabourCost(),Job.JOB_CM);
 					cmJob.setFixedCost(simCompList[i].getCMFixedCost());
 					cmJob.setCompNo(i);
@@ -118,6 +116,9 @@ public class SimulationThread implements Callable<SimulationResult> {
 				}
 				time++;
 			}
+			
+			//System.out.println(simSchedule.printSchedule());
+			//System.out.println(simSchedule.getSum());
 			try{
 				//Calculate penaltyCost for leftover jobs
 				while(!simSchedule.isEmpty()){
@@ -134,7 +135,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 		}
 		totalCost /= noOfSimulations;
 		pmAvgTime /= noOfSimulations;
-		return new SimulationResult(totalCost,pmAvgTime,compCombo,pmOpportunity,noPM);
+		return new SimulationResult(totalCost,pmAvgTime,compCombo,pmOpportunity,noPM,chromosomeID);
 	}
 	/*Add PM job for the given combination of components.
 	 * The PM jobs are being split into smaller PM jobs for each component.
@@ -146,10 +147,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 		for(int i=0;i< simCompList.length;i++){
 			int pos = 1<<i;
 			if((pos&compCombo[pmOppo])!=0){
-				long pmttr = (long)(simCompList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR);
-				//Smallest unit is one hour
-				if(pmttr == 0)
-					pmttr=1;
+				long pmttr = Component.notZero((simCompList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR));
 				Job pmJob = new Job("PM",pmttr,simCompList[i].getPMLabourCost(),Job.JOB_PM);
 				pmJob.setCompNo(i);
 				if(cnt==0){

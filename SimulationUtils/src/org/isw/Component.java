@@ -121,9 +121,11 @@ public class Component implements Serializable {
 		return pmLabour;
 	}
 
-	public void initProps() {
-		
-		active = new SimpleBooleanProperty(false);
+	public void initProps(int i) {
+		if(i<4)
+			active = new SimpleBooleanProperty(true);
+		else
+			active = new SimpleBooleanProperty(false);
 		compNameP = new SimpleStringProperty(compName);
 		initAgeP = new SimpleDoubleProperty(initAge);
 		cmEtaP = new SimpleDoubleProperty(cmEta);

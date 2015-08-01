@@ -31,7 +31,7 @@ public class ComponentTableView extends VBox {
 	public ComponentTableView(InetAddress ip){
 		super(10);
 		CheckBox isMachineSelected = new CheckBox("Select Machine");
-		isMachineSelected.setSelected(false);
+		isMachineSelected.setSelected(true);
 		TableView<Component> componentTable = new TableView<Component>();
 		TableColumn<Component,Boolean> checkColumn = new TableColumn<Component,Boolean>("Select");
 		checkColumn.setCellValueFactory(cellData -> cellData.getValue().active);
@@ -190,7 +190,7 @@ public class ComponentTableView extends VBox {
 				comp.cmLabour[0] = (int)row.getCell(2).getNumericCellValue();
 				comp.cmLabour[1] = (int)row.getCell(4).getNumericCellValue();
 				comp.cmLabour[2] = (int)row.getCell(6).getNumericCellValue();
-				comp.initProps();
+				comp.initProps(i-5);
 				c[i-5] = comp;
 			}
 			file.close();

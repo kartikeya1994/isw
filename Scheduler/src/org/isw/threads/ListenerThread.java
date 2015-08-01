@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.Enumeration;
 
 import org.isw.FlagPacket;
 import org.isw.MachineList;
@@ -41,11 +42,14 @@ public class ListenerThread extends Thread
 					break;
 					case Macros.REQUEST_TIME:
 						// COMPLETE THIS
-						if(machineCount++ == machineList.count()){
+						if(machineCount++ == machineList.count()-1){
 						machineCount = 0;
-						DatagramPacket timePacket = FlagPacket.makePacket(fp.ip.getHostAddress(), fp.port, Macros.REPLY_TIME);
-						socket.send(timePacket);
-					}
+						Enumeration<InetAddress> ips = machineList.getIPs();
+						while(ips.hasMoreElements()){
+							DatagramPacket timePacket = FlagPacket.makePacket(ips.nextElement().getHostAddress(), fp.port, Macros.REPLY_TIME);
+							socket.send(timePacket);
+						}
+						}
 						break;
 					case Macros.START_SCHEDULING:
 						(new JobSchedThread(machineList,SchedulingDept.days/Macros.SHIFT_DURATION)).start();

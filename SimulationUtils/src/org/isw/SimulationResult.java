@@ -17,13 +17,16 @@ public class SimulationResult implements Serializable {
 	public long startTimes[]; //to be set and used for calculations by maintenance dept during planning
 	public int id; //to be set and used for calculations by maintenance dept during planning
 	public long pmTTRs[][];
+
+	public int chromosomeID;
 	
-	public SimulationResult(double cost, double pmAvgTime, int[] compCombo,int[] pmOpportunity, boolean noPM){
+	public SimulationResult(double cost, double pmAvgTime, int[] compCombo,int[] pmOpportunity, boolean noPM,int chromosomeID){
 		this.cost = cost;
 		this.pmAvgTime = pmAvgTime;
 		this.compCombo = compCombo;
 		this.pmOpportunity = pmOpportunity;
 		this.noPM = noPM;
+		this.chromosomeID = chromosomeID;
 		if(!noPM)
 			this.startTimes = new long[pmOpportunity.length];
 	}
@@ -62,9 +65,10 @@ public class SimulationResult implements Serializable {
 		return count;
 	}
 	public int getChormosome(int length) {
-		int combo = compCombo[0];
-		for(int i = 1; i < compCombo.length ;i++){
-			combo = (combo<<length)|compCombo[i];
+		int combo = compCombo[compCombo.length-1];
+		for(int i = compCombo.length-2; i >=0  ;i--){
+			combo = (combo<<length);
+			combo |= compCombo[i];
 		}
 		return combo;
 	}

@@ -69,6 +69,7 @@ public class JobExecThread extends Thread{
 				 * Machine fails. 
 				 * Add CM job to top of schedule and run it. 
 				 */
+				System.out.println("Machine Failed. Requesting maintenance...");
 				Job cmJob = new Job("CM", upcomingFailure.repairTime, Machine.compList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
 				cmJob.setFixedCost(Machine.compList[upcomingFailure.compNo].getCMFixedCost());
 				cmJob.setCompNo(upcomingFailure.compNo);
@@ -100,6 +101,7 @@ public class JobExecThread extends Thread{
 				FlagPacket flagPacket = FlagPacket.receiveTCP(tcpSocket, 0);
 				if(flagPacket.flag == Macros.LABOUR_GRANTED)
 				{
+					System.out.println("Request granted");
 					// labour is available, perform maintenance job
 					if(current.getJobType() == Job.JOB_CM)
 						Machine.setStatus(Macros.MACHINE_CM);
@@ -109,6 +111,7 @@ public class JobExecThread extends Thread{
 				}
 				else if(flagPacket.flag == Macros.LABOUR_DENIED)
 				{
+					System.out.println("Request denied. Not enough labour");
 					// machine waits for labour
 					// increment cost models accordingly
 					Machine.downTime++;
@@ -259,7 +262,7 @@ public class JobExecThread extends Thread{
 					System.exit(0);
 				}
 			}
-
+			System.out.println("Sending time packet");
 			try {
 				byte[] bufIn = new byte[128];
 				DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
