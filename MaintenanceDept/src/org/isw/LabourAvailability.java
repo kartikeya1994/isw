@@ -12,7 +12,7 @@ public class LabourAvailability {
 	public LabourAvailability(int[] maxLabour, long shiftDuration)
 	{
 		timeline = new ArrayList<MaintenanceTuple>();
-		MaintenanceTuple tuple = new MaintenanceTuple(0, shiftDuration, maxLabour);
+		MaintenanceTuple tuple = new MaintenanceTuple(0, shiftDuration*5, maxLabour);
 		timeline.add(tuple);
 	}
 	
@@ -26,6 +26,14 @@ public class LabourAvailability {
 		/*
 		 * If given labour is available between start and end time
 		 */
+		
+		if(endTime>timeline.get(timeline.size()-1).end)
+		{
+			// extend the timeline as request is beyond timeline range
+			timeline.get(timeline.size()).end *=  endTime;
+			
+		}
+		
 		for(int i=0; i<timeline.size(); i++)
 		{
 			MaintenanceTuple curr = timeline.get(i);
@@ -55,6 +63,13 @@ public class LabourAvailability {
 		/*
 		 * Subtract specified amount of labour from available labour between start and end time
 		 */
+		if(endTime>timeline.get(timeline.size()-1).end)
+		{
+			// extend the timeline as request is beyond timeline range
+			timeline.get(timeline.size()).end *=  endTime;
+			
+		}
+		
 		for(int i=0; i<timeline.size(); i++)
 		{
 			MaintenanceTuple curr = timeline.get(i);
