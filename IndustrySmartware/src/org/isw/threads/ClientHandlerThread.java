@@ -2,12 +2,10 @@ package org.isw.threads;
 
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
-import java.util.List;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
@@ -17,8 +15,6 @@ import org.isw.MachineList;
 import org.isw.Macros;
 import org.isw.Main;
 import org.isw.ui.ComponentTableView;
-
-import com.guigarage.flatterfx.FlatterFX;
 
 class ClientHandlerThread extends Thread {
 

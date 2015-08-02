@@ -12,6 +12,7 @@ import java.util.LinkedList;
 import org.isw.Component;
 import org.isw.FlagPacket;
 import org.isw.Job;
+import org.isw.Logger;
 import org.isw.Machine;
 import org.isw.Macros;
 import org.isw.MaintenanceRequestPacket;
@@ -58,7 +59,7 @@ public class JobExecThread extends Thread{
 		{
 
 			Job current = jobList.peek(); 
-			System.out.println("Status: "+Machine.getStatus());
+			
 			/*
 			 * Perform action according to what job is running
 			 * Increment costs or wait for labour to arrive for CM/PM
@@ -70,11 +71,13 @@ public class JobExecThread extends Thread{
 				 * Add CM job to top of schedule and run it. 
 				 */
 				System.out.println("Machine Failed. Requesting maintenance...");
+				Logger.m(Machine.getStatus(), "Machine Failed. Requesting maintenance...");
 				Job cmJob = new Job("CM", upcomingFailure.repairTime, Machine.compList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
 				cmJob.setFixedCost(Machine.compList[upcomingFailure.compNo].getCMFixedCost());
 				cmJob.setCompNo(upcomingFailure.compNo);
 				jobList.addJobTop(cmJob);
 				Machine.setStatus(Macros.MACHINE_WAITING_FOR_CM_LABOUR);
+				Logger.m(Machine.getStatus(), "");
 				current = jobList.peek();
 			}
 
@@ -110,11 +113,14 @@ public class JobExecThread extends Thread{
 						Machine.setStatus(Macros.MACHINE_CM);
 					if(current.getJobType() == Job.JOB_PM)
 						Machine.setStatus(Macros.MACHINE_PM);
+					Logger.m(Machine.getStatus(), "Request granted");
 					continue;
 				}
 				else if(flagPacket.flag == Macros.LABOUR_DENIED)
 				{
 					System.out.println("Request denied. Not enough labour");
+					
+					Logger.m(Machine.getStatus(),"Request denied. Not enough labour");
 					// machine waits for labour
 					// increment cost models accordingly
 					Machine.downTime++;
@@ -128,6 +134,7 @@ public class JobExecThread extends Thread{
 			{
 				Machine.setStatus(Macros.MACHINE_RUNNING_JOB);
 				current.setStatus(Job.STARTED);
+				Logger.m(Machine.getStatus(), "");
 				// no failure, no maintenance. Just increment cost models normally.
 				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				for(Component comp : Machine.compList)
@@ -141,6 +148,7 @@ public class JobExecThread extends Thread{
 				{
 					// request PM if labours not yet allocated
 					Machine.setStatus(Macros.MACHINE_WAITING_FOR_PM_LABOUR);
+					Logger.m(Machine.getStatus(), "");
 					continue;
 				}
 
@@ -252,14 +260,15 @@ public class JobExecThread extends Thread{
 					break;
 				}
 				try{
+					Job job = jobList.remove();
 					// job is complete, remove from joblist
-					System.out.println("Job "+ jobList.remove().getJobName()+" complete");
+					System.out.println("Job "+ job.getJobName()+" complete");
 					// update Machine status on job completion
 					if(jobList.isEmpty())
 						Machine.setStatus(Macros.MACHINE_IDLE);
 					else
 						Machine.setStatus(Macros.MACHINE_RUNNING_JOB);
-
+					Logger.m(Machine.getStatus(), "Job "+ job.getJobName()+" complete");
 				}
 				catch(IOException e){
 					e.printStackTrace();

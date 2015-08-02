@@ -1,5 +1,7 @@
 package org.isw.ui;
 
+import org.isw.Macros;
+
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -31,17 +33,30 @@ public class MachineStage extends Stage{
 	}
 	
 	public void appendLog(String s){
-		if(s != null){
+		if(s != null && s!= ""){
 			statusConsole.appendText(s+"\n");
 		}
 	}
+	
 	public void setStatus(int status){
 		statusField.setText(getStatusString(status));	
 	}
 
 	private String getStatusString(int status) {
-		// TODO Auto-generated method stub
-		return null;
+		switch(status){
+		case Macros.MACHINE_IDLE:
+			return "IDLE";
+		case Macros.MACHINE_CM:
+			return "UNDERGOING CORRECTIVE MAINTENANCE";
+		case Macros.MACHINE_PM:
+			return "UNDERGOING PREVENTIVE MAINTENANCE";
+		case Macros.MACHINE_RUNNING_JOB:
+			return "RUNNING JOB";
+		case Macros.MACHINE_WAITING_FOR_CM_LABOUR:
+		case Macros.MACHINE_WAITING_FOR_PM_LABOUR:
+			return "WAITING FOR LABOUR";	
+		}
+		return "";
 	}
 
 }

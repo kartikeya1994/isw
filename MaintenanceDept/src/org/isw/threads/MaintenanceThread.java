@@ -102,7 +102,7 @@ public class MaintenanceThread  extends Thread{
 				for(int j=0;j<p.results.length;j++)
 				{
 					p.results[j].id = i; //assign machine id to uniquely identify machine
-					if(!p.results[j].noPM){
+				
 						for(int pmOpp=0; pmOpp < p.results[j].pmOpportunity.length; pmOpp++)
 						{
 							// calculate start times for each job in SimulationResult
@@ -114,7 +114,8 @@ public class MaintenanceThread  extends Thread{
 								p.results[j].startTimes[pmOpp] = sched.getFinishingTime(p.results[j].pmOpportunity[pmOpp]-1);
 							}
 						}
-					
+						
+					if(!p.results[j].noPM){
 						table.add(p.results[j]);
 					}
 				}

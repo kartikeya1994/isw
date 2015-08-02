@@ -24,6 +24,7 @@ import org.isw.Component;
 import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.Job;
+import org.isw.Logger;
 import org.isw.Machine;
 import org.isw.Macros;
 import org.isw.MemeticAlgorithm;
@@ -91,6 +92,7 @@ public class ListenerThread extends Thread
 					System.out.println(Machine.compList.length);
 					Machine.compCMJobsDone = new int[Machine.compList.length];
 					Machine.compPMJobsDone = new int[Machine.compList.length];
+					Logger.connect();
 					break;
 				case Macros.PROCESS_COMPLETE:
 					// simulation is over
@@ -103,7 +105,8 @@ public class ListenerThread extends Thread
 					ObjectInputStream is = new ObjectInputStream(in);
 					try {
 						//Parse schedule from packet.
-						jl = (Schedule) is.readObject();	
+						jl = (Schedule) is.readObject();
+						Logger.m(Machine.getStatus(), "Received schedule from scheduler:" + jl.printSchedule()+"\nRunning simulations..");
 						System.out.println("Received schedule from scheduler:" + jl.printSchedule());
 						System.out.println("Total time" + jl.getSum());
 						System.out.println("Running Simulations");
@@ -127,11 +130,10 @@ public class ListenerThread extends Thread
 							MemeticAlgorithm ma = new MemeticAlgorithm(intArray.length*Machine.compList.length*2,200,jl,intArray,result);
 							results = ma.execute();
 						}
-						else
-						{
-							results = new SimulationResult[0];
+						else{
+							results = new SimulationResult[1];
 						}
-						
+						Logger.m(Machine.getStatus(), "Simulations complete in " + (System.currentTimeMillis() - starttime)+" ms"+"\nSending simulation results to Maintenance Dept");
 						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));
 						System.out.println("Sending simulation results to Maintenance");
 						
@@ -141,11 +143,12 @@ public class ListenerThread extends Thread
 						
 						//receive PM incorporated schedule from maintenance
 						jl = Schedule.receive(tcpSocket); 
+						Logger.m(Machine.getStatus(),"Received schedule from maintenance:" + jl.printSchedule());
 						System.out.println("Received schedule from maintenance:" + jl.printSchedule());
 						System.out.println("Total time" + jl.getSum());
 						
 						//Execute schedule received by maintenance
-						 threadPool = Executors.newSingleThreadExecutor();
+						threadPool = Executors.newSingleThreadExecutor();
 						threadPool.execute(new JobExecThread(jl, udpSocket, tcpSocket, maintenanceIP));
 						threadPool.shutdown();
 						while(!threadPool.isTerminated()); 

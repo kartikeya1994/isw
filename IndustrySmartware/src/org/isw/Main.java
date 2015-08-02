@@ -10,6 +10,8 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -34,6 +36,11 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.isw.threads.ListenerThread;
+import org.isw.threads.LoggingThread;
+import org.isw.threads.MachineLoggingThread;
+import org.isw.ui.MachineStage;
+
+import com.aquafx_project.AquaFx;
 
 
 public class Main extends Application {
@@ -120,11 +127,14 @@ public class Main extends Application {
 			@Override
 			public void handle(ActionEvent event) {
 				try {
+					new Thread(new LoggingThread()).start();;
 					initMachines();
 					initMaintenance();
 					initScheduler();
+					
 					Thread.sleep(5);
 					startSimulation();
+					
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -135,6 +145,7 @@ public class Main extends Application {
 				
 						
 			}
+
 
 			private void startSimulation() throws IOException {
 				DatagramPacket packet = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.START_SCHEDULING);
@@ -189,7 +200,6 @@ public class Main extends Application {
 							byte[] data = baos.toByteArray();
 							DatagramPacket packet = new DatagramPacket(data,data.length,entry.getKey(),Macros.MACHINE_PORT); 
 							udpSocket.send(packet);
-					     
 					}
 				}
 				
@@ -247,6 +257,7 @@ public class Main extends Application {
 	}
 
 	public static void main(String[] args) {
+		AquaFx.style();
 		launch(args);
 	}
 }
