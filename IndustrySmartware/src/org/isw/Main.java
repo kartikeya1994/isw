@@ -215,6 +215,8 @@ public class Main extends Application {
         grid.setVgap(10);
         machineBox = new TilePane();
         machineBox.setPrefColumns(3);
+        machineBox.setVgap(10);
+        machineBox.setHgap(10);
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(10));
         vbox.getChildren().addAll(new Label("Machines:"),machineBox);

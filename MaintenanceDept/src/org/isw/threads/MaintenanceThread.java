@@ -1,4 +1,5 @@
 
+
 package org.isw.threads;
 
 import java.io.IOException;
@@ -23,6 +24,7 @@ import org.isw.Job;
 import org.isw.LabourAvailability;
 import org.isw.MachineList;
 import org.isw.Macros;
+import org.isw.Maintenance;
 import org.isw.MaintenanceRequestPacket;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
@@ -31,7 +33,6 @@ public class MaintenanceThread  extends Thread{
 	MachineList machineList;
 	static DatagramSocket socket;
 	static ServerSocket tcpSocket;
-	static int[] maxLabour;
 	static ArrayList<SimulationResult> table = new ArrayList<SimulationResult>();
 	static ArrayList<InetAddress> ip = new ArrayList<InetAddress>();
 	static ArrayList<Integer> port = new ArrayList<Integer>();
@@ -61,9 +62,9 @@ public class MaintenanceThread  extends Thread{
 	}
 	public void startShift()
 	{
+		System.out.format("Max Labour: %d %d %d\n",Maintenance.maxLabour[0],Maintenance.maxLabour[1],Maintenance.maxLabour[2]);
 		try
 		{
-			
 			//use thread pool to query each machine in list for IFs and schedule
 			Enumeration<InetAddress> ips = machineList.getIPs();
 			ExecutorService threadPool = Executors.newFixedThreadPool(5);
@@ -101,18 +102,19 @@ public class MaintenanceThread  extends Thread{
 				for(int j=0;j<p.results.length;j++)
 				{
 					p.results[j].id = i; //assign machine id to uniquely identify machine
-					for(int pmOpp=0; pmOpp < p.results[j].pmOpportunity.length; pmOpp++)
-					{
-						// calculate start times for each job in SimulationResult
-						if(p.results[j].pmOpportunity[pmOpp] <= 0){
-							p.results[j].startTimes[pmOpp] = 0; //assign calculated t
-						}
-						else{
-							// start time of PM job is finishing time of job before it
-							p.results[j].startTimes[pmOpp] = sched.getFinishingTime(p.results[j].pmOpportunity[pmOpp]-1);
-						}
-					}
 					if(!p.results[j].noPM){
+						for(int pmOpp=0; pmOpp < p.results[j].pmOpportunity.length; pmOpp++)
+						{
+							// calculate start times for each job in SimulationResult
+							if(p.results[j].pmOpportunity[pmOpp] <= 0){
+								p.results[j].startTimes[pmOpp] = 0; //assign calculated t
+							}
+							else{
+								// start time of PM job is finishing time of job before it
+								p.results[j].startTimes[pmOpp] = sched.getFinishingTime(p.results[j].pmOpportunity[pmOpp]-1);
+							}
+						}
+					
 						table.add(p.results[j]);
 					}
 				}
@@ -127,7 +129,7 @@ public class MaintenanceThread  extends Thread{
 		}
 		
 		// labour availability during planning
-		pmLabourAssignment = new LabourAvailability(maxLabour, Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
+		pmLabourAssignment = new LabourAvailability(Maintenance.maxLabour.clone(), Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
 		
 		// reserve labour for jobs pending from previous shift
 		for(int i=0; i<schedule.size(); i++)
@@ -136,18 +138,18 @@ public class MaintenanceThread  extends Thread{
 			if(!sched.isEmpty() && sched.jobAt(0).getJobType()==Job.JOB_PM)
 			{
 				//pending PM job present in this schedule
-				
+				System.out.println("Reserving Labour for previous shift PM job");
 				//reserve labour for it
 				pmLabourAssignment.employLabour(0, sched.jobAt(0).getSeriesTTR(), sched.jobAt(0).getSeriesLabour());
 			}
-			
+			/*
 			if(!sched.isEmpty() && sched.jobAt(0).getJobType()==Job.JOB_CM)
 			{
 				//pending PM job present in this schedule
 				
 				//reserve labour for it
 				pmLabourAssignment.employLabour(0, sched.jobAt(0).getSeriesTTR(), sched.jobAt(0).getSeriesLabour());
-			}
+			}*/
 			
 		}
 		 
@@ -175,24 +177,26 @@ public class MaintenanceThread  extends Thread{
 					seriesLabour[pmOpp][1] = 0;
 					seriesLabour[pmOpp][2] = 0;
 					seriesTTR[pmOpp] = 0;
-					
 					for(int compno=0;i< compList.length;i++)
 					{
 						int pos = 1<<compno;
 						if((pos&row.compCombo[pmOpp])!=0) //for each component in combo, generate TTR
 						{
 							row.pmTTRs[pmOpp][compno] = Component.notZero(compList[compno].getPMTTR()*Macros.TIME_SCALE_FACTOR); //store PM TTR
-							
+							System.out.println("pmTTR: "+row.pmTTRs[pmOpp][compno]);
 							seriesTTR[pmOpp] += row.pmTTRs[pmOpp][compno];
 							
 							// find max labour requirement for PM series
 							int[] labour1 = compList[compno].getPMLabour();
+							
 							if(seriesLabour[pmOpp][0] < labour1[0])
 								seriesLabour[pmOpp][0] = labour1[0];
 							if(seriesLabour[pmOpp][1] < labour1[1])
 								seriesLabour[pmOpp][1] = labour1[1];
 							if(seriesLabour[pmOpp][2] < labour1[2])
 								seriesLabour[pmOpp][2] = labour1[2];
+							System.out.format("Series Labour: %d %d %d\n", seriesLabour[0],seriesLabour[1],seriesLabour[2]);
+							pmLabourAssignment.print();
 						}
 					}
 					if(!pmLabourAssignment.checkAvailability(row.startTimes[pmOpp], row.startTimes[pmOpp]+seriesTTR[pmOpp], seriesLabour[pmOpp]))
@@ -205,6 +209,7 @@ public class MaintenanceThread  extends Thread{
 				
 				if(meetsReqForAllOpp)
 				{
+					System.out.println("Met requirements for all pmOpp");
 					//incorporate the PM job(s) into schedule of machine
 					addPMJobs(schedule.get(row.id), component.get(row.id), row, seriesTTR, seriesLabour);
 					toPerformPM.put(row.id, true);
@@ -216,7 +221,7 @@ public class MaintenanceThread  extends Thread{
 			}
 		}
 		
-		System.out.println("PM + CM incorporated schedule- ");
+		System.out.println("PM incorporated schedule- ");
 		for(int i=0; i<numOfMachines;i++)
 			System.out.println("Machine: "+ip.get(i)+"\nSchedule: "+schedule.get(i).printSchedule());
 		//sending PM incorporated schedule to respective machines
@@ -232,7 +237,7 @@ public class MaintenanceThread  extends Thread{
 		
 		// shift has begun
 		// receive and process requests for labour
-		LabourAvailability realTimeLabour = new LabourAvailability(maxLabour, Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
+		LabourAvailability realTimeLabour = new LabourAvailability(Maintenance.maxLabour.clone(), Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
 		
 		while(true)
 		{
@@ -248,15 +253,20 @@ public class MaintenanceThread  extends Thread{
 			{
 				if(realTimeLabour.checkAvailability(packet.mtTuple))
 				{
+					
 					//labour is available. Grant request and reserve labour
 					realTimeLabour.employLabour(packet.mtTuple);
-					FlagPacket.sendTCP(Macros.LABOUR_GRANTED, packet.machineIP, packet.machinePort);
+					realTimeLabour.print();
+					FlagPacket.sendTCP(Macros.LABOUR_GRANTED, packet.machineIP, Macros.MACHINE_PORT_TCP);
 					
 				}
 				else
 				{
+					
+					realTimeLabour.print();
+					System.out.println("Denied");
 					//deny request
-					FlagPacket.sendTCP(Macros.LABOUR_DENIED, packet.machineIP, packet.machinePort);
+					FlagPacket.sendTCP(Macros.LABOUR_DENIED, packet.machineIP,Macros.MACHINE_PORT_TCP);
 				}
 			}
 		}

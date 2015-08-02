@@ -1,3 +1,4 @@
+
 package org.isw.ui;
 
 
@@ -13,12 +14,14 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -65,6 +68,9 @@ public class ComponentTableView extends VBox {
 				else{
 					Main.machines.put(ip, null);
 				}
+				Node  source = (Node) event.getSource(); 
+				Stage window = (Stage)source.getScene().getWindow();
+				window.close();
 			}
 			
 		});

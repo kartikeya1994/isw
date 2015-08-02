@@ -33,7 +33,6 @@ public class SimulationThread implements Callable<SimulationResult> {
 		double totalCost = 0;
 		double pmAvgTime = 0;
 		int cnt = 0;
-		//System.out.println("CompCombo: "+ compCombo+ " Pm opportunity "+pmOpportunity);
 		while(cnt++ < noOfSimulations){
 			double procCost = 0;  //Processing cost
 			double pmCost = 0;   //PM cost 
@@ -95,12 +94,12 @@ public class SimulationThread implements Callable<SimulationResult> {
 					procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 					break;
 				case Job.JOB_PM:
-					pmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
+					pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 					current.setFixedCost(0);
 					pmAvgTime += 1;
 					break;
 				case Job.JOB_CM:
-					cmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
+					cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 					current.setFixedCost(0);
 					break;
 				}
@@ -131,7 +130,11 @@ public class SimulationThread implements Callable<SimulationResult> {
 			}
 			//Calculate totalCost for the shift
 			totalCost += procCost + pmCost + cmCost + penaltyCost;
-
+			if(totalCost == 0){
+				System.out.println("error bye");
+				System.out.println(simSchedule.printSchedule());
+				System.exit(0);
+			}
 		}
 		totalCost /= noOfSimulations;
 		pmAvgTime /= noOfSimulations;
@@ -143,7 +146,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 	 * */
 	private void addPMJobs(Schedule simSchedule,Component[] simCompList) {
 		int cnt = 0;
-		for(int pmOppo : pmOpportunity){
+		for(int pmOppo=0;pmOppo < pmOpportunity.length;pmOppo++){
 		for(int i=0;i< simCompList.length;i++){
 			int pos = 1<<i;
 			if((pos&compCombo[pmOppo])!=0){

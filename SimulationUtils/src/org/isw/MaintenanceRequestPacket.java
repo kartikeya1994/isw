@@ -2,14 +2,19 @@ package org.isw;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 
-public class MaintenanceRequestPacket 
+public class MaintenanceRequestPacket implements Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	InetAddress maintenanceIP;
 	int maintenancePort;
 	public MaintenanceTuple mtTuple;
@@ -58,6 +63,7 @@ public class MaintenanceRequestPacket
 		}catch(Exception e)
 		{
 			System.out.println("Failed to receive MaintenanceRequestPacket.");
+			e.printStackTrace();
 		}
 
 		return ret;

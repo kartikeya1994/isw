@@ -42,19 +42,31 @@ public class MemeticAlgorithm {
 			totalFitness = 0;
 			optimizePopulation();
 			evaluateFitness(population);
+			try{
 			distribution = new EnumeratedDistribution<Chromosome>(populationDistribution());
+			}catch(Exception e){
+				System.out.println("Total Fitness"+ totalFitness);
+				for(Chromosome c : population)
+					System.out.println(c.fitnessValue);
+				e.printStackTrace();
+				
+			}
+			
 			if(cnt++ >= stopCrit)
 				break;
 			generatePopulation();
-			System.out.println(population.get(0).fitnessValue);
 		}
 		Collections.sort(population);
 		int i =0;
 		ArrayList<SimulationResult> results = new ArrayList<SimulationResult>();
 		
-		while(i < populationSize && population.get(i).fitnessValue < noPM.cost){
+		while(i < populationSize && population.get(i).fitnessValue < noPM.cost*100){
 			Chromosome c = population.get(i);
-			results.add(new SimulationResult(c.fitnessValue,c.pmAvgTime,c.getCombolist(),pmOpportunity,false,i));
+			if(c.combo != 0){
+			System.out.println(Integer.toBinaryString(c.combo));
+				results.add(new SimulationResult(c.fitnessValue,c.pmAvgTime,c.getCombolist(),pmOpportunity,false,i));
+			
+			}
 			i++;
 		}
 		SimulationResult[] r = new SimulationResult[results.size()];
@@ -70,8 +82,10 @@ public class MemeticAlgorithm {
 			Chromosome[] parents = selectParents();
 			if(parents[0].combo != parents[1].combo){
 					Chromosome[] offspring = crossover(parents[0],parents[1]);
-					offsprings.add(offspring[0]);	
-					offsprings.add(offspring[1]);	
+					if(offspring[0].combo != 0)
+						offsprings.add(offspring[0]);
+					if(offspring[0].combo != 0)
+						offsprings.add(offspring[1]);	
 					}
 		}
 		//Do mutation here
@@ -79,9 +93,12 @@ public class MemeticAlgorithm {
 		for(Chromosome offspring: offsprings){
 			if(rand.nextDouble() < 0.4){
 				int mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length);
-				offspring.combo ^= 1<<mutationPoint;
+				if((offspring.combo^1<<mutationPoint) !=0)
+					offspring.combo ^= 1<<mutationPoint;
+				
 				mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length);
-				offspring.combo ^= 1<<mutationPoint;
+				if((offspring.combo^1<<mutationPoint) !=0)
+					offspring.combo ^= 1<<mutationPoint;
 			}
 		}
 		evaluateFitness(offsprings);

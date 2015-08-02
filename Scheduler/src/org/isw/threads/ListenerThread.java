@@ -52,7 +52,7 @@ public class ListenerThread extends Thread
 						}
 						break;
 					case Macros.START_SCHEDULING:
-						(new JobSchedThread(machineList,SchedulingDept.days/Macros.SHIFT_DURATION)).start();
+						(new JobSchedThread(machineList,SchedulingDept.days*24/Macros.SHIFT_DURATION)).start();
 				}	
 			}
 

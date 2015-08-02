@@ -63,15 +63,7 @@ public class ListenerThread extends Thread
 					}
 			
 				}
-				//case Macros.REQUEST_MACHINE_LIST:
-				//	System.out.println("Request for machineList");
-				//	MachineList.send(machineList, fp.ip, fp.port);
-				//case Macros.REQUEST_TIME:
-				//	if(machineCount++ == machineList.count()){
-				//		machineCount = 0;
-				//		DatagramPacket timePacket = FlagPacket.makePacket(fp.ip.getHostAddress(), fp.port, Macros.REPLY_TIME);
-				//		socket.send(timePacket);
-				//	}
+			
 					
 			
 				

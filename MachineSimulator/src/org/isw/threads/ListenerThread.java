@@ -122,9 +122,15 @@ public class ListenerThread extends Thread
 						for (int i = 0; i < intArray.length; i++) {
 						    intArray[i] = pmos.get(i);
 						}
-						
-						MemeticAlgorithm ma = new MemeticAlgorithm(intArray.length*Machine.compList.length*2,200,jl,intArray,result);
-						SimulationResult[] results = ma.execute();
+						SimulationResult[] results = null;
+						if(intArray.length > 0){
+							MemeticAlgorithm ma = new MemeticAlgorithm(intArray.length*Machine.compList.length*2,200,jl,intArray,result);
+							results = ma.execute();
+						}
+						else
+						{
+							results = new SimulationResult[0];
+						}
 						
 						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));
 						System.out.println("Sending simulation results to Maintenance");
@@ -240,7 +246,7 @@ public class ListenerThread extends Thread
 		System.out.println("Number of CM jobs:" + Machine.cmJobsDone);
 		System.out.println("Number of PM jobs:" + Machine.pmJobsDone);
 		for(int i=0 ;i<Machine.compList.length; i++)
-			System.out.println("Component "+String.valueOf(i+1)+": PM "+Machine.compPMJobsDone[i]+"|CM"+Machine.compCMJobsDone[i]);
+			System.out.format("Component %d: PM %d| CM %d| Age %f \n",i+1,Machine.compPMJobsDone[i],Machine.compCMJobsDone[i],Machine.compList[i].initAge);
 
 	}
 }

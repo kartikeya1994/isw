@@ -58,12 +58,12 @@ public class JobExecThread extends Thread{
 		{
 
 			Job current = jobList.peek(); 
-
+			System.out.println("Status: "+Machine.getStatus());
 			/*
 			 * Perform action according to what job is running
 			 * Increment costs or wait for labour to arrive for CM/PM
 			 */
-			if((current.getJobType()!= Job.JOB_CM||current.getJobType()!= Job.JOB_PM) && upcomingFailure!=null && time == upcomingFailure.failureTime)
+			if(current.getJobType()!= Job.JOB_CM&&current.getJobType()!= Job.JOB_PM && upcomingFailure!=null && time == upcomingFailure.failureTime)
 			{
 				/*
 				 * Machine fails. 
@@ -75,6 +75,7 @@ public class JobExecThread extends Thread{
 				cmJob.setCompNo(upcomingFailure.compNo);
 				jobList.addJobTop(cmJob);
 				Machine.setStatus(Macros.MACHINE_WAITING_FOR_CM_LABOUR);
+				current = jobList.peek();
 			}
 
 			if(Machine.getStatus() == Macros.MACHINE_WAITING_FOR_CM_LABOUR || Machine.getStatus() == Macros.MACHINE_WAITING_FOR_PM_LABOUR)
@@ -86,7 +87,7 @@ public class JobExecThread extends Thread{
 					labour_req = Machine.compList[current.getCompNo()].getCMLabour();
 				else if(current.getJobType() == Job.JOB_PM)
 					labour_req = Machine.compList[current.getCompNo()].getPMLabour();
-
+				System.out.format("Labour: %d %d %d", labour_req[0],labour_req[1],labour_req[2]);
 				// send labour request
 				MaintenanceTuple mtTuple;
 				if(Machine.getStatus() == Macros.MACHINE_WAITING_FOR_CM_LABOUR)
@@ -95,6 +96,8 @@ public class JobExecThread extends Thread{
 				{
 					mtTuple = new MaintenanceTuple(time, time+current.getSeriesTTR(), current.getSeriesLabour());
 				}
+
+				System.out.format("Labour: %d %d %d", mtTuple.labour[0],mtTuple.labour[1],mtTuple.labour[2]);
 				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, mtTuple);
 				mrp.sendTCP();
 
@@ -129,6 +132,7 @@ public class JobExecThread extends Thread{
 				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				for(Component comp : Machine.compList)
 					comp.initAge++;
+				Machine.runTime++;
 			}
 
 			else if(current.getJobType() == Job.JOB_PM)
@@ -156,7 +160,7 @@ public class JobExecThread extends Thread{
 				else if(current.getStatus() == Job.SERIES_STARTED)
 					current.setStatus(Job.STARTED);
 
-				Machine.pmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
+				Machine.pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
 				Machine.pmDownTime++;
 				Machine.downTime++;				
@@ -164,7 +168,7 @@ public class JobExecThread extends Thread{
 			else if(current.getJobType() == Job.JOB_CM && Machine.getStatus() == Macros.MACHINE_CM)
 			{
 				current.setStatus(Job.STARTED);
-				Machine.cmCost += current.getFixedCost() + current.getJobCost()*current.getJobTime()/Macros.TIME_SCALE_FACTOR;
+				Machine.cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
 				Machine.downTime++;
 				Machine.cmDownTime++;
@@ -181,7 +185,7 @@ public class JobExecThread extends Thread{
 			}
 
 			time++;
-			Machine.runTime++;
+	
 
 			// if job has completed remove job from schedule
 			if(current.getJobTime()<=0)
@@ -262,7 +266,6 @@ public class JobExecThread extends Thread{
 					System.exit(0);
 				}
 			}
-			System.out.println("Sending time packet");
 			try {
 				byte[] bufIn = new byte[128];
 				DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);

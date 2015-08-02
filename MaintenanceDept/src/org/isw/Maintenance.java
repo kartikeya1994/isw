@@ -18,7 +18,7 @@ public class Maintenance
 	 */
 	
 	static DatagramSocket socket;
-	static int maxLabour[] = new int[3];
+	public static int maxLabour[] = new int[3];
 	public static void main(String[] args)
 	{
 		try {
