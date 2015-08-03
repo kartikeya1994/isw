@@ -59,7 +59,7 @@ public class JobExecThread extends Thread{
 		{
 
 			Job current = jobList.peek(); 
-			
+
 			/*
 			 * Perform action according to what job is running
 			 * Increment costs or wait for labour to arrive for CM/PM
@@ -101,15 +101,15 @@ public class JobExecThread extends Thread{
 				}
 
 				System.out.format("Labour: %d %d %d", mtTuple.labour[0],mtTuple.labour[1],mtTuple.labour[2]);
+
 				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT, mtTuple);
-				;
 				try {
 					socket.send(mrp.makePacket());
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
+
 
 				FlagPacket flagPacket = FlagPacket.receiveTCP(tcpSocket, 0);
 				if(flagPacket.flag == Macros.LABOUR_GRANTED)
@@ -126,7 +126,7 @@ public class JobExecThread extends Thread{
 				else if(flagPacket.flag == Macros.LABOUR_DENIED)
 				{
 					System.out.println("Request denied. Not enough labour");
-					
+
 					Logger.log(Machine.getStatus(),"Request denied. Not enough labour");
 					// machine waits for labour
 					// increment cost models accordingly
@@ -200,7 +200,7 @@ public class JobExecThread extends Thread{
 			}
 
 			time++;
-	
+
 
 			// if job has completed remove job from schedule
 			if(current.getJobTime()<=0)
@@ -215,6 +215,19 @@ public class JobExecThread extends Thread{
 
 
 					Machine.pmJobsDone++;
+
+					// let maintenance know how much labour has been released (for logging purpose only)
+					if(jobList.getSize()<=1 || jobList.jobAt(1).getStatus()!=Job.SERIES_STARTED)
+					{
+						MaintenanceTuple release = new MaintenanceTuple(-2, 0, current.getSeriesLabour());
+						MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT, release);
+						try {
+							socket.send(mrp.makePacket());
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
 
 					// recompute component failures
 					failureEvents = new LinkedList<FailureEvent>();

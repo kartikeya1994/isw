@@ -22,6 +22,7 @@ import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.Job;
 import org.isw.LabourAvailability;
+import org.isw.Logger;
 import org.isw.MachineList;
 import org.isw.Macros;
 import org.isw.Maintenance;
@@ -57,6 +58,11 @@ public class MaintenanceThread  extends Thread{
 	
 	public void run()
 	{
+		try {
+			Logger.connect();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		while(true)
 			startShift();
 	}
@@ -239,7 +245,9 @@ public class MaintenanceThread  extends Thread{
 		// shift has begun
 		// receive and process requests for labour
 		LabourAvailability realTimeLabour = new LabourAvailability(Maintenance.maxLabour.clone(), Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
-		
+		int[] currentLabour = Maintenance.maxLabour.clone();
+		String logMessage = "**********\nAvailable Labour:\n**********\nSkilled: %d\nSemi-Skilled: %d\nUnskilled: %d\n**********\n";
+		Logger.log(currentLabour, String.format(logMessage, currentLabour[0], currentLabour[1], currentLabour[2]));
 		while(true)
 		{
 			MaintenanceRequestPacket packet = MaintenanceRequestPacket.receiveUDP(udpSocket, 0);
@@ -248,6 +256,15 @@ public class MaintenanceThread  extends Thread{
 			{
 				// shift is over
 				break;
+			}
+			
+			else if(packet.mtTuple.start == -2) // packet sent by Scheduling Dept indicating shift is over
+			{
+				// some machine is reporting PM job completion
+				currentLabour[0]+=packet.mtTuple.labour[0];
+				currentLabour[1]+=packet.mtTuple.labour[1];
+				currentLabour[2]+=packet.mtTuple.labour[2];
+				Logger.log(currentLabour, String.format(logMessage, currentLabour[0], currentLabour[1], currentLabour[2]));
 			}
 			
 			else
@@ -260,6 +277,11 @@ public class MaintenanceThread  extends Thread{
 					realTimeLabour.print();
 					FlagPacket.sendTCP(Macros.LABOUR_GRANTED, packet.machineIP, Macros.MACHINE_PORT_TCP);
 					
+					// log a decrease in available labour
+					currentLabour[0]-=packet.mtTuple.labour[0];
+					currentLabour[1]-=packet.mtTuple.labour[1];
+					currentLabour[2]-=packet.mtTuple.labour[2];
+					Logger.log(currentLabour, String.format(logMessage, currentLabour[0], currentLabour[1], currentLabour[2]));
 				}
 				else
 				{

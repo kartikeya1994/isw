@@ -12,8 +12,26 @@ public class LabourAvailability {
 	public LabourAvailability(int[] maxLabour, long shiftDuration)
 	{
 		timeline = new ArrayList<MaintenanceTuple>();
-		MaintenanceTuple tuple = new MaintenanceTuple(0, shiftDuration*5, maxLabour);
+		MaintenanceTuple tuple = new MaintenanceTuple(0, shiftDuration*2, maxLabour);
 		timeline.add(tuple);
+	}
+	
+	public int[] getCurrent(long time)
+	{
+		for(MaintenanceTuple m: timeline)
+		{
+			if(m.start<=time && m.end>time)
+				return m.labour;
+		}
+		return null;
+	}
+	
+	public boolean equals(int[] labour1, int[] labour2)
+	{
+		if(labour1[0]==labour2[0] && labour1[1]==labour2[1] && labour1[2]==labour2[2])
+			return true;
+		else
+			return false;
 	}
 	
 	public boolean checkAvailability(MaintenanceTuple mtTuple)
@@ -30,7 +48,7 @@ public class LabourAvailability {
 		if(endTime>timeline.get(timeline.size()-1).end)
 		{
 			// extend the timeline as request is beyond timeline range
-			timeline.get(timeline.size()).end *=  endTime;
+			timeline.get(timeline.size()-1).end =  endTime*2;
 			
 		}
 		
