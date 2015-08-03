@@ -6,20 +6,20 @@ import java.net.Socket;
 
 import javafx.application.Platform;
 
-import org.isw.MachineStatusPacket;
-import org.isw.ui.MachineStage;
+import org.isw.MaintenanceStatusPacket;
+import org.isw.ui.MaintenanceDeptStage;
 
-public class MachineLoggingThread implements Runnable{
+public class MaintenanceLoggingThread implements Runnable{
 	
-	private MachineStage ms;
+	private MaintenanceDeptStage ms;
 	Socket socket;
-	public MachineLoggingThread(Socket socket){
+	public MaintenanceLoggingThread(Socket socket){
 		Platform.runLater(new Runnable(){
 
 			@Override
 			public void run() {
-				ms = new MachineStage();
-				ms.setTitle("Machine: "+socket.getInetAddress().getHostAddress());
+				ms = new MaintenanceDeptStage();
+				ms.setTitle("Maintenance Dept");
 				ms.show();
 			}
 			
@@ -33,12 +33,12 @@ public class MachineLoggingThread implements Runnable{
 			try {
 				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 				while(true){
-				 MachineStatusPacket msp =	(MachineStatusPacket) in.readObject();
+				 MaintenanceStatusPacket msp =	(MaintenanceStatusPacket) in.readObject();
 				 Platform.runLater(new Runnable(){
 					@Override
 					public void run() {
 						 ms.appendLog(msp.logMessage);
-						 ms.setStatus(msp.status);
+						 ms.setLabourStatus(msp.labour);
 					}
 					 
 				 });

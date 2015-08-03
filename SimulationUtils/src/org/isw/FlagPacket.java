@@ -72,7 +72,6 @@ public class FlagPacket implements Serializable{
 			e.printStackTrace();
 			
 		}
-
 		return ret;
 	}
 	public static FlagPacket receiveUDP(DatagramSocket socket) throws IOException{

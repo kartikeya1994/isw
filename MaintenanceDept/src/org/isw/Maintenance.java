@@ -37,7 +37,6 @@ public class Maintenance
 					packetIn = FlagPacket.receiveUDP(socket);
 				}catch(SocketTimeoutException stoe)
 				{
-					System.out.println("Timed out.");
 					continue;
 				}
 				
@@ -69,7 +68,6 @@ public class Maintenance
 				socket.receive(packet); 
 			}
 			catch(SocketTimeoutException stoe) {
-				System.out.println("Timed out.");
 				continue; 
 			} 
 			byte[] reply=packet.getData();

@@ -4,14 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -37,8 +34,6 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.isw.threads.ListenerThread;
 import org.isw.threads.LoggingThread;
-import org.isw.threads.MachineLoggingThread;
-import org.isw.ui.MachineStage;
 
 import com.aquafx_project.AquaFx;
 
@@ -65,7 +60,7 @@ public class Main extends Application {
 			 scene2 = getScene2();
 			//FlatterFX.style();
 			//scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
-			primaryStage.setTitle("Industry Smartware");
+			primaryStage.setTitle("Industry Smartware App");
 			primaryStage.setScene(scene1);
 			primaryStage.show();
 		} catch(Exception e) {

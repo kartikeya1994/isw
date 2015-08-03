@@ -31,7 +31,7 @@ import org.isw.SimulationResult;
 
 public class MaintenanceThread  extends Thread{
 	MachineList machineList;
-	static DatagramSocket socket;
+	static DatagramSocket udpSocket;
 	static ServerSocket tcpSocket;
 	static ArrayList<SimulationResult> table = new ArrayList<SimulationResult>();
 	static ArrayList<InetAddress> ip = new ArrayList<InetAddress>();
@@ -47,7 +47,7 @@ public class MaintenanceThread  extends Thread{
 		this.machineList = machineList;
 		
 		try {
-			socket = new DatagramSocket(Macros.MAINTENANCE_DEPT_PORT);
+			udpSocket = new DatagramSocket(Macros.MAINTENANCE_DEPT_PORT);
 			tcpSocket = new ServerSocket(Macros.MAINTENANCE_DEPT_PORT_TCP);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -74,7 +74,7 @@ public class MaintenanceThread  extends Thread{
 			while(ips.hasMoreElements()){
 				//get intensity factors and schedules from all machines in machine list
 				numOfMachines++;
-				pool.submit(new FetchIFTask(tcpSocket, ips.nextElement(), Macros.MACHINE_PORT_TCP));
+				pool.submit(new FetchIFTask(udpSocket, ips.nextElement(), Macros.MACHINE_PORT_TCP));
 			}
 
 			
@@ -242,7 +242,7 @@ public class MaintenanceThread  extends Thread{
 		
 		while(true)
 		{
-			MaintenanceRequestPacket packet = MaintenanceRequestPacket.receiveTCP(tcpSocket, 0);
+			MaintenanceRequestPacket packet = MaintenanceRequestPacket.receiveUDP(udpSocket, 0);
 			
 			if(packet.mtTuple.start == -1) // packet sent by Scheduling Dept indicating shift is over
 			{

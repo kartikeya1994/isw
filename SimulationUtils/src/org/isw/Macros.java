@@ -4,15 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.SocketAddress;
-import java.net.SocketImpl;
 import java.util.Properties;
-
-
-/*
- * Scheduling listens on 8888
- * Machine listens on 8889
- */
 
 public class Macros {
 	public static final int REQUEST_SCHEDULING_DEPT_IP = 1;
@@ -47,6 +39,7 @@ public class Macros {
 	public static final int MACHINE_WAITING_FOR_CM_LABOUR = 28;
 	public static final int MACHINE_PM = 29;
 	public static final int MACHINE_CM = 30;
+	public static final int MACHINE_PLANNING = 33;
 	public static final int START_SCHEDULING = 31;
 	public static final int INIT = 32;
 	
@@ -64,6 +57,7 @@ public class Macros {
 	public static final String SCHEDULING_DEPT_GROUP = "224.1.1.1";
 	public static final String ISW_GROUP = "224.1.1.3";
 	public static final String MAINTENANCE_DEPT_GROUP = "224.1.1.4";
+	
 	
 	
 	

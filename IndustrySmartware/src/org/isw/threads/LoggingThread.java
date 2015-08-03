@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import javafx.application.Platform;
-
 import org.isw.Macros;
-import org.isw.ui.MachineStage;
+import org.isw.Main;
 
 public class LoggingThread implements Runnable {
 
@@ -19,7 +17,7 @@ public class LoggingThread implements Runnable {
 			while(true){
 				
 				Socket socket = tcpSocket.accept();
-				
+				if(socket.getInetAddress().equals(Main.maintenanceIP))
 				new Thread(new MachineLoggingThread(socket)).start();
 			}
 		

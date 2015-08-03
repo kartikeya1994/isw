@@ -106,7 +106,8 @@ public class ListenerThread extends Thread
 					try {
 						//Parse schedule from packet.
 						jl = (Schedule) is.readObject();
-						Logger.m(Machine.getStatus(), "Received schedule from scheduler:" + jl.printSchedule()+"\nRunning simulations..");
+						Machine.setStatus(Macros.MACHINE_PLANNING);
+						Logger.log(Machine.getStatus(), "Received schedule from scheduler:" + jl.printSchedule()+"\nRunning simulations..");
 						System.out.println("Received schedule from scheduler:" + jl.printSchedule());
 						System.out.println("Total time" + jl.getSum());
 						System.out.println("Running Simulations");
@@ -133,17 +134,17 @@ public class ListenerThread extends Thread
 						else{
 							results = new SimulationResult[1];
 						}
-						Logger.m(Machine.getStatus(), "Simulations complete in " + (System.currentTimeMillis() - starttime)+" ms"+"\nSending simulation results to Maintenance Dept");
+						Logger.log(Machine.getStatus(), "Simulations complete in " + (System.currentTimeMillis() - starttime)+" ms"+"\nSending simulation results to Maintenance Dept");
 						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));
 						System.out.println("Sending simulation results to Maintenance");
 						
 						//Send simulation results to Maintenance Dept.
 						IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
-						ifPacket.send(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP);
-						
+						DatagramPacket IFpacket = ifPacket.makePacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT);
+						udpSocket.send(IFpacket);
 						//receive PM incorporated schedule from maintenance
 						jl = Schedule.receive(tcpSocket); 
-						Logger.m(Machine.getStatus(),"Received schedule from maintenance:" + jl.printSchedule());
+						Logger.log(Machine.getStatus(),"Received schedule from maintenance:" + jl.printSchedule());
 						System.out.println("Received schedule from maintenance:" + jl.printSchedule());
 						System.out.println("Total time" + jl.getSum());
 						

@@ -24,7 +24,7 @@ public class ListenerThread extends Thread
 	public void run()
 	{
 		MulticastSocket socket;
-		int machineCount = 0;
+
 		try
 		{
 			socket = new MulticastSocket(Macros.ISW_MULTICAST_PORT);

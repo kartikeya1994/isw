@@ -32,7 +32,6 @@ public class SchedulingDept
 					packetIn = FlagPacket.receiveUDP(socket); //blocking call for 1000ms
 				}catch(SocketTimeoutException stoe)
 				{
-					System.out.println("Timed out.");
 					continue;
 				}
 				if (packetIn.flag == Macros.REPLY_ISW_IP){
@@ -66,7 +65,6 @@ public class SchedulingDept
 				socket.receive(packet); 
 			}
 			catch(SocketTimeoutException stoe) {
-				System.out.println("Timed out.");
 				continue; 
 			} 
 			byte[] reply=packet.getData();

@@ -150,8 +150,16 @@ public class JobSchedThread extends Thread
 					count++;
 			}
 			
-			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
-			mrp.sendTCP();
+			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, Macros.MAINTENANCE_DEPT_PORT, new MaintenanceTuple(-1));
+			
+			try {
+				DatagramPacket packet = mrp.makePacket();
+				socket.send(packet);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		}
 		
 		// Simulation Complete

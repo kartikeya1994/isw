@@ -18,7 +18,7 @@ public class Logger {
 		out = new ObjectOutputStream(socket.getOutputStream()); 
 	}
 	
-	public static void m(int status, String logMessage){
+	public static void log(int status, String logMessage){
 	try {
 			out.writeObject(new MachineStatusPacket(status,logMessage));		
 		} catch (IOException e) {
@@ -26,6 +26,15 @@ public class Logger {
 			e.printStackTrace();
 		}
 	}
+	public static void log(int[] labour, String logMessage){
+		try {
+				out.writeObject(new MaintenanceStatusPacket(labour,logMessage));		
+			} catch (IOException e) {
+				
+				e.printStackTrace();
+			}
+		}
+		
 	
 	
 }

@@ -31,6 +31,7 @@ import org.isw.Main;
 
 
 public class ComponentTableView extends VBox {
+	@SuppressWarnings("unchecked")
 	public ComponentTableView(InetAddress ip){
 		super(10);
 		CheckBox isMachineSelected = new CheckBox("Select Machine");
@@ -82,6 +83,7 @@ public class ComponentTableView extends VBox {
 		this.getChildren().addAll(componentTable,isMachineSelected,saveButton);
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private TableColumn createPMColumns() {
 		TableColumn pm = new TableColumn("Preventive Maintainence");
 		TableColumn maintainability = new TableColumn("Maintainabilty");
@@ -108,6 +110,7 @@ public class ComponentTableView extends VBox {
 		return pm;
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private TableColumn createCMColumns() {
 		TableColumn cm = new TableColumn("Corrective Maintainence");
 		TableColumn reliability = new TableColumn("Reliability");

@@ -71,13 +71,13 @@ public class JobExecThread extends Thread{
 				 * Add CM job to top of schedule and run it. 
 				 */
 				System.out.println("Machine Failed. Requesting maintenance...");
-				Logger.m(Machine.getStatus(), "Machine Failed. Requesting maintenance...");
+				Logger.log(Machine.getStatus(), "Machine Failed. Requesting maintenance...");
 				Job cmJob = new Job("CM", upcomingFailure.repairTime, Machine.compList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
 				cmJob.setFixedCost(Machine.compList[upcomingFailure.compNo].getCMFixedCost());
 				cmJob.setCompNo(upcomingFailure.compNo);
 				jobList.addJobTop(cmJob);
 				Machine.setStatus(Macros.MACHINE_WAITING_FOR_CM_LABOUR);
-				Logger.m(Machine.getStatus(), "");
+				Logger.log(Machine.getStatus(), "");
 				current = jobList.peek();
 			}
 
@@ -101,8 +101,15 @@ public class JobExecThread extends Thread{
 				}
 
 				System.out.format("Labour: %d %d %d", mtTuple.labour[0],mtTuple.labour[1],mtTuple.labour[2]);
-				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, mtTuple);
-				mrp.sendTCP();
+				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT, mtTuple);
+				;
+				try {
+					socket.send(mrp.makePacket());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 
 				FlagPacket flagPacket = FlagPacket.receiveTCP(tcpSocket, 0);
 				if(flagPacket.flag == Macros.LABOUR_GRANTED)
@@ -113,14 +120,14 @@ public class JobExecThread extends Thread{
 						Machine.setStatus(Macros.MACHINE_CM);
 					if(current.getJobType() == Job.JOB_PM)
 						Machine.setStatus(Macros.MACHINE_PM);
-					Logger.m(Machine.getStatus(), "Request granted");
+					Logger.log(Machine.getStatus(), "Request granted");
 					continue;
 				}
 				else if(flagPacket.flag == Macros.LABOUR_DENIED)
 				{
 					System.out.println("Request denied. Not enough labour");
 					
-					Logger.m(Machine.getStatus(),"Request denied. Not enough labour");
+					Logger.log(Machine.getStatus(),"Request denied. Not enough labour");
 					// machine waits for labour
 					// increment cost models accordingly
 					Machine.downTime++;
@@ -134,7 +141,7 @@ public class JobExecThread extends Thread{
 			{
 				Machine.setStatus(Macros.MACHINE_RUNNING_JOB);
 				current.setStatus(Job.STARTED);
-				Logger.m(Machine.getStatus(), "");
+				Logger.log(Machine.getStatus(), "");
 				// no failure, no maintenance. Just increment cost models normally.
 				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				for(Component comp : Machine.compList)
@@ -148,7 +155,7 @@ public class JobExecThread extends Thread{
 				{
 					// request PM if labours not yet allocated
 					Machine.setStatus(Macros.MACHINE_WAITING_FOR_PM_LABOUR);
-					Logger.m(Machine.getStatus(), "");
+					Logger.log(Machine.getStatus(), "");
 					continue;
 				}
 
@@ -268,7 +275,7 @@ public class JobExecThread extends Thread{
 						Machine.setStatus(Macros.MACHINE_IDLE);
 					else
 						Machine.setStatus(Macros.MACHINE_RUNNING_JOB);
-					Logger.m(Machine.getStatus(), "Job "+ job.getJobName()+" complete");
+					Logger.log(Machine.getStatus(), "Job "+ job.getJobName()+" complete");
 				}
 				catch(IOException e){
 					e.printStackTrace();
@@ -293,6 +300,7 @@ public class JobExecThread extends Thread{
 		while(i < jobList.getSize()){
 			Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost()*Macros.SHIFT_DURATION;
 		}
+		Logger.log(Machine.getStatus(), "Shift has ended");
 
 	}
 
