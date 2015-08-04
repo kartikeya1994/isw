@@ -35,6 +35,7 @@ public class JobExecThread extends Thread{
 
 	public void run()
 	{
+		Machine.setStatus(Machine.getOldStatus());
 		long time=0;
 
 		// find all machine failures and CM times for this shift
@@ -57,6 +58,8 @@ public class JobExecThread extends Thread{
 
 		while(!jobList.isEmpty() && time < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
 		{
+			
+			System.out.println("Machine Status: "+Machine.getStatus());
 
 			Job current = jobList.peek(); 
 
@@ -158,7 +161,7 @@ public class JobExecThread extends Thread{
 					Logger.log(Machine.getStatus(), "");
 					continue;
 				}
-
+				System.out.println(current.getJobTime());
 				// since an actual PM job is a series of PM jobs of each comp in compCombo
 				// we set all jobs in series to SERIES_STARED
 				if(current.getStatus() == Job.NOT_STARTED)
@@ -255,6 +258,15 @@ public class JobExecThread extends Thread{
 					comp.initAge = (1 - comp.cmRF)*comp.initAge;
 					Machine.cmJobsDone++;
 					Machine.compCMJobsDone[current.getCompNo()]++;
+					// let maintenance know how much labour has been released (for logging purpose only)
+					MaintenanceTuple release = new MaintenanceTuple(-2, 0, comp.getCMLabour());
+					MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT, release);
+					try {
+						socket.send(mrp.makePacket());
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 
 					// recompute component failures
 					failureEvents = new LinkedList<FailureEvent>();
@@ -286,8 +298,6 @@ public class JobExecThread extends Thread{
 					// update Machine status on job completion
 					if(jobList.isEmpty())
 						Machine.setStatus(Macros.MACHINE_IDLE);
-					else
-						Machine.setStatus(Macros.MACHINE_RUNNING_JOB);
 					Logger.log(Machine.getStatus(), "Job "+ job.getJobName()+" complete");
 				}
 				catch(IOException e){

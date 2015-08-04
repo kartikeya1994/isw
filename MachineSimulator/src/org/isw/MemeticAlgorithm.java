@@ -60,7 +60,7 @@ public class MemeticAlgorithm {
 		int i =0;
 		ArrayList<SimulationResult> results = new ArrayList<SimulationResult>();
 		
-		while(i < populationSize && population.get(i).fitnessValue < noPM.cost){
+		while(i < populationSize && population.get(i).fitnessValue < noPM.cost*50){
 			Chromosome c = population.get(i);
 			if(c.combo != 0){
 			System.out.println(Integer.toBinaryString(c.combo));

@@ -123,5 +123,14 @@ public class Machine
 			e.printStackTrace();
 		}
 	}
+	static int oldStatus = 0;
+	public static void setOldStatus(int status) {
+		oldStatus = status;
+		
+	}
+
+	public static int getOldStatus() {
+		return oldStatus;
+	}
 	
 }

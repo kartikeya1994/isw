@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 
 import org.isw.FlagPacket;
+import org.isw.Logger;
 import org.isw.MachineList;
 import org.isw.Macros;
 
@@ -41,6 +42,7 @@ public class ListenerThread extends Thread
 				
 				else if (fp.flag == Macros.START_MAINTENANCE_PLANNING)
 				{
+					Logger.connect();
 					// start planning after receiving signal from central logging
 					MaintenanceThread mt = new MaintenanceThread(machineList);
 					mt.start();

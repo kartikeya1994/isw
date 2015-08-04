@@ -34,6 +34,16 @@ public class Logger {
 				e.printStackTrace();
 			}
 		}
+
+	public static void log(MachineResultPacket mrp) {
+		try {
+			out.writeObject(mrp);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
 		
 	
 	

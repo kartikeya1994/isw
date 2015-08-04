@@ -29,7 +29,7 @@ public class MaintenanceDeptStage extends Stage{
 		//pane.add(statusLabel, 0,0);
 		pane.add(statusField, 0,0);
 		pane.add(statusConsole, 0, 1);
-		realTimeScene = new Scene(pane,500,500);
+		realTimeScene = new Scene(pane,600,400);
 		this.setScene(realTimeScene);
 	}
 	
@@ -40,7 +40,7 @@ public class MaintenanceDeptStage extends Stage{
 	}
 	
 	public void setLabourStatus(int[] labour){
-		labourStatusP.set(String.format("Labour Available:\nSkilled: %d\nSemi-skilled: %d\nUnskilled: %d", labour[0],labour[1],labour[2]));	
+		labourStatusP.set(String.format("Labour Available:\tSkilled: %d\tSemi-skilled: %d\tUnskilled: %d", labour[0],labour[1],labour[2]));	
 	}
 
 }

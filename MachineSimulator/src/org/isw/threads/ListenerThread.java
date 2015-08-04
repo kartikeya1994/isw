@@ -26,6 +26,7 @@ import org.isw.IFPacket;
 import org.isw.Job;
 import org.isw.Logger;
 import org.isw.Machine;
+import org.isw.MachineResultPacket;
 import org.isw.Macros;
 import org.isw.MemeticAlgorithm;
 import org.isw.Schedule;
@@ -106,6 +107,7 @@ public class ListenerThread extends Thread
 					try {
 						//Parse schedule from packet.
 						jl = (Schedule) is.readObject();
+						Machine.setOldStatus(Machine.getStatus());
 						Machine.setStatus(Macros.MACHINE_PLANNING);
 						Logger.log(Machine.getStatus(), "Received schedule from scheduler:" + jl.printSchedule()+"\nRunning simulations..");
 						System.out.println("Received schedule from scheduler:" + jl.printSchedule());
@@ -132,7 +134,7 @@ public class ListenerThread extends Thread
 							results = ma.execute();
 						}
 						else{
-							results = new SimulationResult[1];
+							results = new SimulationResult[0];
 						}
 						Logger.log(Machine.getStatus(), "Simulations complete in " + (System.currentTimeMillis() - starttime)+" ms"+"\nSending simulation results to Maintenance Dept");
 						System.out.println("Simulations complete in " +(System.currentTimeMillis() - starttime));
@@ -246,9 +248,26 @@ public class ListenerThread extends Thread
 		System.out.println("CM Cost: "+ Machine.cmCost);
 		System.out.println("Penalty Cost: "+ Machine.penaltyCost);
 		System.out.println("Processing Cost: "+ Machine.procCost);
-		System.out.println("Number of jobs:" + Machine.jobsDone);
+		System.out.println("Jobs processed:" + Machine.jobsDone);
 		System.out.println("Number of CM jobs:" + Machine.cmJobsDone);
 		System.out.println("Number of PM jobs:" + Machine.pmJobsDone);
+		MachineResultPacket mrp = new MachineResultPacket(); 
+		mrp.downTime = Machine.downTime;
+		mrp.runTime = Machine.runTime;
+		mrp.cmDownTime = Machine.cmDownTime;
+		mrp.pmDownTime = Machine.pmDownTime;
+		mrp.waitTime = Machine.waitTime;
+		mrp.idleTime = Machine.idleTime;
+		mrp.jobsDone = Machine.jobsDone;
+		mrp.cmJobsDone = Machine.cmJobsDone;
+		mrp.pmJobsDone = Machine.pmJobsDone;
+		mrp.pmCost = Machine.pmCost;
+		mrp.cmCost = Machine.cmCost;
+		mrp.procCost = Machine.procCost;
+		mrp.penaltyCost = Machine.penaltyCost;
+		mrp.compCMJobsDone = Machine.compCMJobsDone;
+		mrp.compPMJobsDone = Machine.compPMJobsDone;
+		Logger.log(mrp);		
 		for(int i=0 ;i<Machine.compList.length; i++)
 			System.out.format("Component %d: PM %d| CM %d| Age %f \n",i+1,Machine.compPMJobsDone[i],Machine.compCMJobsDone[i],Machine.compList[i].initAge);
 

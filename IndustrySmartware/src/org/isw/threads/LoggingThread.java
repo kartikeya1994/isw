@@ -18,7 +18,9 @@ public class LoggingThread implements Runnable {
 				
 				Socket socket = tcpSocket.accept();
 				if(socket.getInetAddress().equals(Main.maintenanceIP))
-				new Thread(new MachineLoggingThread(socket)).start();
+					new Thread(new MaintenanceLoggingThread(socket)).start();
+				else
+					new Thread(new MachineLoggingThread(socket)).start();
 			}
 		
 		} catch (IOException e) {

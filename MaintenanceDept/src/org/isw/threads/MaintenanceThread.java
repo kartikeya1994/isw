@@ -58,11 +58,6 @@ public class MaintenanceThread  extends Thread{
 	
 	public void run()
 	{
-		try {
-			Logger.connect();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		while(true)
 			startShift();
 	}
@@ -184,8 +179,10 @@ public class MaintenanceThread  extends Thread{
 					seriesLabour[pmOpp][1] = 0;
 					seriesLabour[pmOpp][2] = 0;
 					seriesTTR[pmOpp] = 0;
-					for(int compno=0;i< compList.length;i++)
+					System.out.println("Complist"+compList.length);
+					for(int compno=0;compno<compList.length;compno++)
 					{
+						System.out.println("Combo:"+row.compCombo[pmOpp]);
 						int pos = 1<<compno;
 						if((pos&row.compCombo[pmOpp])!=0) //for each component in combo, generate TTR
 						{
@@ -202,7 +199,7 @@ public class MaintenanceThread  extends Thread{
 								seriesLabour[pmOpp][1] = labour1[1];
 							if(seriesLabour[pmOpp][2] < labour1[2])
 								seriesLabour[pmOpp][2] = labour1[2];
-							System.out.format("Series Labour: %d %d %d\n", seriesLabour[0],seriesLabour[1],seriesLabour[2]);
+							System.out.format("Series Labour: %d %d %d\n", seriesLabour[pmOpp][0],seriesLabour[pmOpp][1],seriesLabour[pmOpp][2]);
 							pmLabourAssignment.print();
 						}
 					}
@@ -246,8 +243,8 @@ public class MaintenanceThread  extends Thread{
 		// receive and process requests for labour
 		LabourAvailability realTimeLabour = new LabourAvailability(Maintenance.maxLabour.clone(), Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
 		int[] currentLabour = Maintenance.maxLabour.clone();
-		String logMessage = "**********\nAvailable Labour:\n**********\nSkilled: %d\nSemi-Skilled: %d\nUnskilled: %d\n**********\n";
-		Logger.log(currentLabour, String.format(logMessage, currentLabour[0], currentLabour[1], currentLabour[2]));
+	
+		Logger.log(currentLabour, "Shift started");
 		while(true)
 		{
 			MaintenanceRequestPacket packet = MaintenanceRequestPacket.receiveUDP(udpSocket, 0);
@@ -258,13 +255,13 @@ public class MaintenanceThread  extends Thread{
 				break;
 			}
 			
-			else if(packet.mtTuple.start == -2) // packet sent by Scheduling Dept indicating shift is over
+			else if(packet.mtTuple.start == -2) 
 			{
 				// some machine is reporting PM job completion
 				currentLabour[0]+=packet.mtTuple.labour[0];
 				currentLabour[1]+=packet.mtTuple.labour[1];
 				currentLabour[2]+=packet.mtTuple.labour[2];
-				Logger.log(currentLabour, String.format(logMessage, currentLabour[0], currentLabour[1], currentLabour[2]));
+				Logger.log(currentLabour, "Maintenance job over at "+packet.machineIP.getHostAddress());
 			}
 			
 			else
@@ -281,7 +278,7 @@ public class MaintenanceThread  extends Thread{
 					currentLabour[0]-=packet.mtTuple.labour[0];
 					currentLabour[1]-=packet.mtTuple.labour[1];
 					currentLabour[2]-=packet.mtTuple.labour[2];
-					Logger.log(currentLabour, String.format(logMessage, currentLabour[0], currentLabour[1], currentLabour[2]));
+					Logger.log(currentLabour, "Maintenance job started at " +packet.machineIP.getHostAddress());
 				}
 				else
 				{
