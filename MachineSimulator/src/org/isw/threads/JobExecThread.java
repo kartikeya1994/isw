@@ -105,13 +105,8 @@ public class JobExecThread extends Thread{
 
 				System.out.format("Labour: %d %d %d", mtTuple.labour[0],mtTuple.labour[1],mtTuple.labour[2]);
 
-				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT, mtTuple);
-				try {
-					socket.send(mrp.makePacket());
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, mtTuple);
+				mrp.sendTCP();
 
 
 				FlagPacket flagPacket = FlagPacket.receiveTCP(tcpSocket, 0);
@@ -146,7 +141,7 @@ public class JobExecThread extends Thread{
 				current.setStatus(Job.STARTED);
 				Logger.log(Machine.getStatus(), "");
 				// no failure, no maintenance. Just increment cost models normally.
-				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
+				//Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				for(Component comp : Machine.compList)
 					comp.initAge++;
 				Machine.runTime++;
@@ -223,13 +218,8 @@ public class JobExecThread extends Thread{
 					if(jobList.getSize()<=1 || jobList.jobAt(1).getStatus()!=Job.SERIES_STARTED)
 					{
 						MaintenanceTuple release = new MaintenanceTuple(-2, 0, current.getSeriesLabour());
-						MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT, release);
-						try {
-							socket.send(mrp.makePacket());
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+						MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, release);
+						mrp.sendTCP();
 					}
 
 					// recompute component failures
@@ -260,14 +250,8 @@ public class JobExecThread extends Thread{
 					Machine.compCMJobsDone[current.getCompNo()]++;
 					// let maintenance know how much labour has been released (for logging purpose only)
 					MaintenanceTuple release = new MaintenanceTuple(-2, 0, comp.getCMLabour());
-					MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT, release);
-					try {
-						socket.send(mrp.makePacket());
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
+					MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, release);
+					mrp.sendTCP();
 					// recompute component failures
 					failureEvents = new LinkedList<FailureEvent>();
 					upcomingFailure = null;

@@ -22,7 +22,7 @@ public class MachineList implements Serializable
 		count = 0;
 	}
 
-	public boolean contains(InetAddress ip)
+	public synchronized boolean contains(InetAddress ip)
 	{
 		return ips.containsKey(ip);
 	}

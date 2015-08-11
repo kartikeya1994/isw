@@ -34,7 +34,6 @@ public class SimulationThread implements Callable<SimulationResult> {
 		double pmAvgTime = 0;
 		int cnt = 0;
 		while(cnt++ < noOfSimulations){
-			double procCost = 0;  //Processing cost
 			double pmCost = 0;   //PM cost 
 			double cmCost = 0;   //CM cost
 			double penaltyCost = 0; //Penalty cost
@@ -90,9 +89,6 @@ public class SimulationThread implements Callable<SimulationResult> {
 				//Calculate the cost depending upon the job type
 				Job current = simSchedule.peek(); 
 				switch(current.getJobType()){
-				case Job.JOB_NORMAL:
-					procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-					break;
 				case Job.JOB_PM:
 					pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 					current.setFixedCost(0);
@@ -106,7 +102,9 @@ public class SimulationThread implements Callable<SimulationResult> {
 
 				if(current.getJobTime()<=0){
 					try{
+						
 						simSchedule.remove();
+						
 					}
 					catch(IOException e){
 						e.printStackTrace();
@@ -129,12 +127,8 @@ public class SimulationThread implements Callable<SimulationResult> {
 				System.exit(0);
 			}
 			//Calculate totalCost for the shift
-			totalCost += procCost + pmCost + cmCost + penaltyCost;
-			if(totalCost == 0){
-				System.out.println("error bye");
-				System.out.println(simSchedule.printSchedule());
-				System.exit(0);
-			}
+			totalCost +=  pmCost + cmCost + penaltyCost;
+
 		}
 		totalCost /= noOfSimulations;
 		pmAvgTime /= noOfSimulations;
