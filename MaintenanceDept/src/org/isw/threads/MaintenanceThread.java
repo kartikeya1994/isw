@@ -295,7 +295,7 @@ public class MaintenanceThread  extends Thread{
 		 */
 		int cnt = 0;
 		int[] pmOpportunity = row.pmOpportunity;
-		int[] compCombo = row.compCombo;
+		long[] compCombo = row.compCombo;
 		
 		for(int pmOpp = 0; pmOpp<pmOpportunity.length; pmOpp++)
 		{

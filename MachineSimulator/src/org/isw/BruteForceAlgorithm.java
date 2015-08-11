@@ -41,12 +41,12 @@ public class BruteForceAlgorithm {
 		SimulationResult[] r = new SimulationResult[results.size()];
 		r = results.toArray(r);
 		SimulationResult best = Collections.min(results);
-		System.out.format("%f (%s)\n",best.cost,Integer.toBinaryString(best.chromosomeID));
+		System.out.format("%f (%s)\n",best.cost,Long.toBinaryString(best.chromosomeID));
 		return r;
 		
 	}
-	private int[] getCombolist(int combo) {
-		int combos[] = new int[pmOpportunity.length];
+	private long[] getCombolist(long combo) {
+		long combos[] = new long[pmOpportunity.length];
 		for(int i =0;i<pmOpportunity.length;i++){
 			combos[i] = (combo>>(Machine.compList.length*i))&((int)Math.pow(2,Machine.compList.length)-1);
 		}

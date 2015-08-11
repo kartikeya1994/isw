@@ -13,12 +13,12 @@ import org.isw.SimulationResult;
 
 public class SimulationThread implements Callable<SimulationResult> {
 	Schedule schedule; // Job Schedule received by scheduler
-	int compCombo[]; //Combination of components to perform PM on.
+	long compCombo[]; //Combination of components to perform PM on.
 	int pmOpportunity[];
 	int noOfSimulations = Macros.SIMULATION_COUNT;
 	boolean noPM;
-	int chromosomeID;
-	public SimulationThread(Schedule schedule, int compCombo[], int pmOpportunity[],boolean noPM,int chromosomeID){
+	long chromosomeID;
+	public SimulationThread(Schedule schedule, long compCombo[], int pmOpportunity[],boolean noPM,long chromosomeID){
 		this.schedule = schedule;
 		this.compCombo = compCombo;
 		this.pmOpportunity = pmOpportunity;

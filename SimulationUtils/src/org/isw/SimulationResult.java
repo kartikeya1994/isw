@@ -10,7 +10,7 @@ public class SimulationResult implements Serializable,Comparable<SimulationResul
 
 	public double cost; //Intensity Factor
 	public double pmAvgTime;
-	public int[] compCombo;
+	public long[] compCombo;
 	public int[] pmOpportunity;
 	public boolean noPM; // When there is no PM job to do
 
@@ -18,9 +18,9 @@ public class SimulationResult implements Serializable,Comparable<SimulationResul
 	public int id; //to be set and used for calculations by maintenance dept during planning
 	public long pmTTRs[][];
 
-	public int chromosomeID;
+	public long chromosomeID;
 	
-	public SimulationResult(double cost, double pmAvgTime, int[] compCombo,int[] pmOpportunity, boolean noPM,int chromosomeID){
+	public SimulationResult(double cost, double pmAvgTime, long[] compCombo,int[] pmOpportunity, boolean noPM,long chromosomeID){
 		this.cost = cost;
 		this.pmAvgTime = pmAvgTime;
 		this.compCombo = compCombo;
@@ -36,7 +36,7 @@ public class SimulationResult implements Serializable,Comparable<SimulationResul
 	public double getPMAvgTime(){
 		return pmAvgTime;
 	}
-	public int[] getCompCombo(){
+	public long[] getCompCombo(){
 		return compCombo;
 	}
 	public int[] getPMOpportunity(){
@@ -64,8 +64,8 @@ public class SimulationResult implements Serializable,Comparable<SimulationResul
 		}
 		return count;
 	}
-	public int getChormosome(int length) {
-		int combo = compCombo[compCombo.length-1];
+	public long getChormosome(int length) {
+		long combo = compCombo[compCombo.length-1];
 		for(int i = compCombo.length-2; i >=0  ;i--){
 			combo = (combo<<length);
 			combo |= compCombo[i];

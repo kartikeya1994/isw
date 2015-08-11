@@ -39,11 +39,13 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	public void addJob(Job job){
 		jobs.add(job);
 		sum+=job.getJobTime();
+		System.out.println("Added Job, new sum: "+sum);
 	}
 	
 	public void addJobTop(Job job){
 		jobs.add(0, job);
 		sum+=job.getJobTime();
+		System.out.println("Added Job, new sum: "+sum);
 	}
 	
 	public int numOfJobs()
@@ -81,17 +83,20 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 				jobs.add(i,cmJob);
 			}
 		sum += cmJob.getJobTime();
+		System.out.println("Added CM Job, new sum: "+sum);
 	}
 	//Insert PM job at give opportunity.
 	public void addPMJob(Job pmJob, int opportunity){
 		jobs.add(opportunity, pmJob);
 		sum += pmJob.getJobTime();
+		System.out.println("Added PM Job, new sum: "+sum);
 	}
 	
 	public synchronized Job remove() throws IOException{
 		Job job = jobs.remove(0);
 		sum -= job.getJobTime();
 		if(sum < 0){
+			System.out.println("Sum: "+sum);
 			throw new IOException();
 		}
 		return job;
