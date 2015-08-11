@@ -1,7 +1,9 @@
 package org.isw.threads;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.concurrent.Callable;
 
 import org.isw.Component;
@@ -15,6 +17,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 	Schedule schedule; // Job Schedule received by scheduler
 	long compCombo[]; //Combination of components to perform PM on.
 	int pmOpportunity[];
+	Component[] simCompList;
 	int noOfSimulations = Macros.SIMULATION_COUNT;
 	boolean noPM;
 	long chromosomeID;
@@ -38,88 +41,142 @@ public class SimulationThread implements Callable<SimulationResult> {
 			double cmCost = 0;   //CM cost
 			double penaltyCost = 0; //Penalty cost
 			Schedule simSchedule = new Schedule(schedule);
-			Component[] simCompList = Machine.compList.clone();
+			simCompList = new Component[Machine.compList.length];
+			for(int i=0;i< Machine.compList.length;i++)
+				simCompList[i] = new Component(Machine.compList[i]);
 			/*Add PM job to the schedule*/
 			if(!noPM){
 				addPMJobs(simSchedule,simCompList);
 			}
-			/*Calculate the TTF for every component and add it's corresponding CM job 
-			 * to the schedule*/
-			for(int i=0;i<simCompList.length;i++){
-				long cmTTF = (long)(simCompList[i].getCMTTF()*Macros.TIME_SCALE_FACTOR);
-				if(cmTTF < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR){
-					ArrayList<Job> pmJobs =	simSchedule.getPMJobs();
-					boolean flag = false;
-					for(Job pmJob : pmJobs){
-					int tempIndex = simSchedule.indexOf(pmJob);
-					int compNo = pmJob.getCompNo();
-					long time =	simSchedule.getFinishingTime(tempIndex-1);
-					if(cmTTF>= time && i==compNo)
-						flag = true;
-					}
-					ArrayList<Job> cmJobs = simSchedule.getCMJobs();
-					for(Job cmJob : cmJobs){
-						if(i == cmJob.getCompNo())
-							flag = true;
-					}
-					if(flag)
-						continue;
-				
-					long cmTTR = Component.notZero((simCompList[i].getCMTTR()*Macros.TIME_SCALE_FACTOR));
-					Job cmJob = new Job("CM",cmTTR,simCompList[i].getCMLabourCost(),Job.JOB_CM);
-					cmJob.setFixedCost(simCompList[i].getCMFixedCost());
-					cmJob.setCompNo(i);
-					try{
-						simSchedule.addCMJob(cmJob, cmTTF);
-					}
-					catch(Exception e){
-						e.printStackTrace();
-					}
+
+			// find all machine failures and CM times for this shift
+			LinkedList<FailureEvent> failureEvents = new LinkedList<FailureEvent>();
+			FailureEvent upcomingFailure = null;
+			for(int compNo=0; compNo<simCompList.length; compNo++)
+			{
+				//System.out.format("%d %f %f %f\n",compNo,simCompList[compNo].cmEta,simCompList[compNo].cmBeta,simCompList[compNo].initAge);
+				long ft = (long)(simCompList[compNo].getCMTTF());
+				if(ft < Macros.SHIFT_DURATION)
+				{
+					// this component fails in this shift
+					failureEvents.add(new FailureEvent(compNo, ft*Macros.TIME_SCALE_FACTOR));
 				}
 			}
+			if(!failureEvents.isEmpty())
+			{
+				Collections.sort(failureEvents, new FailureEventComparator());
+				upcomingFailure =  failureEvents.pop();
+			}
+
 			long time = 0;
-			while(time< Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR && !simSchedule.isEmpty()){
+			while(time < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR && !simSchedule.isEmpty()){
+				//Calculate the cost depending upon the job type
+				Job current = simSchedule.peek(); 
+				if(current.getJobType()!= Job.JOB_CM&&current.getJobType()!= Job.JOB_PM && upcomingFailure!=null && time == upcomingFailure.failureTime)
+				{
+					
+					Job cmJob = new Job("CM", upcomingFailure.repairTime, simCompList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
+					cmJob.setFixedCost(simCompList[upcomingFailure.compNo].getCMFixedCost());
+					cmJob.setCompNo(upcomingFailure.compNo);
+					simSchedule.addJobTop(cmJob);
+					continue;
+				}
+				else if(current.getJobType() == Job.JOB_NORMAL){
+					for(Component comp : simCompList)
+						comp.initAge++;
+				}
+				else if(current.getJobType() == Job.JOB_PM){
+					pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
+					current.setFixedCost(0);
+					pmAvgTime += 1;
+				}
+				else if(current.getJobType() == Job.JOB_CM){
+					cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
+					current.setFixedCost(0);
+				}
+				// decrement job time by unit time
 				try{
-					simSchedule.decrement(1);
+						simSchedule.decrement(1);
 				}
 				catch(IOException e){
 					e.printStackTrace();
 					System.exit(0);
 				}
-				//Calculate the cost depending upon the job type
-				Job current = simSchedule.peek(); 
-				switch(current.getJobType()){
-				case Job.JOB_PM:
-					pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-					current.setFixedCost(0);
-					pmAvgTime += 1;
-					break;
-				case Job.JOB_CM:
-					cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-					current.setFixedCost(0);
-					break;
-				}
-
+				time++;
 				if(current.getJobTime()<=0){
+					switch(current.getJobType())
+					{
+					case Job.JOB_PM:
+						Component comp1 = simCompList[current.getCompNo()];
+						comp1.initAge = (1-comp1.pmRF)*comp1.initAge;
+						// recompute component failures
+						failureEvents = new LinkedList<FailureEvent>();
+						upcomingFailure = null;
+						for(int compNo=0; compNo<simCompList.length; compNo++)
+						{
+							long ft = time + (long) simCompList[compNo].getCMTTF()*Macros.TIME_SCALE_FACTOR;
+							if(ft < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
+							{
+								// this component fails in this shift
+								failureEvents.add(new FailureEvent(compNo, ft));
+							}
+						}
+
+						if(!failureEvents.isEmpty())
+						{
+							Collections.sort(failureEvents, new FailureEventComparator());
+							upcomingFailure =  failureEvents.pop();
+						}
+						break;
+					case Job.JOB_CM:	
+						Component comp = simCompList[current.getCompNo()];
+						comp.initAge = (1 - comp.cmRF)*comp.initAge;
+						// recompute component failures
+						failureEvents = new LinkedList<FailureEvent>();
+						upcomingFailure = null;
+						for(int compNo=0; compNo<simCompList.length; compNo++)
+						{
+							long ft = time + (long) simCompList[compNo].getCMTTF()*Macros.TIME_SCALE_FACTOR;
+							if(ft < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
+							{
+								// this component fails in this shift
+								failureEvents.add(new FailureEvent(compNo, ft));
+							}
+						}
+						if(!failureEvents.isEmpty())
+						{
+							Collections.sort(failureEvents, new FailureEventComparator());
+							upcomingFailure =  failureEvents.pop();
+						}
+						break;
+					}
+					
 					try{
-						
 						simSchedule.remove();
-						
 					}
 					catch(IOException e){
 						e.printStackTrace();
 						System.exit(0);
 					}
 				}
-				time++;
 			}
-			
-			//System.out.println(simSchedule.printSchedule());
-			//System.out.println(simSchedule.getSum());
 			try{
 				//Calculate penaltyCost for leftover jobs
 				while(!simSchedule.isEmpty()){
-					penaltyCost += simSchedule.remove().getPenaltyCost()*Macros.SHIFT_DURATION;
+					Job job = simSchedule.remove();
+					switch(job.getJobType()){
+						case Job.JOB_NORMAL:	
+							penaltyCost += job.getPenaltyCost()*Macros.SHIFT_DURATION;
+						break;
+						case Job.JOB_PM:
+							pmCost += job.getFixedCost() + job.getJobCost()*job.getJobTime()*Macros.TIME_SCALE_FACTOR; 
+							pmAvgTime += job.getJobTime();
+							break;
+						case Job.JOB_CM:
+							cmCost += job.getFixedCost() + job.getJobCost()*job.getJobTime()*Macros.TIME_SCALE_FACTOR; 
+					}
+					
+				
 				}
 			}
 			catch(IOException e){
@@ -157,4 +214,31 @@ public class SimulationThread implements Callable<SimulationResult> {
 		}
 	}
 
+
+
+	class FailureEvent
+	{
+		public int compNo;
+		public long repairTime;
+		public long failureTime;
+
+		public FailureEvent(int compNo, long failureTime)
+		{
+			this.compNo = compNo;
+			this.repairTime = Component.notZero(simCompList[compNo].getCMTTR()*Macros.TIME_SCALE_FACTOR);
+			this.failureTime = failureTime;
+		}
+	}
+
+	class FailureEventComparator implements Comparator<FailureEvent> {
+		/*
+		 * Sort events in ascending order of failure time
+		 */
+		@Override
+		public int compare(FailureEvent a, FailureEvent b) 
+		{
+			return Long.compare(a.failureTime,b.failureTime);
+		}
+
+	}
 }

@@ -4,8 +4,8 @@ import java.util.Random;
 
 public class WeibullTest {
 	public static void main(String[] args) {
-		for(int i=5000;i<900000;i++)
-		System.out.println(weibull(2.3,4000,i));
+		for(int i=0;i<4;i++)
+		System.out.println(weibull(2.3,4000,900000));
 	}
 	public static double weibull(double p, double q, double agein) 
 	{		

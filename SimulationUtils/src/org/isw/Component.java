@@ -1,7 +1,6 @@
 package org.isw;
 
 import java.io.Serializable;
-import java.util.Random;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -15,7 +14,7 @@ import org.apache.commons.math3.random.JDKRandomGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
 
 
-public class Component implements Serializable {
+public class Component implements Serializable{
 	/**
 	 * 
 	 */
@@ -71,6 +70,32 @@ public class Component implements Serializable {
 	public transient DoubleProperty cmCostSpareP;
 	public transient DoubleProperty cmCostOtherP;
 
+	public Component(Component component) {
+		compName = component.compName;
+		initAge = component.initAge;
+		cmEta = component.cmEta;
+		cmBeta = component.cmBeta;
+		cmMuRep = component.cmMuRep;
+		cmSigmaRep = component.cmSigmaRep;
+		cmMuSupp = component.cmMuSupp; 
+		cmSigmaSupp = component.cmSigmaSupp;
+		cmRF = component.cmRF;
+		cmCostSpare = component.cmCostSpare;
+		cmCostOther = component.cmCostOther;
+		pmMuRep = component.pmMuRep;
+		pmSigmaRep = component.pmSigmaRep;
+		pmMuSupp = component.pmMuSupp;
+		pmSigmaSupp = component.pmSigmaSupp;
+		pmRF = component.pmRF;
+		pmCostSpare = component.pmCostSpare;
+		pmCostOther = component.pmCostOther;
+		pmLabour = component.pmLabour;
+		cmLabour = component.cmLabour;
+		labourCost = component.labourCost;
+	}
+	public Component(){
+		
+	};
 	public double getPMTTR(){
 		return normalRandom(pmMuRep,pmSigmaRep) + normalRandom(pmMuSupp,pmSigmaSupp);
 	}
@@ -90,14 +115,14 @@ public class Component implements Serializable {
 	double a=(double) (mean+g.nextNormalizedDouble()*sd);
 	return a;
 	}
-	static Random x= new Random();
+	
 	public static double weibull(double p, double q, double agein) 
 	{		
 		//p beta and q eta 
 		double t0 = agein;
 		double b=Math.pow(t0, p);
 		double a=Math.pow((1/q), p);	
-		return (Math.pow(b-((Math.log(1-x.nextDouble())/a)),(1/p)))-t0;
+		return (Math.pow(b-((Math.log(1-Math.random())/a)),(1/p)))-t0;
 	}
 
 	public double getPMFixedCost() {

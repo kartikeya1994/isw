@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.isw.BruteForceAlgorithm;
 import org.isw.Component;
 import org.isw.Job;
 import org.isw.Machine;
@@ -32,6 +33,7 @@ public class MemeticTest {
 			Job job2 = new Job("J3",1,5000,Job.JOB_NORMAL);
 			schedule.addJob(job2);
 			int arr[] ={13,14};
+
 			for(int c=0;c<arr.length;c++){
 				System.out.println("\n***************************");
 				System.out.format("No of components: %d\n", arr[c]);
@@ -45,30 +47,24 @@ public class MemeticTest {
 				threadPool.shutdown();
 				while(!threadPool.isTerminated());
 				System.out.println("Cost of no PM: "+result.cost);
+
 				ArrayList<Integer> pmos = schedule.getPMOpportunities();
 				pmOpportunity = new int[pmos.size()];
 				for (int i = 0; i < pmOpportunity.length; i++) {
 					pmOpportunity[i] = pmos.get(i);
 				}
 				if(pmOpportunity.length > 0){
-					//simulateSolution(schedule,80);
-					//simulateSolution(schedule,80<<4);
-					//simulateSolution(schedule,80>>4);
+					
 					Long time = System.nanoTime();
 					MemeticAlgorithm ma = new MemeticAlgorithm(pmOpportunity.length*Machine.compList.length*2,200,schedule,pmOpportunity,result);
 					ma.execute();
 					System.out.format("Memetic Time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));
 					time = System.nanoTime();
-					/*if(arr[c]<=6)
-					{
-						BruteForceAlgorithm bf = new BruteForceAlgorithm(schedule,pmOpportunity,result); 
-						bf.execute();
-						System.out.format("Brute Force Time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));
-					}
-					else
-					{
-						System.out.println("Skipping brute force calc.");
-					}*/
+
+					BruteForceAlgorithm bf = new BruteForceAlgorithm(schedule,pmOpportunity,result); 
+					bf.execute();
+					System.out.format("Time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
+
 				}
 			}
 

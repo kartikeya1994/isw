@@ -48,7 +48,6 @@ public class MemeticAlgorithm {
 				e.printStackTrace();
 
 			}
-			//System.out.format("%f (%s)\n",population.get(0).fitnessValue,Integer.toBinaryString(population.get(0).combo));
 			if(cnt++ >= stopCrit)
 				break;
 
@@ -229,6 +228,7 @@ class Chromosome implements Comparable<Chromosome>{
 
 	private long heuristic(long combo) {
 		Component[] temp = Machine.compList.clone();
+
 		int heuristicP=0;
 		int heuristicN=0;
 		Double fp;
