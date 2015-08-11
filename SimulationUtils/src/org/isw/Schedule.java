@@ -2,6 +2,7 @@ package org.isw;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -267,5 +268,13 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 					cmJobs.add(jobs.get(i));
 		}
 		return cmJobs;
+	}
+
+	public void send(InetAddress ip, int port) throws IOException{
+		Socket socket = new Socket(ip, port);
+		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+		oos.writeObject(this);
+		oos.close();
+		socket.close();
 	}
 }

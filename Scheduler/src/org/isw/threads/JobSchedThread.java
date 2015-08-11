@@ -1,15 +1,8 @@
 package org.isw.threads;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
@@ -36,7 +29,6 @@ public class JobSchedThread extends Thread
 {
 	MachineList machineList;
 	Random r = new Random();
-	DatagramSocket socket;
 	ServerSocket tcpSocket;
 	long procTimeArr[]={5,5,5,4,4,4,4,4,2,2,1,1};
 	int procCostArr[]={80,80,70,70,70,60,60,50,50,40,40,40};
@@ -52,7 +44,6 @@ public class JobSchedThread extends Thread
 	{	
 		try 
 		{
-			socket = new DatagramSocket(Macros.SCHEDULING_DEPT_PORT);
 			tcpSocket = new ServerSocket(Macros.SCHEDULING_DEPT_PORT_TCP);
 		} catch (SocketException e1) {
 			e1.printStackTrace();
@@ -71,31 +62,11 @@ public class JobSchedThread extends Thread
 			while(machineIPs.hasMoreElements())
 			{	
 				InetAddress ip = machineIPs.nextElement();
-				try {
-					//request pending jobs from previous shift from machine
-					final ByteArrayOutputStream baos=new ByteArrayOutputStream();
-					final DataOutputStream daos=new DataOutputStream(baos);
-					daos.writeInt(Macros.REQUEST_PREVIOUS_SHIFT); // request pending jobs of previous shift of machine
-					daos.close();
-					final byte[] bufOut=baos.toByteArray();
-					DatagramPacket packetOut = new DatagramPacket(bufOut, bufOut.length, ip, Macros.MACHINE_PORT);
-					socket.send(packetOut);
-					System.out.println("Sent schedule get req to machines");
-					byte[] bufIn = new byte[4096*8];
-					DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
-					socket.receive(packet);
-					byte[] object = packet.getData();
-					ByteArrayInputStream in = new ByteArrayInputStream(object);
-					ObjectInputStream is = new ObjectInputStream(in);
-					Schedule jl = (Schedule) is.readObject();	
-					jl.setAddress(ip);
-					pq.add(jl);	// add pending job lists to priority queue
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				} 
-
+				FlagPacket.sendTCP(Macros.REQUEST_PREVIOUS_SHIFT, ip, Macros.MACHINE_PORT_TCP);		
+				System.out.println("Sent schedule get req to machines");
+				Schedule jl = Schedule.receive(tcpSocket);
+				jl.setAddress(ip);
+				pq.add(jl);	// add pending job lists to priority queue
 			}
 
 			System.out.println("Job list: ");
@@ -113,24 +84,8 @@ public class JobSchedThread extends Thread
 			while(!pq.isEmpty())
 			{
 				try {
-					//send job lists to machines
-					ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-					ObjectOutputStream os = new ObjectOutputStream(outputStream);
-					os.writeObject(pq.peek());
-					byte[] object = outputStream.toByteArray();
-					os.close();
-					outputStream.reset();
-					DataOutputStream ds = new DataOutputStream(outputStream);
-					ds.writeInt(Macros.REPLY_NEXT_SHIFT);
-					byte[] header =outputStream.toByteArray();
-					ds.close();
-					outputStream.reset();
-					outputStream.write( header );
-					outputStream.write( object );
-					byte[] data = outputStream.toByteArray( );
-					DatagramPacket sendPacket = new DatagramPacket(data, data.length, pq.peek().getAddress(), Macros.MACHINE_PORT);
+					pq.peek().send(pq.peek().getAddress(), Macros.MACHINE_PORT_TCP);
 					System.out.println("Sending schedule to "+pq.poll().getAddress());
-					socket.send(sendPacket);
 				} catch (SocketException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -150,16 +105,9 @@ public class JobSchedThread extends Thread
 					count++;
 			}
 			
-			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, Macros.MAINTENANCE_DEPT_PORT, new MaintenanceTuple(-1));
-			
-			try {
-				DatagramPacket packet = mrp.makePacket();
-				socket.send(packet);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
+			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
+			mrp.sendTCP();
+				
 		}
 		
 		// Simulation Complete
@@ -167,13 +115,7 @@ public class JobSchedThread extends Thread
 		Enumeration<InetAddress> en = machineList.getIPs();
 		while(en.hasMoreElements())
 		{
-			// Tell all machines that simulation is complete
-			DatagramPacket dp = FlagPacket.makePacket(en.nextElement().getHostAddress(), Macros.MACHINE_PORT, Macros.PROCESS_COMPLETE);
-			try {
-				socket.send(dp);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			FlagPacket.sendTCP(Macros.PROCESS_COMPLETE, en.nextElement(), Macros.MACHINE_PORT_TCP);
 		}
 
 	}

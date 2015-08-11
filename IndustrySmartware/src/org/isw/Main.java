@@ -176,25 +176,12 @@ public class Main extends Application {
 			private void initMachines() throws IOException {
 				for(Entry<InetAddress, Component[]> entry: machines.entrySet()){
 					if(entry.getValue() != null){
-					    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							ObjectOutputStream oos = new ObjectOutputStream(baos);
-							oos.writeObject(entry.getValue());
-							byte[] compdata = baos.toByteArray();
-							oos.close();
-							baos.reset();
-							DataOutputStream dos = new DataOutputStream(baos);
-							dos.writeInt(Macros.INIT);
-							dos.writeInt(Integer.parseInt(shiftDuration.getText()));
-							dos.writeInt(Integer.parseInt(scaleFactor.getText()));
-							dos.writeInt(Integer.parseInt(simulationCount.getText()));
-							byte[] configdata = baos.toByteArray();
-							dos.close();
-							baos.reset();
-							baos.write(configdata);
-							baos.write(compdata);
-							byte[] data = baos.toByteArray();
-							DatagramPacket packet = new DatagramPacket(data,data.length,entry.getKey(),Macros.MACHINE_PORT); 
-							udpSocket.send(packet);
+							InitConfig ic = new InitConfig();
+							ic.compList = entry.getValue();
+							ic.scaleFactor = Integer.parseInt(scaleFactor.getText());
+							ic.shiftDuration = Integer.parseInt(shiftDuration.getText());
+					    	ic.simuLationCount = Integer.parseInt(simulationCount.getText());
+							ic.send(entry.getKey(),Macros.MACHINE_PORT_TCP);
 					}
 				}
 				

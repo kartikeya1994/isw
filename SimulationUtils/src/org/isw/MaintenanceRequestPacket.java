@@ -1,14 +1,13 @@
 package org.isw;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketAddress;
 
 public class MaintenanceRequestPacket implements Serializable
 {
@@ -37,7 +36,7 @@ public class MaintenanceRequestPacket implements Serializable
 		this.mtTuple = mtTuple;
 	}
 	
-	/*public static MaintenanceRequestPacket receiveTCP(ServerSocket tcpSocket, int timeout)
+	public static MaintenanceRequestPacket receiveTCP(ServerSocket tcpSocket, int timeout)
 	{
 		MaintenanceRequestPacket ret = null;
 		try
@@ -68,41 +67,10 @@ public class MaintenanceRequestPacket implements Serializable
 		}
 
 		return ret;
-	}*/
-
-	public static MaintenanceRequestPacket receiveUDP(DatagramSocket udpSocket, int timeout)
-	{
-		MaintenanceRequestPacket ret = null;
-		try
-		{
-				udpSocket.setSoTimeout(timeout);
-				byte[] bufIn = new byte[4096*400];
-				DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
-				udpSocket.receive(packet); 
-				byte[] data=packet.getData();
-				ByteArrayInputStream in = new ByteArrayInputStream(data);
-				ObjectInputStream oin = new ObjectInputStream(in); 
-				Object o = oin.readObject();
-				if(o instanceof MaintenanceRequestPacket) 
-				{
-				ret = (MaintenanceRequestPacket)o;
-				ret.machineIP = packet.getAddress();
-				ret.machinePort = packet.getPort();
-			}
-			else 
-			{
-				System.out.println("Received MaintenanceRequestPacket is garbled");
-				return null;
-			}
-		}catch(Exception e)
-		{
-			System.out.println("Failed to receive MaintenanceRequestPacket.");
-			e.printStackTrace();
-		}
-
-		return ret;
 	}
-	/*public void sendTCP()
+
+	
+	public void sendTCP()
 	{
 		try
 		{
@@ -119,12 +87,6 @@ public class MaintenanceRequestPacket implements Serializable
 			System.out.println("Unable to send Maintenance Request to " + maintenanceIP);
 			e.printStackTrace();
 		}
-	}*/
-	public DatagramPacket makePacket() throws IOException{
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		ObjectOutputStream os = new ObjectOutputStream(outputStream);
-		os.writeObject(this);
-		byte[] object = outputStream.toByteArray();
-		return new DatagramPacket(object, object.length,maintenanceIP, maintenancePort);
 	}
+
 }

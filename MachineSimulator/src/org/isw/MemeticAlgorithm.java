@@ -17,8 +17,8 @@ import org.isw.threads.SimulationThread;
 public class MemeticAlgorithm {
 	private int populationSize;
 	private int stopCrit;
-	private int pmOpportunity[];
-	private Schedule schedule;
+	int pmOpportunity[];
+	Schedule schedule;
 	private ArrayList<Chromosome> population;
 	private ArrayList<Chromosome> offsprings;
 	SimulationResult noPM;
@@ -40,32 +40,31 @@ public class MemeticAlgorithm {
 		int cnt=0;
 		while(true){
 			totalFitness = 0;
-			optimizePopulation();
 			evaluateFitness(population);
 			try{
 			distribution = new EnumeratedDistribution<Chromosome>(populationDistribution());
 			}catch(Exception e){
-				System.out.println("Total Fitness"+ totalFitness);
-				for(Chromosome c : population)
-					System.out.println(c.fitnessValue);
 				e.printStackTrace();
 				
 			}
-			
+			//System.out.format("%f (%s)\n",population.get(0).fitnessValue,Integer.toBinaryString(population.get(0).combo));
 			if(cnt++ >= stopCrit)
 				break;
+			
 			generatePopulation();
 		}
+		
 		Collections.sort(population);
+		System.out.format("%f (%s)\n",population.get(0).fitnessValue,Integer.toBinaryString(population.get(0).combo));
 		int i =0;
 		ArrayList<SimulationResult> results = new ArrayList<SimulationResult>();
-		
-		while(i < populationSize && population.get(i).fitnessValue < noPM.cost*50){
+		System.out.println("----------------------------------------");
+		while(i < populationSize && population.get(i).fitnessValue < noPM.cost){
 			Chromosome c = population.get(i);
 			if(c.combo != 0){
-			System.out.println(Integer.toBinaryString(c.combo));
+				//System.out.format("%f (%s)\n",c.fitnessValue,Integer.toBinaryString(c.combo));
 				results.add(new SimulationResult(c.fitnessValue,c.pmAvgTime,c.getCombolist(),pmOpportunity,false,i));
-			
+				
 			}
 			i++;
 		}
@@ -101,6 +100,7 @@ public class MemeticAlgorithm {
 					offspring.combo ^= 1<<mutationPoint;
 			}
 		}
+		optimizeOffsprings();
 		evaluateFitness(offsprings);
 		population.addAll(offsprings);
 		Collections.sort(population);
@@ -113,7 +113,7 @@ public class MemeticAlgorithm {
 		int combo1[] = {parent1.combo,parent1.combo};
 		int combo2[] = {parent2.combo,parent2.combo};
 		
-		int crossoverPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length-1) + 1;
+		int crossoverPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length-1)+1;
 		for(int i=0; i<Machine.compList.length*pmOpportunity.length;i++){
 			if(i < crossoverPoint){
 				combo2[0] = combo2[0] & ~(1<<i);
@@ -125,8 +125,8 @@ public class MemeticAlgorithm {
 			}
 		}
 		
-		offsprings[0] = new Chromosome(combo1[0]|combo2[0],pmOpportunity);
-		offsprings[1] = new Chromosome(combo1[1]|combo2[1],pmOpportunity);
+		offsprings[0] = new Chromosome(combo1[0]|combo2[0],this);
+		offsprings[1] = new Chromosome(combo1[1]|combo2[1],this);
 		return offsprings;
 	}
 
@@ -165,9 +165,9 @@ public class MemeticAlgorithm {
 		 
 	}
 
-	private void optimizePopulation() {
-		for(Chromosome chromosome: population){
-			chromosome.applyHeuristic();
+	private void optimizeOffsprings() {
+		for(Chromosome chromosome: offsprings){
+			chromosome.applyLocalSearch();
 		}	
 	}
 
@@ -178,7 +178,7 @@ public class MemeticAlgorithm {
 		}
 		Collections.shuffle(numbers);
 		for(int i=0;i<populationSize;i++){
-			  population.add(new Chromosome(numbers.get(i),pmOpportunity));
+			  population.add(new Chromosome(numbers.get(i),this));
 		}
 		
 	}
@@ -189,12 +189,14 @@ class Chromosome implements Comparable<Chromosome>{
 	double pmAvgTime;
 	double fitnessValue;
 	int[] pmOpportunity;
+	Schedule schedule;
 	//Binary representation of the chromosome
 	int combo;
-	public Chromosome(int combo ,int[] pmOpportunity){
+	public Chromosome(int combo ,MemeticAlgorithm ma){
 		this.combo = combo;
 		this.fitnessValue = 0;
-		this.pmOpportunity = pmOpportunity;
+		this.pmOpportunity = ma.pmOpportunity;
+		this.schedule = ma.schedule;
 	}
 	
 	public int[] getCombolist() {
@@ -205,9 +207,76 @@ class Chromosome implements Comparable<Chromosome>{
 		return combos;
 	}
 
-	public void applyHeuristic() {
-	//TODO	
-		
+	public void applyLocalSearch() {
+		int maxCombo = combo;
+		if(heuristic(maxCombo) < heuristic(combo+1) && combo + 1 != Math.pow(2, Machine.compList.length*pmOpportunity.length))
+				maxCombo = combo+1;
+		if(heuristic(maxCombo) < heuristic(combo-1) && combo != 1)
+			maxCombo = combo-1;
+		combo = maxCombo;
+	}
+	
+
+
+	private int heuristic(int combo) {
+		Component[] temp = Machine.compList.clone();
+		int heuristicP=0;
+		int heuristicN=0;
+		Double fp;
+		int comboList[] = getCombolist(combo);
+		for(int i=0;i<comboList.length;i++){
+			for(int j=0;j<temp.length;j++){
+				int pos = 1<<j;
+				if((comboList[i]&pos)!=0){
+					fp = getFailureProbablity(temp[j]);
+					heuristicP += (fp>0.5d)?1:-1;
+					temp[i].initAge = (1-temp[i].pmRF)*temp[i].initAge;
+				}
+				else{
+					fp = getFailureProbablity(temp[j]);
+					heuristicN += (fp<0.5d)?1:-1;
+				}
+			}
+		}
+		return heuristicN+heuristicP;
+	}
+
+	private Double getFailureProbablity(Component component , int oppoIndex) {
+		int failureCount =0;
+		long time = 0;
+		if(oppoIndex ==  pmOpportunity.length-1)
+			time = Math.min(Macros.SHIFT_DURATION, schedule.getSum());
+		else 
+			time = schedule.getFinishingTime(pmOpportunity[oppoIndex+1]-1);
+		for(int i=0;i<1000;i++){
+			Double cmTTF = component.getCMTTF();
+			if(cmTTF < time){
+				failureCount++;
+			}
+		}
+		return failureCount/1000d;
+	}
+	
+	private Double getFailureProbablity(Component component) {
+		int failureCount =0;
+		long time = 0;
+		time = Math.min(Macros.SHIFT_DURATION, schedule.getSum());
+	
+		for(int i=0;i<1000;i++){
+			Double cmTTF = component.getCMTTF();
+			if(cmTTF < time){
+				failureCount++;
+			}
+		}
+		return failureCount/1000d;
+	}
+
+	private int[] getCombolist(int combo) {
+		int combos[] = new int[pmOpportunity.length];
+		for(int i =0;i<pmOpportunity.length;i++){
+			combos[i] = (combo>>(Machine.compList.length*i))&((int)Math.pow(2,Machine.compList.length)-1);
+		}
+		return combos;
 	}
 
 	@Override

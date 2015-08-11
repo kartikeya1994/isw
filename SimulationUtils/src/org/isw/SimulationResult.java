@@ -2,7 +2,7 @@ package org.isw;
 
 import java.io.Serializable;
 
-public class SimulationResult implements Serializable {
+public class SimulationResult implements Serializable,Comparable<SimulationResult> {
 	/**
 	 * 
 	 */
@@ -71,6 +71,11 @@ public class SimulationResult implements Serializable {
 			combo |= compCombo[i];
 		}
 		return combo;
+	}
+
+	@Override
+	public int compareTo(SimulationResult o) {
+		return Double.compare(cost, o.cost);
 	}
 
 

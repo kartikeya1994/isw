@@ -21,6 +21,7 @@ class ClientHandlerThread extends Thread {
 
 	@Override
 	public void run() {
+		synchronized(machineList){
 		try
 		{
 			if(!machineList.contains(packet.ip))
@@ -37,4 +38,5 @@ class ClientHandlerThread extends Thread {
 			e.printStackTrace();
 		}
 	}
+		}
 	}

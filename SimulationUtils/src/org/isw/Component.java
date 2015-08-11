@@ -90,14 +90,13 @@ public class Component implements Serializable {
 	double a=(double) (mean+g.nextNormalizedDouble()*sd);
 	return a;
 	}
-	
+	static Random x= new Random();
 	public static double weibull(double p, double q, double agein) 
 	{		
 		//p beta and q eta 
 		double t0 = agein;
 		double b=Math.pow(t0, p);
-		double a=Math.pow((1/q), p);
-		Random x= new Random();
+		double a=Math.pow((1/q), p);	
 		return (Math.pow(b-((Math.log(1-x.nextDouble())/a)),(1/p)))-t0;
 	}
 
