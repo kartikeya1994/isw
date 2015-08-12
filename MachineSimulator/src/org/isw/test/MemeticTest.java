@@ -2,6 +2,8 @@ package org.isw.test;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
@@ -23,7 +25,7 @@ import org.isw.threads.SimulationThread;
 
 public class MemeticTest {
 	static int[] pmOpportunity;
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		try {
 			Schedule schedule = new Schedule();
 			Job job = new Job("J1",4,5000,Job.JOB_NORMAL);
@@ -32,8 +34,8 @@ public class MemeticTest {
 			schedule.addJob(job1);
 			Job job2 = new Job("J3",1,5000,Job.JOB_NORMAL);
 			schedule.addJob(job2);
-			int arr[] ={13,14};
-
+			int arr[] ={4};
+			FileWriter writer = new FileWriter("mavsbf.csv");
 			for(int c=0;c<arr.length;c++){
 				System.out.println("\n***************************");
 				System.out.format("No of components: %d\n", arr[c]);
@@ -53,18 +55,40 @@ public class MemeticTest {
 				for (int i = 0; i < pmOpportunity.length; i++) {
 					pmOpportunity[i] = pmos.get(i);
 				}
-				if(pmOpportunity.length > 0){
+				
+			
+					if(pmOpportunity.length > 0){
 					
+					/*	for(int n =100;n<1000;n+=50){
+							Double mean = 0d;
+							double[] costs = new double[n];
+						for(int i=0;i<n;i++){
+							costs[i] = simulateSolution(schedule,6);
+							mean += costs[i];
+						}
+						mean/=n;
+						double sd = 0d;
+						for(int i=0;i<n;i++){
+							sd += Math.pow(costs[i]-mean,2);
+						}
+						sd/=(n-1);
+						sd = Math.pow(sd, 0.5);
+						writer.append(String.format("%d,%f,%f\n",n,mean,sd));
+						System.out.println("Mean: "+mean);
+						System.out.println("SD: "+sd);
+					}
+					writer.flush();
+				    writer.close();
+					*/
 					Long time = System.nanoTime();
 					MemeticAlgorithm ma = new MemeticAlgorithm(pmOpportunity.length*Machine.compList.length*2,200,schedule,pmOpportunity,result);
 					ma.execute();
 					System.out.format("Memetic Time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));
 					time = System.nanoTime();
-
 					BruteForceAlgorithm bf = new BruteForceAlgorithm(schedule,pmOpportunity,result); 
 					bf.execute();
 					System.out.format("Time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
-
+					 
 				}
 			}
 
@@ -143,14 +167,15 @@ public class MemeticTest {
 		}
 		return c;
 	}
-	static void simulateSolution(Schedule jl,long combo) throws InterruptedException, ExecutionException{
+	static double simulateSolution(Schedule jl,long combo) throws InterruptedException, ExecutionException{
 		ExecutorService threadPool = Executors.newSingleThreadExecutor();
 		CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
 		pool.submit(new SimulationThread(jl,getComboList(combo),pmOpportunity,false,combo));
 		SimulationResult result = pool.take().get();
-		System.out.format("Cost: %f (%s)\n", result.cost, Long.toBinaryString(combo));
+		//System.out.format("Cost: %f (%s)\n", result.cost, Long.toBinaryString(combo));
 		threadPool.shutdown();
 		while(!threadPool.isTerminated());
+		return result.cost;
 	}
 
 	private  static long[] getComboList(long combo) {

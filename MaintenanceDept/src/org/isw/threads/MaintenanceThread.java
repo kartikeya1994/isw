@@ -316,7 +316,7 @@ public class MaintenanceThread  extends Thread{
 					}
 					
 					// add job to schedule
-					schedule.addPMJob(pmJob,pmOpportunity[pmOpp]+cnt);
+					schedule.addPMJob(new Job(pmJob),pmOpportunity[pmOpp]+cnt);
 
 					cnt++;
 				}

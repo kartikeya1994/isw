@@ -31,8 +31,9 @@ public class SimulationThread implements Callable<SimulationResult> {
 	/**
 	 * We shall run the simulation 1000 times,each simulation being Macros.SHIFT_DURATION hours (real time) in duration.
 	 * For each simulation PM is done only once and is carried out in between job executions.
+	 * @throws IOException 
 	 * **/
-	public SimulationResult call(){
+	public SimulationResult call() throws IOException{
 		double totalCost = 0;
 		double pmAvgTime = 0;
 		int cnt = 0;
@@ -72,9 +73,9 @@ public class SimulationThread implements Callable<SimulationResult> {
 			while(time < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR && !simSchedule.isEmpty()){
 				//Calculate the cost depending upon the job type
 				Job current = simSchedule.peek(); 
+				//System.out.println(current.getJobName()+":"+time);
 				if(current.getJobType()!= Job.JOB_CM&&current.getJobType()!= Job.JOB_PM && upcomingFailure!=null && time == upcomingFailure.failureTime)
 				{
-					
 					Job cmJob = new Job("CM", upcomingFailure.repairTime, simCompList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
 					cmJob.setFixedCost(simCompList[upcomingFailure.compNo].getCMFixedCost());
 					cmJob.setCompNo(upcomingFailure.compNo);
@@ -95,13 +96,9 @@ public class SimulationThread implements Callable<SimulationResult> {
 					current.setFixedCost(0);
 				}
 				// decrement job time by unit time
-				try{
-						simSchedule.decrement(1);
-				}
-				catch(IOException e){
-					e.printStackTrace();
-					System.exit(0);
-				}
+				
+				simSchedule.decrement(1);
+			
 				time++;
 				if(current.getJobTime()<=0){
 					switch(current.getJobType())
@@ -151,13 +148,8 @@ public class SimulationThread implements Callable<SimulationResult> {
 						break;
 					}
 					
-					try{
 						simSchedule.remove();
-					}
-					catch(IOException e){
-						e.printStackTrace();
-						System.exit(0);
-					}
+						
 				}
 			}
 			try{
@@ -197,8 +189,8 @@ public class SimulationThread implements Callable<SimulationResult> {
 	 * */
 	private void addPMJobs(Schedule simSchedule,Component[] simCompList) {
 		int cnt = 0;
-		for(int pmOppo=0;pmOppo < pmOpportunity.length;pmOppo++){
-		for(int i=0;i< simCompList.length;i++){
+		for(int pmOppo=0; pmOppo < pmOpportunity.length; pmOppo++){
+		for(int i=0;i<simCompList.length;i++){
 			int pos = 1<<i;
 			if((pos&compCombo[pmOppo])!=0){
 				long pmttr = Component.notZero((simCompList[i].getPMTTR()*Macros.TIME_SCALE_FACTOR));

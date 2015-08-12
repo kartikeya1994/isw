@@ -227,7 +227,9 @@ class Chromosome implements Comparable<Chromosome>{
 
 
 	private long heuristic(long combo) {
-		Component[] temp = Machine.compList.clone();
+		Component[] temp = new Component[Machine.compList.length];
+		for(int i=0; i < Machine.compList.length; i++)
+			temp[i] = new Component(Machine.compList[i]);
 
 		int heuristicP=0;
 		int heuristicN=0;
