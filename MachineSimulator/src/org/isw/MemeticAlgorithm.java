@@ -36,8 +36,10 @@ public class MemeticAlgorithm {
 		this.noPM = noPM;
 	}
 
-	public SimulationResult[] execute() throws InterruptedException, ExecutionException{
+	public SimulationResult[] execute() throws InterruptedException, ExecutionException
+	{
 		initializePopulation();
+		
 		int cnt=0;
 		while(true){
 			totalFitness = 0;
@@ -55,7 +57,15 @@ public class MemeticAlgorithm {
 		}
 
 		Collections.sort(population);
-		System.out.format("%f (%s)\n",population.get(0).fitnessValue,Long.toBinaryString(population.get(0).combo));
+		System.out.format("MA Cost: %f (%s)\n",population.get(0).fitnessValue,Long.toBinaryString(population.get(0).combo));
+
+//		// write results to file
+//		try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("MACostComp.csv", true)))) {
+//			out.format("%f,%s\n",population.get(0).fitnessValue,Long.toBinaryString(population.get(0).combo));
+//		}catch (IOException e) {
+//			//exception handling left as an exercise for the reader
+//		}
+
 		int i =0;
 		ArrayList<SimulationResult> results = new ArrayList<SimulationResult>();
 		//System.out.println("----------------------------------------");

@@ -1,8 +1,11 @@
 package org.isw.test;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
@@ -22,7 +25,7 @@ import org.isw.Schedule;
 import org.isw.SimulationResult;
 import org.isw.threads.SimulationThread;
 
-public class MemeticTest {
+public class MemeticTestTime {
 	static int[] pmOpportunity;
 	public static void main(String[] args) throws IOException {
 		try {
@@ -33,10 +36,9 @@ public class MemeticTest {
 			schedule.addJob(job1);
 			Job job2 = new Job("J3",1,5000,Job.JOB_NORMAL);
 			schedule.addJob(job2);
-			int arr[] ={6};
+			int arr[] ={7};
 			//FileWriter writer = new FileWriter("mavsbf.csv");
-			for(int times=0;times<100;times++){
-				int c = 0;
+			for(int c=0; c<arr.length; c++){
 				System.out.println("\n***************************");
 				System.out.format("No of components: %d\n", arr[c]);
 				System.out.println("***************************");
@@ -55,10 +57,10 @@ public class MemeticTest {
 				for (int i = 0; i < pmOpportunity.length; i++) {
 					pmOpportunity[i] = pmos.get(i);
 				}
-				
-			
-					if(pmOpportunity.length > 0){
-					
+
+
+				if(pmOpportunity.length > 0){
+
 					/*	for(int n =100;n<1000;n+=50){
 							Double mean = 0d;
 							double[] costs = new double[n];
@@ -79,16 +81,32 @@ public class MemeticTest {
 					}
 					writer.flush();
 				    writer.close();
-					*/
+					 */
 					Long time = System.nanoTime();
-					MemeticAlgorithm ma = new MemeticAlgorithm(pmOpportunity.length*Machine.compList.length*2,200,schedule,pmOpportunity,result);
-					ma.execute();
-					System.out.format("MA Time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));
+//					MemeticAlgorithm ma = new MemeticAlgorithm(pmOpportunity.length*Machine.compList.length*2,200,schedule,pmOpportunity,result);
+//					ma.execute();
+//					double MATime = (System.nanoTime() - time)/Math.pow(10, 9);
+//					System.out.format("MA Time: %f\n", MATime);
+//					// write results to file
+//					try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("MATime.csv", true)))) {
+//						out.format("%d,%f\n",arr[c],MATime);
+//					}catch (IOException e) {
+//						//exception handling left as an exercise for the reader
+//					}
+					
 					time = System.nanoTime();
 					BruteForceAlgorithm bf = new BruteForceAlgorithm(schedule,pmOpportunity,result); 
+					System.out.println("No. of PM opportunities: "+pmOpportunity.length);
 					bf.execute();
-					System.out.format("BF Time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
-					 
+					double BFTime = (System.nanoTime() - time)/Math.pow(10, 9);
+					System.out.format("BF Time: %f\n",BFTime);
+					// write results to file
+					try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("BFTime.csv", true)))) {
+						out.format("%d,%f\n",arr[c],BFTime);
+					}catch (IOException e) {
+						//exception handling left as an exercise for the reader
+					}
+					
 				}
 			}
 
