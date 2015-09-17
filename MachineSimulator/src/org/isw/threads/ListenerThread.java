@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.isw.BruteForceAlgorithm;
 import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.InitConfig;
@@ -24,6 +23,7 @@ import org.isw.Logger;
 import org.isw.Machine;
 import org.isw.MachineResultPacket;
 import org.isw.Macros;
+import org.isw.MemeticAlgorithm;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
 
@@ -34,12 +34,13 @@ public class ListenerThread extends Thread
 	ServerSocket tcpSocket;
 	DatagramSocket udpSocket;
 	private InetAddress maintenanceIP =null;
-
+	JobExecutor jobExecutor;
 	public ListenerThread(InetAddress schedulerIP, InetAddress maintenanceIP,DatagramSocket udpSocket,ServerSocket tcpSocket) {
 		this.schedulerIP = schedulerIP;
 		this.tcpSocket = tcpSocket;
 		this.udpSocket = udpSocket; 
 		this.maintenanceIP = maintenanceIP;	
+		jobExecutor = new JobExecutor(udpSocket,tcpSocket, maintenanceIP);
 	}
 
 	public void run()
@@ -75,59 +76,63 @@ public class ListenerThread extends Thread
 				else if(o instanceof FlagPacket && ((FlagPacket)o).flag == Macros.REQUEST_PREVIOUS_SHIFT){ // send pending jobs to Scheduling Dept.
 					sendPreviousShift();
 				}
+				
 			 } catch(Exception e){
 				 e.printStackTrace();
 			 }
 				}
 	}
-	
-	private void sendPreviousShift() throws IOException {
+	void removePMJobs() throws IOException{
 		// remove PM jobs that have not been started
-		for(int i=0; i<jl.getSize(); i++)
-		{
-			Job j = jl.jobAt(i);
-			if(j.getJobType()==Job.JOB_PM && j.getStatus()==Job.NOT_STARTED)
-			{
-				jl.remove(i);
-				i--;
-			}
-		}
-		
-		/*
-		 *  if partial PM series is present, set all jobs to NOT_STARTED
-		 *  and recalculate seriesTTR and seriesLabour
-		 */
-		if(!jl.isEmpty() && jl.jobAt(0).getJobType()==Job.JOB_PM)
-		{
-			long seriesTTR = 0;
-			int[] seriesLabour = {0,0,0};
-			for(int i=0; i<jl.getSize(); i++)
-			{
-				// change jobStatus to NOT_STARTED
-				Job j = jl.jobAt(i);
-				if(j.getJobType()!=Job.JOB_PM)
-					break;
-				j.setStatus(Job.NOT_STARTED);
+				for(int i=0; i<jl.getSize(); i++)
+				{
+					Job j = jl.jobAt(i);
+					if(j.getJobType()==Job.JOB_PM && j.getStatus()==Job.NOT_STARTED)
+					{
+						jl.remove(i);
+						i--;
+					}
+				}
 				
-				// recompute seriesTTR and seriesLabour
-				seriesTTR += j.getJobTime();
-				if(seriesLabour[0]<j.getSeriesLabour()[0])
-					seriesLabour[0] = j.getSeriesLabour()[0];
-				if(seriesLabour[1]<j.getSeriesLabour()[1])
-					seriesLabour[1] = j.getSeriesLabour()[1];
-				if(seriesLabour[2]<j.getSeriesLabour()[2])
-					seriesLabour[2] = j.getSeriesLabour()[2];
-			}
-			
-			for(int i=0; i<jl.getSize(); i++)
-			{
-				Job j = jl.jobAt(i);
-				if(j.getJobType()!=Job.JOB_PM)
-					break;
-				j.setSeriesTTR(seriesTTR);
-				j.setSeriesLabour(seriesLabour);
-			}
-		}
+				/*
+				 *  if partial PM series is present, set all jobs to NOT_STARTED
+				 *  and recalculate seriesTTR and seriesLabour
+				 */
+				if(!jl.isEmpty() && jl.jobAt(0).getJobType()==Job.JOB_PM)
+				{
+					long seriesTTR = 0;
+					int[] seriesLabour = {0,0,0};
+					for(int i=0; i<jl.getSize(); i++)
+					{
+						// change jobStatus to NOT_STARTED
+						Job j = jl.jobAt(i);
+						if(j.getJobType()!=Job.JOB_PM)
+							break;
+						j.setStatus(Job.NOT_STARTED);
+						
+						// recompute seriesTTR and seriesLabour
+						seriesTTR += j.getJobTime();
+						if(seriesLabour[0]<j.getSeriesLabour()[0])
+							seriesLabour[0] = j.getSeriesLabour()[0];
+						if(seriesLabour[1]<j.getSeriesLabour()[1])
+							seriesLabour[1] = j.getSeriesLabour()[1];
+						if(seriesLabour[2]<j.getSeriesLabour()[2])
+							seriesLabour[2] = j.getSeriesLabour()[2];
+					}
+					
+					for(int i=0; i<jl.getSize(); i++)
+					{
+						Job j = jl.jobAt(i);
+						if(j.getJobType()!=Job.JOB_PM)
+							break;
+						j.setSeriesTTR(seriesTTR);
+						j.setSeriesLabour(seriesLabour);
+					}
+				}
+	}
+	private void sendPreviousShift() throws IOException {
+		removePMJobs();
+		
 		System.out.println("Sending previous shift to Scheduler");
 		jl.send(schedulerIP,Macros.SCHEDULING_DEPT_PORT_TCP);
 	}
@@ -158,10 +163,10 @@ public class ListenerThread extends Thread
 		}
 		SimulationResult[] results = null;
 		if(intArray.length > 0){
-			//MemeticAlgorithm ma = new MemeticAlgorithm(intArray.length*Machine.compList.length*2,200,jl,intArray,result);
-			//results = ma.execute();
-			BruteForceAlgorithm bfa = new BruteForceAlgorithm(jl,intArray,result);
-			results  = bfa.execute();
+			MemeticAlgorithm ma = new MemeticAlgorithm(intArray.length*Machine.compList.length*2,200,jl,intArray,result,false);
+			results = ma.execute();
+			//BruteForceAlgorithm bfa = new BruteForceAlgorithm(jl,intArray,result);
+			//results  = bfa.execute();
 		
 		}
 		else{
@@ -182,14 +187,16 @@ public class ListenerThread extends Thread
 		System.out.println("Total time" + jl.getSum());
 		
 		//Execute schedule received by maintenance
-		threadPool = Executors.newSingleThreadExecutor();
-		threadPool.execute(new JobExecThread(jl,udpSocket,tcpSocket, maintenanceIP));
-		threadPool.shutdown();
-		while(!threadPool.isTerminated()); 
+		int flag = jobExecutor.execute(jl);
+		if(flag == Macros.REQUEST_REPLAN){
+			//Replan
+			removePMJobs();
+			plan(jl);
+			return;
+		}
 		Machine.shiftCount++;
 		//Request Scheduling Dept for next shift
-		FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);
-		
+		FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);		
 	}
 
 	private void init(InitConfig ic) throws IOException {
@@ -239,4 +246,5 @@ public class ListenerThread extends Thread
 			System.out.format("Component %d: PM %d| CM %d| Age %f \n",i+1,Machine.compPMJobsDone[i],Machine.compCMJobsDone[i],Machine.compList[i].initAge);
 
 	}
+	
 }

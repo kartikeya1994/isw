@@ -20,7 +20,6 @@ import org.isw.BruteForceAlgorithm;
 import org.isw.Component;
 import org.isw.Job;
 import org.isw.Machine;
-import org.isw.MemeticAlgorithm;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
 import org.isw.threads.SimulationThread;

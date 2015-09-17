@@ -244,7 +244,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		if(jobs.isEmpty())
 			return arr;
 		
-		if(jobs.get(0).getJobType() == Job.JOB_NORMAL)
+		if(jobs.get(0).getJobType() == Job.JOB_NORMAL && jobs.get(0).getStatus() == Job.NOT_STARTED)
 			arr.add(0);
 		int i=1;
 		while(i<jobs.size()){
@@ -257,6 +257,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 			arr.add(i);
 		return arr;
 	}
+	
 	public ArrayList<Job> getPMJobs() {
 		ArrayList<Job> pmJobs = new ArrayList<Job>();
 		for(int i = jobs.size()-1; i>0; i--){

@@ -17,6 +17,7 @@ import org.isw.BruteForceAlgorithm;
 import org.isw.Component;
 import org.isw.Job;
 import org.isw.Machine;
+import org.isw.Macros;
 import org.isw.MemeticAlgorithm;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
@@ -26,20 +27,21 @@ public class MemeticTest {
 	static int[] pmOpportunity;
 	public static void main(String[] args) throws IOException {
 		try {
+			Macros.SHIFT_DURATION = 24*60;
 			Schedule schedule = new Schedule();
-			Job job = new Job("J1",4,5000,Job.JOB_NORMAL);
+			Job job = new Job("J1",15*24,5000,Job.JOB_NORMAL);
 			schedule.addJob(job);
-			Job job1 = new Job("J2",3,5000,Job.JOB_NORMAL);
+			Job job1 = new Job("J2",15*24,5000,Job.JOB_NORMAL);
 			schedule.addJob(job1);
-			Job job2 = new Job("J3",1,5000,Job.JOB_NORMAL);
+			Job job2 = new Job("J3",15*24,5000,Job.JOB_NORMAL);
 			schedule.addJob(job2);
-			int arr[] ={6};
+			schedule.addJob(new Job("J4",15*24,5000,Job.JOB_NORMAL));
+			
+			//schedule.addJob(new Job("J5",10*24,5000,Job.JOB_NORMAL));
+			//schedule.addJob(new Job("J6",10*24,5000,Job.JOB_NORMAL));
+			int arr[] ={4};
 			//FileWriter writer = new FileWriter("mavsbf.csv");
-			for(int times=0;times<100;times++){
-				int c = 0;
-				System.out.println("\n***************************");
-				System.out.format("No of components: %d\n", arr[c]);
-				System.out.println("***************************");
+			for(int c=0;c<arr.length;c++){
 				Machine.compList = parseExcel(arr[c]);
 				ExecutorService threadPool = Executors.newSingleThreadExecutor();
 				CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
@@ -48,47 +50,31 @@ public class MemeticTest {
 				result = pool.take().get();
 				threadPool.shutdown();
 				while(!threadPool.isTerminated());
-				System.out.println("Cost of no PM: "+result.cost);
-
+				System.out.println("Cost of no PM: " + result.cost);
 				ArrayList<Integer> pmos = schedule.getPMOpportunities();
 				pmOpportunity = new int[pmos.size()];
 				for (int i = 0; i < pmOpportunity.length; i++) {
 					pmOpportunity[i] = pmos.get(i);
 				}
-				
-			
+				System.out.format("m: %d n: %d\n",pmOpportunity.length,Machine.compList.length);
 					if(pmOpportunity.length > 0){
-					
-					/*	for(int n =100;n<1000;n+=50){
-							Double mean = 0d;
-							double[] costs = new double[n];
-						for(int i=0;i<n;i++){
-							costs[i] = simulateSolution(schedule,6);
-							mean += costs[i];
-						}
-						mean/=n;
-						double sd = 0d;
-						for(int i=0;i<n;i++){
-							sd += Math.pow(costs[i]-mean,2);
-						}
-						sd/=(n-1);
-						sd = Math.pow(sd, 0.5);
-						writer.append(String.format("%d,%f,%f\n",n,mean,sd));
-						System.out.println("Mean: "+mean);
-						System.out.println("SD: "+sd);
-					}
-					writer.flush();
-				    writer.close();
-					*/
 					Long time = System.nanoTime();
-					MemeticAlgorithm ma = new MemeticAlgorithm(pmOpportunity.length*Machine.compList.length*2,200,schedule,pmOpportunity,result);
+					System.out.println("MA:");
+					MemeticAlgorithm ma = new MemeticAlgorithm(pmOpportunity.length*Machine.compList.length*2,200,schedule,pmOpportunity,result,false);
 					ma.execute();
-					System.out.format("MA Time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));
+					System.out.format("time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));
+					
+					//time = System.nanoTime();
+					//System.out.println("GA:");
+					//ma = new MemeticAlgorithm(pmOpportunity.length*Machine.compList.length*2,200,schedule,pmOpportunity,result,true);
+					//ma.execute();
+					//System.out.format("time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));
+					
+					System.out.println("BF:");
 					time = System.nanoTime();
 					BruteForceAlgorithm bf = new BruteForceAlgorithm(schedule,pmOpportunity,result); 
 					bf.execute();
-					System.out.format("BF Time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
-					 
+					System.out.format("time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
 				}
 			}
 

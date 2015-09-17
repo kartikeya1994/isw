@@ -48,6 +48,8 @@ public class Job implements Serializable {
 		compNo = source.compNo;
 		fixedCost = source.fixedCost;
 		penaltyCost = source.penaltyCost;
+		seriesTTR = source.seriesTTR;
+		seriesLabour = source.seriesLabour;
 	
 	}
 

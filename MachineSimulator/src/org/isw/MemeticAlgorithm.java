@@ -1,5 +1,6 @@
 package org.isw;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
@@ -19,6 +20,7 @@ public class MemeticAlgorithm {
 	private int populationSize;
 	private int stopCrit;
 	int pmOpportunity[];
+	Chromosome best;
 	Schedule schedule;
 	private ArrayList<Chromosome> population;
 	private ArrayList<Chromosome> offsprings;
@@ -26,7 +28,9 @@ public class MemeticAlgorithm {
 	private double totalFitness;
 	Random rand;
 	EnumeratedDistribution<Chromosome> distribution;
-	public MemeticAlgorithm(int populationSize, int stopCrit, Schedule schedule ,int[] pmOpportunity, SimulationResult noPM){
+	private int convergenceCount;
+	private boolean noLS;
+	public MemeticAlgorithm(int populationSize, int stopCrit, Schedule schedule ,int[] pmOpportunity, SimulationResult noPM, boolean noLS){
 		this.populationSize = populationSize;
 		this.population = new ArrayList<Chromosome>();
 		this.stopCrit = stopCrit;
@@ -34,45 +38,44 @@ public class MemeticAlgorithm {
 		this.pmOpportunity = pmOpportunity;
 		rand = new Random();
 		this.noPM = noPM;
+		best = new Chromosome(0 ,this);
+		best.fitnessValue = 0;
+		convergenceCount = 0;
+		this.noLS = noLS;
 	}
 
-	public SimulationResult[] execute() throws InterruptedException, ExecutionException
+	public SimulationResult[] execute() throws InterruptedException, ExecutionException, NumberFormatException, IOException
 	{
 		initializePopulation();
-		
+		evaluateFitness(population);
 		int cnt=0;
 		while(true){
 			totalFitness = 0;
-			evaluateFitness(population);
+			for(Chromosome individual: population)
+				totalFitness += individual.fitnessValue;
+			
 			try{
 				distribution = new EnumeratedDistribution<Chromosome>(populationDistribution());
 			}catch(Exception e){
 				e.printStackTrace();
 
 			}
-			if(cnt++ >= stopCrit)
+			if(cnt++ >= stopCrit || hasConverged())
 				break;
-
 			generatePopulation();
+			//System.out.format("%d,%f\n",cnt,population.get(0).fitnessValue);
 		}
 
 		Collections.sort(population);
-		System.out.format("MA Cost: %f (%s)\n",population.get(0).fitnessValue,Long.toBinaryString(population.get(0).combo));
+		System.out.format("%f (%s)\n",population.get(0).fitnessValue,Long.toBinaryString(population.get(0).combo));
 
-//		// write results to file
-//		try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("MACostComp.csv", true)))) {
-//			out.format("%f,%s\n",population.get(0).fitnessValue,Long.toBinaryString(population.get(0).combo));
-//		}catch (IOException e) {
-//			//exception handling left as an exercise for the reader
-//		}
 
 		int i =0;
 		ArrayList<SimulationResult> results = new ArrayList<SimulationResult>();
-		//System.out.println("----------------------------------------");
 		while(i < populationSize && population.get(i).fitnessValue < noPM.cost){
 			Chromosome c = population.get(i);
 			if(c.combo != 0){
-				//System.out.format("%f (%s)\n",c.fitnessValue,Integer.toBinaryString(c.combo));
+				//System.out.format("%f (%s) ",c.fitnessValue,Integer.toBinaryString(c.combo));
 				results.add(new SimulationResult(c.fitnessValue,c.pmAvgTime,c.getCombolist(),pmOpportunity,false,i));
 
 			}
@@ -81,6 +84,21 @@ public class MemeticAlgorithm {
 		SimulationResult[] r = new SimulationResult[results.size()];
 		r = results.toArray(r);
 		return r;
+	}
+
+	
+	
+	private boolean hasConverged() {
+		if(population.get(0).combo == best.combo){
+			convergenceCount++;
+			if(convergenceCount == 25)
+				return true;
+		}
+		else{
+			convergenceCount = 0;
+			best.combo =  population.get(0).combo;
+		}
+		return false;
 	}
 
 	private void generatePopulation() throws InterruptedException, ExecutionException {
@@ -109,7 +127,10 @@ public class MemeticAlgorithm {
 					offspring.combo ^= 1<<mutationPoint;
 			}
 		}
-		optimizeOffsprings();
+		
+		if(!noLS){
+			optimizeOffsprings();
+		}
 		evaluateFitness(offsprings);
 		population.addAll(offsprings);
 		Collections.sort(population);
@@ -181,8 +202,12 @@ public class MemeticAlgorithm {
 		}	
 	}
 
-	private void initializePopulation() 
+	
+	
+	private void initializePopulation() throws NumberFormatException, IOException 
 	{
+		//BufferedReader br = new BufferedReader(new FileReader("init_population"));
+		
 		/*
 		 * Initialize population of size 2*number of components * number of pm Opp
 		 */
@@ -191,6 +216,8 @@ public class MemeticAlgorithm {
 		Hashtable<Long, Boolean> hashTable = new Hashtable<Long, Boolean>();
 		for(int i=0;i<populationSize;i++)
 		{
+			
+			//num = Long.parseLong(br.readLine());
 			num = (long)(Math.random()*upper+1);
 			while(hashTable.containsKey(new Long(num)))
 			{
@@ -199,11 +226,10 @@ public class MemeticAlgorithm {
 			population.add(new Chromosome(num,this));
 			hashTable.put(new Long(num), new Boolean(true));
 		}
-		System.out.println("Number of chromosomes in population: "+population.size());
 	}
 }
 class Chromosome implements Comparable<Chromosome>{
-
+	static Random rand = new Random();
 	double pmAvgTime;
 	double fitnessValue;
 	int[] pmOpportunity;
@@ -226,12 +252,21 @@ class Chromosome implements Comparable<Chromosome>{
 	}
 
 	public void applyLocalSearch() {
-		long maxCombo = combo;
-		if(heuristic(maxCombo) < heuristic(combo+1) && combo + 1 != Math.pow(2, Machine.compList.length*pmOpportunity.length))
-			maxCombo = combo+1;
-		if(heuristic(maxCombo) < heuristic(combo-1) && combo != 1)
-			maxCombo = combo-1;
-		combo = maxCombo;
+		long new_combo = combo;
+		int cnt = 0;
+		while(cnt++<5){
+			int mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length);
+			if((combo^1<<mutationPoint) !=0)
+				new_combo = combo^1<<mutationPoint;
+
+			mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length);
+			if((combo^1<<mutationPoint) !=0)
+				new_combo = combo^1<<mutationPoint;
+			
+			if(heuristic(new_combo)>heuristic(combo)){
+				combo = new_combo;
+			}
+		}		
 	}
 
 
@@ -249,48 +284,34 @@ class Chromosome implements Comparable<Chromosome>{
 			for(int j=0;j<temp.length;j++){
 				int pos = 1<<j;
 				if((comboList[i]&pos)!=0){
-					fp = getFailureProbablity(temp[j]);
+					fp = getFailureProbablity(temp[j], pmOpportunity[i]);
 					heuristicP += (fp>0.5d)?1:-1;
-					temp[i].initAge = (1-temp[i].pmRF)*temp[i].initAge;
+					temp[j].initAge = (1-temp[j].pmRF)*temp[j].initAge;
 				}
 				else{
-					fp = getFailureProbablity(temp[j]);
+					fp = getFailureProbablity(temp[j], pmOpportunity[i]);
 					heuristicN += (fp<0.5d)?1:-1;
 				}
 			}
 		}
 		return heuristicN+heuristicP;
 	}
-	/*
-	private Double getFailureProbablity(Component component , int oppoIndex) {
-		int failureCount =0;
-		long time = 0;
-		if(oppoIndex ==  pmOpportunity.length-1)
-			time = Math.min(Macros.SHIFT_DURATION, schedule.getSum());
-		else 
-			time = schedule.getFinishingTime(pmOpportunity[oppoIndex+1]-1);
-		for(int i=0;i<1000;i++){
-			Double cmTTF = component.getCMTTF();
-			if(cmTTF < time){
-				failureCount++;
-			}
-		}
-		return failureCount/1000d;
-	}
-	 */
+	
+	
+	 
 
-	private Double getFailureProbablity(Component component) {
+	private Double getFailureProbablity(Component component, int pmO) {
 		int failureCount =0;
 		long time = 0;
 		time = Math.min(Macros.SHIFT_DURATION, schedule.getSum());
-
-		for(int i=0;i<1000;i++){
+		time -= pmO;
+		for(int i=0;i<50;i++){
 			Double cmTTF = component.getCMTTF();
 			if(cmTTF < time){
 				failureCount++;
 			}
 		}
-		return failureCount/1000d;
+		return failureCount/50d;
 	}
 
 	private long[] getCombolist(long combo) {

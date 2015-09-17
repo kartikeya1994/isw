@@ -82,7 +82,8 @@ public class SimulationThread implements Callable<SimulationResult> {
 					simSchedule.addJobTop(cmJob);
 					continue;
 				}
-				else if(current.getJobType() == Job.JOB_NORMAL){
+				
+				if(current.getJobType() == Job.JOB_NORMAL){
 					for(Component comp : simCompList)
 						comp.initAge++;
 				}
@@ -98,8 +99,8 @@ public class SimulationThread implements Callable<SimulationResult> {
 				// decrement job time by unit time
 				
 				simSchedule.decrement(1);
-			
 				time++;
+				
 				if(current.getJobTime()<=0){
 					switch(current.getJobType())
 					{

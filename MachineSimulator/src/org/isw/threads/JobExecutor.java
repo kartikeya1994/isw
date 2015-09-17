@@ -19,32 +19,47 @@ import org.isw.MaintenanceRequestPacket;
 import org.isw.MaintenanceTuple;
 import org.isw.Schedule;
 
-public class JobExecThread extends Thread{
-	Schedule jobList;
+public class JobExecutor{
 	DatagramSocket socket;
-	DatagramPacket timePacket;
+	DatagramPacket timePacket, replanPacket;
 	ServerSocket tcpSocket;
 	InetAddress maintenanceIP;
-	public JobExecThread(Schedule jobList , DatagramSocket socket, ServerSocket tcpSocket, InetAddress maintenanceIP){
-		this.jobList = jobList;
+	long time;
+	boolean flag_replan;
+	boolean flag_shift_end;
+	public JobExecutor(DatagramSocket socket, ServerSocket tcpSocket, InetAddress maintenanceIP){
 		this.socket = socket;
 		this.tcpSocket = tcpSocket;
 		this.maintenanceIP = maintenanceIP;
 		timePacket = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_TIME);
+		replanPacket = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_REPLAN);
+		flag_replan = false;
+		flag_shift_end = false;
+		time = 0;
 	}
-
-	public void run()
+	public void timeSync(boolean replan) throws IOException{
+		if(replan)
+			socket.send(replanPacket);
+		else
+			socket.send(timePacket);
+		FlagPacket fp = FlagPacket.receiveUDP(socket);
+		if(fp.flag == Macros.REQUEST_REPLAN)
+			flag_replan = true;
+		if(fp.flag == Macros.SHIFT_END){
+			flag_shift_end = true;
+		}
+	}
+	
+	public int execute(Schedule jobList) throws IOException
 	{
 		Machine.setStatus(Machine.getOldStatus());
-		long time=0;
-
 		// find all machine failures and CM times for this shift
 		LinkedList<FailureEvent> failureEvents = new LinkedList<FailureEvent>();
 		FailureEvent upcomingFailure = null;
 		for(int compNo=0; compNo<Machine.compList.length; compNo++)
 		{
 			long ft = (long)Machine.compList[compNo].getCMTTF();
-			if(ft < Macros.SHIFT_DURATION)
+			if(ft < Macros.SHIFT_DURATION - time)
 			{
 				// this component fails in this shift
 				failureEvents.add(new FailureEvent(compNo, ft*Macros.TIME_SCALE_FACTOR));
@@ -56,11 +71,33 @@ public class JobExecThread extends Thread{
 			upcomingFailure =  failureEvents.pop();
 		}
 
-		while(!jobList.isEmpty() && time < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
+		while(true)
 		{
+			if(jobList.isEmpty()){
+				timeSync(flag_replan);
+			}
+			
+			if(flag_shift_end) {
+				time = 0;
+				if(jobList.isEmpty()){
+					Machine.idleTime += Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR - time;
+				}
+				else {
+				int i = jobList.indexOf(jobList.peek());
+				while(i < jobList.getSize()){
+					Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost()*Macros.SHIFT_DURATION;
+					}
+				}
+				return Macros.SHIFT_END;
+			}
+			
+			if(flag_replan){
+				flag_replan = false;
+				return Macros.REQUEST_REPLAN;
+			}
+			
 			
 			System.out.println("Machine Status: "+Machine.getStatus());
-
 			Job current = jobList.peek(); 
 
 			/*
@@ -190,30 +227,25 @@ public class JobExecThread extends Thread{
 			// decrement job time by unit time
 			try{
 				if(Machine.getStatus()==Macros.MACHINE_RUNNING_JOB || Machine.getStatus()==Macros.MACHINE_CM || Machine.getStatus()==Macros.MACHINE_PM)
+					{
 					jobList.decrement(1);
-			}
+					time++;	
+				}
+				}
 			catch(IOException e){
 				e.printStackTrace();
 				System.exit(0);
 			}
-
-			time++;
-
-
 			// if job has completed remove job from schedule
 			if(current.getJobTime()<=0)
 			{
 				switch(current.getJobType())
 				{
 				case Job.JOB_PM:
-
 					Component comp1 = Machine.compList[current.getCompNo()];
 					comp1.initAge = (1-comp1.pmRF)*comp1.initAge;
 					Machine.compPMJobsDone[current.getCompNo()]++;
-
-
 					Machine.pmJobsDone++;
-
 					// let maintenance know how much labour has been released (for logging purpose only)
 					if(jobList.getSize()<=1 || jobList.jobAt(1).getStatus()!=Job.SERIES_STARTED)
 					{
@@ -252,23 +284,7 @@ public class JobExecThread extends Thread{
 					MaintenanceTuple release = new MaintenanceTuple(-2, 0, comp.getCMLabour());
 					MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, release);
 					mrp.sendTCP();
-					// recompute component failures
-					failureEvents = new LinkedList<FailureEvent>();
-					upcomingFailure = null;
-					for(int compNo=0; compNo<Machine.compList.length; compNo++)
-					{
-						long ft = time + (long) Machine.compList[compNo].getCMTTF()*Macros.TIME_SCALE_FACTOR;
-						if(ft < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
-						{
-							// this component fails in this shift
-							failureEvents.add(new FailureEvent(compNo, ft));
-						}
-					}
-					if(!failureEvents.isEmpty())
-					{
-						Collections.sort(failureEvents, new FailureEventComparator());
-						upcomingFailure =  failureEvents.pop();
-					}
+					flag_replan = true;
 					break;
 
 				case Job.JOB_NORMAL:
@@ -288,27 +304,14 @@ public class JobExecThread extends Thread{
 					e.printStackTrace();
 					System.exit(0);
 				}
-			}
-			try {
-				byte[] bufIn = new byte[128];
-				DatagramPacket packet = new DatagramPacket(bufIn, bufIn.length);
-				socket.send(timePacket);
-				socket.receive(packet);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		if(jobList.isEmpty()){
-			Machine.idleTime += Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR - time;
-			return;
-		}
-		int i = jobList.indexOf(jobList.peek());
-		while(i < jobList.getSize()){
-			Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost()*Macros.SHIFT_DURATION;
-		}
-		Logger.log(Machine.getStatus(), "Shift has ended");
-
+			}		
+			
+			//Poll for synchronization		
+			timeSync(flag_replan);
+			
+		
+		} //Loop ends 
+		
 	}
 
 
