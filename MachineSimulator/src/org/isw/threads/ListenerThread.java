@@ -187,13 +187,8 @@ public class ListenerThread extends Thread
 		System.out.println("Total time" + jl.getSum());
 		
 		//Execute schedule received by maintenance
-		int flag = jobExecutor.execute(jl);
-		if(flag == Macros.REQUEST_REPLAN){
-			//Replan
-			removePMJobs();
-			plan(jl);
-			return;
-		}
+		jobExecutor.execute(jl);
+
 		Machine.shiftCount++;
 		//Request Scheduling Dept for next shift
 		FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);		
