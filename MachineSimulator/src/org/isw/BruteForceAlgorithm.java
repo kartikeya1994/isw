@@ -1,5 +1,6 @@
 package org.isw;
 
+import java.util.ArrayList;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -11,11 +12,11 @@ import org.isw.threads.SimulationThread;
 public class BruteForceAlgorithm {
 	Schedule schedule;
 	int[] pmOpportunity;
-	SimulationResult best;  
+	SimulationResult noPM;  
 	public BruteForceAlgorithm(Schedule schedule, int[] pmOpportunity, SimulationResult noPM){
 		this.schedule = schedule;
 		this.pmOpportunity = pmOpportunity;
-		this.best = noPM;
+		this.noPM = noPM;
 		
 	}
 	
@@ -28,23 +29,22 @@ public class BruteForceAlgorithm {
 			pool.submit(new SimulationThread(schedule, getCombolist(i),pmOpportunity,false,i));
 			cnt++;
 		}
+		ArrayList<SimulationResult> results = new ArrayList<SimulationResult>();
 		for(long i=0;i<cnt;i++){
 			SimulationResult result = pool.take().get();
-			if(best.cost > result.cost){
-				best.cost = result.cost;
-				best.chromosomeID = result.chromosomeID;
+			if(noPM.cost > result.cost){
+				results.add(result);
 			}
-				
-			//if((i*100/cnt)%5 == 0){
-			//	System.out.println(i*100/cnt);
-			//}
+
 		}
 		threadPool.shutdown();
 		while(!threadPool.isTerminated());
 
-		System.out.format("%f (%s)\n",best.cost,Long.toBinaryString(best.chromosomeID));
-		return null;
-		
+		SimulationResult[] results2 = new SimulationResult[results.size()];
+		for(int i=0;i<results.size();i++){
+			results2[i] = results.get(i);
+		}
+		return results2;
 	}
 	private long[] getCombolist(long combo) {
 		long combos[] = new long[pmOpportunity.length];

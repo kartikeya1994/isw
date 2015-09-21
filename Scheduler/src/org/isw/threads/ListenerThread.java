@@ -43,7 +43,7 @@ public class ListenerThread extends Thread
 						if(machineCount++ == machineList.count()-1){
 						machineCount = 0;
 						Enumeration<InetAddress> ips = machineList.getIPs();
-						sleep(1000);
+						//sleep(1000);
 						while(ips.hasMoreElements()){
 								DatagramPacket timePacket = FlagPacket.makePacket(ips.nextElement().getHostAddress(), fp.port, Macros.REPLY_TIME);
 								socket.send(timePacket);
@@ -56,7 +56,7 @@ public class ListenerThread extends Thread
 				}	
 			}
 
-		}catch(IOException | InterruptedException e)
+		}catch(IOException e)
 		{
 			e.printStackTrace();
 		}

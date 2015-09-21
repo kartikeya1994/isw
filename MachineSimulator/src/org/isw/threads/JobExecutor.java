@@ -60,28 +60,23 @@ public class JobExecutor{
 
 		while(true)
 		{
-			if(jobList.isEmpty()){
-				timeSync();
-			}
 			
 			if(time == Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR) {
 				time = 0;
-				if(jobList.isEmpty()){
-					Machine.idleTime += Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR - time;
-				}
-				else {
+				if(!jobList.isEmpty()){
 				int i = jobList.indexOf(jobList.peek());
 				while(i < jobList.getSize()){
 					Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost()*Macros.SHIFT_DURATION;
-					}
+				}
 				}
 				return;
 			}
-			
-		
-			
-			
-			System.out.println("Machine Status: "+Machine.getStatus());
+			if(jobList.isEmpty()){
+				Machine.idleTime++;
+				time++;
+				timeSync();
+				continue;
+			}
 			Job current = jobList.peek(); 
 
 			/*
@@ -213,13 +208,14 @@ public class JobExecutor{
 				if(Machine.getStatus()==Macros.MACHINE_RUNNING_JOB || Machine.getStatus()==Macros.MACHINE_CM || Machine.getStatus()==Macros.MACHINE_PM)
 					{
 					jobList.decrement(1);
-					time++;	
+					
 				}
 				}
 			catch(IOException e){
 				e.printStackTrace();
 				System.exit(0);
 			}
+			time++;	
 			// if job has completed remove job from schedule
 			if(current.getJobTime()<=0)
 			{

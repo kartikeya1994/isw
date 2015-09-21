@@ -145,7 +145,7 @@ public class ListenerThread extends Thread
 		Logger.log(Machine.getStatus(), "Received schedule from scheduler:" + jl.printSchedule()+"\nRunning simulations..");
 		System.out.println("Received schedule from scheduler:" + jl.printSchedule());
 		System.out.println("Total time" + jl.getSum());
-		System.out.println("Running Simulations");
+		System.out.println("Planning started");
 		long starttime = System.nanoTime();
 		/* TODO:
 		 * Get simulation results by executing Memetic Algorithm
@@ -172,9 +172,8 @@ public class ListenerThread extends Thread
 		else{
 			results = new SimulationResult[0];
 		}
-		long endTime = System.nanoTime();
-		Logger.log(Machine.getStatus(), "Simulations complete in " + (endTime - starttime)/Math.pow(10, 9)+"s"+"\nSending simulation results to Maintenance Dept");
-		System.out.println("Simulations complete in " +(endTime - starttime)/Math.pow(10, 9));
+		
+		
 		System.out.println("Sending simulation results to Maintenance");
 		
 		//Send simulation results to Maintenance Dept.
@@ -182,6 +181,8 @@ public class ListenerThread extends Thread
 		ifPacket.send(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP);
 		//receive PM incorporated schedule from maintenance
 		jl = Schedule.receive(tcpSocket); 
+		long endTime = System.nanoTime();
+		System.out.println("Planning complete in " +(endTime - starttime)/Math.pow(10, 9));
 		Logger.log(Machine.getStatus(),"Received schedule from maintenance:" + jl.printSchedule());
 		System.out.println("Received schedule from maintenance:" + jl.printSchedule());
 		System.out.println("Total time" + jl.getSum());
