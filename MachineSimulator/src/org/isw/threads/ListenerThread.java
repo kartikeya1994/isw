@@ -23,6 +23,8 @@ import org.isw.Logger;
 import org.isw.Machine;
 import org.isw.MachineResultPacket;
 import org.isw.Macros;
+import org.isw.MaintenanceRequestPacket;
+import org.isw.MaintenanceTuple;
 import org.isw.MemeticAlgorithm;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
@@ -180,16 +182,27 @@ public class ListenerThread extends Thread
 		IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
 		ifPacket.send(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP);
 		//receive PM incorporated schedule from maintenance
-		jl = Schedule.receive(tcpSocket); 
+		int count = 0;
+		while(count++ < 99)
+		{
+			System.out.println("Maintenance planning");
+			jl = Schedule.receive(tcpSocket);
+			System.out.println("Received socket");
+			jobExecutor.execute(jl);
+			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
+			mrp.sendTCP();
+			
+		}
 		long endTime = System.nanoTime();
 		System.out.println("Planning complete in " +(endTime - starttime)/Math.pow(10, 9));
+		
+		jl = Schedule.receive(tcpSocket);
 		Logger.log(Machine.getStatus(),"Received schedule from maintenance:" + jl.printSchedule());
 		System.out.println("Received schedule from maintenance:" + jl.printSchedule());
 		System.out.println("Total time" + jl.getSum());
 		
 		//Execute schedule received by maintenance
 		jobExecutor.execute(jl);
-
 		Machine.shiftCount++;
 		//Request Scheduling Dept for next shift
 		FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);		
@@ -210,17 +223,17 @@ public class ListenerThread extends Thread
 	private void writeResults() {
 		System.out.println("=========================================");
 		System.out.println("Downtime:" + String.valueOf(Machine.downTime*100/(Machine.runTime)) +"%");
-		System.out.println("CM Downtime: "+ Machine.cmDownTime +" hours");
-		System.out.println("PM Downtime: "+ Machine.pmDownTime +" hours");
-		System.out.println("Waiting Downtime: "+ Machine.waitTime +" hours");
-		System.out.println("Machine Idle time: "+ Machine.idleTime+" hours");
-		System.out.println("PM Cost: "+ Machine.pmCost);
-		System.out.println("CM Cost: "+ Machine.cmCost);
-		System.out.println("Penalty Cost: "+ Machine.penaltyCost);
+		System.out.println("CM Downtime: "+ Machine.cmDownTime/0100 +" hours");
+		System.out.println("PM Downtime: "+ Machine.pmDownTime/100 +" hours");
+		System.out.println("Waiting Downtime: "+ Machine.waitTime/100 +" hours");
+		System.out.println("Machine Idle time: "+ Machine.idleTime/100+" hours");
+		System.out.println("PM Cost: "+ Machine.pmCost/100);
+		System.out.println("CM Cost: "+ Machine.cmCost/100);
+		System.out.println("Penalty Cost: "+ Machine.penaltyCost/100);
 		System.out.println("Processing Cost: "+ Machine.procCost);
 		System.out.println("Jobs processed:" + Machine.jobsDone);
-		System.out.println("Number of CM jobs:" + Machine.cmJobsDone);
-		System.out.println("Number of PM jobs:" + Machine.pmJobsDone);
+		System.out.println("Number of CM jobs:" + Machine.cmJobsDone/100);
+		System.out.println("Number of PM jobs:" + Machine.pmJobsDone/100);
 		MachineResultPacket mrp = new MachineResultPacket(); 
 		mrp.downTime = Machine.downTime;
 		mrp.runTime = Machine.runTime;

@@ -55,7 +55,7 @@ public class MaintenanceThread  extends Thread{
 	
 	public void run()
 	{
-		while(true)
+		//while(true)
 			startShift();
 	}
 	public void startShift()
@@ -227,34 +227,50 @@ public class MaintenanceThread  extends Thread{
 			System.out.println("Machine: "+ip.get(i)+"\nSchedule: "+schedule.get(i).printSchedule());
 		//sending PM incorporated schedule to respective machines
 		System.out.println("Sending to all machines...");
-		ExecutorService threadPool = Executors.newFixedThreadPool(5);
-		for(int x=0; x<ip.size();x++)
-		{
-			threadPool.execute(new SendScheduleTask(schedule.get(x), ip.get(x), Macros.MACHINE_PORT_TCP));
-		}
-		threadPool.shutdown();
-		while(!threadPool.isTerminated()); //block till all tasks are done
-		System.out.println("Successfully sent PM incorporated schedules to all connected machines.\nShift can now begin.");
-		
-		// shift has begun
-		// receive and process requests for labour
-		LabourAvailability realTimeLabour = new LabourAvailability(Maintenance.maxLabour.clone(), Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
-		int[] currentLabour = Maintenance.maxLabour.clone();
-	
-		Logger.log(currentLabour, "Shift started");
-		while(true)
-		{
-			MaintenanceRequestPacket packet = MaintenanceRequestPacket.receiveTCP(tcpSocket, 0);
+		int count = 0;
+		while(count++ < 100){
 			
-			if(packet.mtTuple.start == -1) // packet sent by Scheduling Dept indicating shift is over
+			System.out.println("Maintenance planning");
+			ExecutorService threadPool = Executors.newFixedThreadPool(5);
+			for(int x=0; x<ip.size();x++)
 			{
-				// shift is over
-				break;
+				threadPool.execute(new SendScheduleTask(schedule.get(x), ip.get(x), Macros.MACHINE_PORT_TCP));
+				
 			}
-			
-			else if(packet.mtTuple.start == -2) 
+		
+			threadPool.shutdown();
+			while(!threadPool.isTerminated()); //block till all tasks are done
+			System.out.println("Successfully sent PM incorporated schedules to all connected machines.\nShift can now begin.");
+		
+			// shift has begun
+			// receive and process requests for labour
+			LabourAvailability realTimeLabour = new LabourAvailability(Maintenance.maxLabour.clone(), Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
+			int[] currentLabour = Maintenance.maxLabour.clone();
+	
+			Logger.log(currentLabour, "Shift started");
+			int mcnt = 0;
+			while(true)
 			{
-				// some machine is reporting PM job completion
+				MaintenanceRequestPacket packet = MaintenanceRequestPacket.receiveTCP(tcpSocket, 0);
+			
+				if(packet.mtTuple.start == -1) // packet sent by Scheduling Dept indicating shift is over
+				{
+					if(count < 100){
+						System.out.println("Count: "+count);
+						if(mcnt++ == numOfMachines-1){
+							break;	
+						}
+					}
+					// shift is over
+					else {
+						System.out.println("End");
+						break;
+					}
+				}
+			
+				else if(packet.mtTuple.start == -2) 
+				{
+					// some machine is reporting PM job completion
 				currentLabour[0]+=packet.mtTuple.labour[0];
 				currentLabour[1]+=packet.mtTuple.labour[1];
 				currentLabour[2]+=packet.mtTuple.labour[2];
@@ -285,8 +301,12 @@ public class MaintenanceThread  extends Thread{
 					//deny request
 					FlagPacket.sendTCP(Macros.LABOUR_DENIED, packet.machineIP,Macros.MACHINE_PORT_TCP);
 				}
+				}
 			}
 		}
+		System.out.println("Printing final schedule: ");
+		for(int i=0;i<schedule.size();i++)
+			System.out.println(i+':'+schedule.get(i).printSchedule());
 	}
 
 	private static void addPMJobs(Schedule schedule,Component[] compList, SimulationResult row, long[] seriesTTR, int[][] seriesLabour) {

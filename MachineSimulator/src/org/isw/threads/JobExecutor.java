@@ -60,7 +60,6 @@ public class JobExecutor{
 
 		while(true)
 		{
-			
 			if(time == Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR) {
 				time = 0;
 				if(!jobList.isEmpty()){
@@ -78,7 +77,6 @@ public class JobExecutor{
 				continue;
 			}
 			Job current = jobList.peek(); 
-
 			/*
 			 * Perform action according to what job is running
 			 * Increment costs or wait for labour to arrive for CM/PM
@@ -102,6 +100,7 @@ public class JobExecutor{
 
 			if(Machine.getStatus() == Macros.MACHINE_WAITING_FOR_CM_LABOUR || Machine.getStatus() == Macros.MACHINE_WAITING_FOR_PM_LABOUR)
 			{
+				System.out.println("Waiting for CM labour");
 				// see if maintenance labour is available at this time instant
 				int[] labour_req = null;
 				// determine labour requirement
@@ -153,6 +152,7 @@ public class JobExecutor{
 
 			else if(current.getJobType() == Job.JOB_NORMAL)
 			{
+				//System.out.println("Normal job");
 				Machine.setStatus(Macros.MACHINE_RUNNING_JOB);
 				current.setStatus(Job.STARTED);
 				Logger.log(Machine.getStatus(), "");
@@ -168,10 +168,12 @@ public class JobExecutor{
 				if(Machine.getStatus() != Macros.MACHINE_PM)
 				{
 					// request PM if labours not yet allocated
+					System.out.println("Waiting for PM labour");
 					Machine.setStatus(Macros.MACHINE_WAITING_FOR_PM_LABOUR);
 					Logger.log(Machine.getStatus(), "");
 					continue;
 				}
+				System.out.println("Undergoing PM");
 				System.out.println(current.getJobTime());
 				// since an actual PM job is a series of PM jobs of each comp in compCombo
 				// we set all jobs in series to SERIES_STARED
@@ -196,6 +198,7 @@ public class JobExecutor{
 			}
 			else if(current.getJobType() == Job.JOB_CM && Machine.getStatus() == Macros.MACHINE_CM)
 			{
+				System.out.println("Undergoing CM");
 				current.setStatus(Job.STARTED);
 				Machine.cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);

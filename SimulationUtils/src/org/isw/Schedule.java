@@ -213,6 +213,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		Schedule ret = null;
 		try
 		{
+			tcpSocket.setSoTimeout(0);
 			Socket tcpSchedSock = tcpSocket.accept();
 			ObjectInputStream ois = new ObjectInputStream(tcpSchedSock.getInputStream());
 			Object o = ois.readObject();
