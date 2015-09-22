@@ -157,7 +157,7 @@ public class JobExecutor{
 				current.setStatus(Job.STARTED);
 				Logger.log(Machine.getStatus(), "");
 				// no failure, no maintenance. Just increment cost models normally.
-				//Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
+				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				for(Component comp : Machine.compList)
 					comp.initAge++;
 				Machine.runTime++;
