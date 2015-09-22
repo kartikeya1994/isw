@@ -132,7 +132,7 @@ public class JobSchedThread extends Thread
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
 
-			for(int i=1;i<=8;i++)
+			for(int i=1;i<=6;i++)
 			{
 				Row row = sheet.getRow(i);
 				int demand = (int) row.getCell(5).getNumericCellValue();

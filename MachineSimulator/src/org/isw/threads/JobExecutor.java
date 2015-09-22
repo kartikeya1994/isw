@@ -66,7 +66,7 @@ public class JobExecutor{
 				if(!jobList.isEmpty()){
 				int i = jobList.indexOf(jobList.peek());
 				while(i < jobList.getSize()){
-					Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost()*Macros.SHIFT_DURATION;
+					Machine.penaltyCost += jobList.jobAt(i++).getPenaltyCost()*jobList.jobAt(i-1).getJobTime();
 				}
 				}
 				return;
