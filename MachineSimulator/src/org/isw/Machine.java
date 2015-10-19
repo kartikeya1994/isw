@@ -46,6 +46,8 @@ public class Machine
 	}
 	
 	public static void main(String[] args) {
+		System.out.println("Hello");
+		
 		boolean maintenanceRegistered=false;
 		boolean iswRegistered = false;
 		boolean schedulerRegistered = false;
