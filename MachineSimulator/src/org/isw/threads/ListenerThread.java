@@ -70,7 +70,7 @@ public class ListenerThread extends Thread
 				}
 				else if(o instanceof FlagPacket && ((FlagPacket)o).flag == Macros.PROCESS_COMPLETE){
 					// simulation is over
-					writeResults();	
+					writeResults(Macros.SIMULATION_COUNT);	
 				}
 				else if(o instanceof Schedule){
 					plan((Schedule)o);		
@@ -182,8 +182,9 @@ public class ListenerThread extends Thread
 		IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
 		ifPacket.send(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP);
 		//receive PM incorporated schedule from maintenance
+		long endTime = System.nanoTime();
 		int count = 0;
-		while(count++ < 99)
+		while(count++ < Macros.SIMULATION_COUNT - 1)
 		{
 			System.out.println("Maintenance planning");
 			jl = Schedule.receive(tcpSocket);
@@ -193,9 +194,6 @@ public class ListenerThread extends Thread
 			mrp.sendTCP();
 			
 		}
-		long endTime = System.nanoTime();
-		System.out.println("Planning complete in " +(endTime - starttime)/Math.pow(10, 9));
-		
 		jl = Schedule.receive(tcpSocket);
 		Logger.log(Machine.getStatus(),"Received schedule from maintenance:" + jl.printSchedule());
 		System.out.println("Received schedule from maintenance:" + jl.printSchedule());
@@ -203,6 +201,7 @@ public class ListenerThread extends Thread
 		
 		//Execute schedule received by maintenance
 		jobExecutor.execute(jl);
+		System.out.println("Planning complete in " +(endTime - starttime)/Math.pow(10, 9));
 		Machine.shiftCount++;
 		//Request Scheduling Dept for next shift
 		FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);		
@@ -220,40 +219,44 @@ public class ListenerThread extends Thread
 		System.out.println("Machine initialized");
 	}
 
-	private void writeResults() {
+	private void writeResults(int simCount) {
 		System.out.println("=========================================");
-		System.out.println("Downtime:" + String.valueOf(Machine.downTime*100/(Machine.runTime)) +"%");
-		System.out.println("CM Downtime: "+ Machine.cmDownTime/0100 +" hours");
-		System.out.println("PM Downtime: "+ Machine.pmDownTime/100 +" hours");
-		System.out.println("Waiting Downtime: "+ Machine.waitTime/100 +" hours");
-		System.out.println("Machine Idle time: "+ Machine.idleTime/100+" hours");
-		System.out.println("PM Cost: "+ Machine.pmCost/100);
-		System.out.println("CM Cost: "+ Machine.cmCost/100);
-		System.out.println("Penalty Cost: "+ Machine.penaltyCost/100);
-		System.out.println("Processing Cost: "+ Machine.procCost);
-		System.out.println("Jobs processed:" + Machine.jobsDone);
-		System.out.println("Number of CM jobs:" + Machine.cmJobsDone/100);
-		System.out.println("Number of PM jobs:" + Machine.pmJobsDone/100);
+		double cost = Machine.cmCost + Machine.pmCost + Machine.penaltyCost;
+		double downtime = (Machine.cmDownTime + Machine.pmDownTime + Machine.waitTime)/simCount;
+		double runtime = 1440 - Machine.idleTime/simCount;
+		double availability = 100  - 100*downtime/runtime;
+		System.out.format("%f| %f \n",availability,cost/simCount);
+		System.out.println("CM Downtime: "+ Machine.cmDownTime/simCount +" hours");
+		System.out.println("PM Downtime: "+ Machine.pmDownTime/simCount +" hours");
+		System.out.println("Waiting Downtime: "+ Machine.waitTime/simCount +" hours");
+		System.out.println("Machine Idle time: "+ Machine.idleTime/simCount+" hours");
+		System.out.println("PM Cost: "+ Machine.pmCost/simCount);
+		System.out.println("CM Cost: "+ Machine.cmCost/simCount);
+		System.out.println("Penalty Cost: "+ Machine.penaltyCost/simCount);
+		System.out.println("Processing Cost: "+ Machine.procCost/simCount);
+		System.out.println("Jobs processed:" + (double)Machine.jobsDone/simCount);
+		System.out.println("Number of CM jobs:" + (double)Machine.cmJobsDone/simCount);
+		System.out.println("Number of PM jobs:" + (double)Machine.pmJobsDone/simCount);
 		MachineResultPacket mrp = new MachineResultPacket(); 
-		mrp.downTime = Machine.downTime/100;
-		mrp.runTime = Machine.runTime/100;
-		mrp.cmDownTime = Machine.cmDownTime/100;
-		mrp.pmDownTime = Machine.pmDownTime/100;
-		mrp.waitTime = Machine.waitTime/100;
-		mrp.idleTime = Machine.idleTime/100;
-		mrp.jobsDone = Machine.jobsDone/100;
-		mrp.cmJobsDone = Machine.cmJobsDone/100;
-		mrp.pmJobsDone = Machine.pmJobsDone/100;
-		mrp.pmCost = Machine.pmCost/100;
-		mrp.cmCost = Machine.cmCost/100;
-		mrp.procCost = Machine.procCost/100;
-		mrp.penaltyCost = Machine.penaltyCost/100;
+		mrp.downTime = Machine.downTime/simCount;
+		mrp.runTime = Machine.runTime/simCount;
+		mrp.cmDownTime = Machine.cmDownTime/simCount;
+		mrp.pmDownTime = Machine.pmDownTime/simCount;
+		mrp.waitTime = Machine.waitTime/simCount;
+		mrp.idleTime = Machine.idleTime/simCount;
+		mrp.jobsDone = Machine.jobsDone/simCount;
+		mrp.cmJobsDone = Machine.cmJobsDone/simCount;
+		mrp.pmJobsDone = Machine.pmJobsDone/simCount;
+		mrp.pmCost = Machine.pmCost/simCount;
+		mrp.cmCost = Machine.cmCost/simCount;
+		mrp.procCost = Machine.procCost/simCount;
+		mrp.penaltyCost = Machine.penaltyCost/simCount;
 		mrp.compCMJobsDone = Machine.compCMJobsDone;
 		mrp.compPMJobsDone = Machine.compPMJobsDone;
-		Logger.log(mrp);		
-		for(int i=0 ;i<Machine.compList.length; i++)
-			System.out.format("Component %d: PM %d| CM %d| Age %f \n",i+1,Machine.compPMJobsDone[i],Machine.compCMJobsDone[i],Machine.compList[i].initAge);
-
+		for(int i=0 ;i<Machine.compList.length; i++){
+			System.out.format("Component %s: PM %f| CM %f\n",Machine.compList[i].compName,(double)Machine.compPMJobsDone[i]/simCount,(double)Machine.compCMJobsDone[i]/simCount);
+		}
+		Logger.log(mrp);
 	}
 	
 }

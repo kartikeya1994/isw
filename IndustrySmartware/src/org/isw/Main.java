@@ -164,6 +164,7 @@ public class Main extends Application {
 				DataOutputStream dos = new DataOutputStream(baos);
 				dos.writeInt(Integer.parseInt(shiftDuration.getText()));
 				dos.writeInt(Integer.parseInt(scaleFactor.getText()));
+				dos.writeInt(Integer.parseInt(simulationCount.getText()));
 				dos.writeInt(Integer.parseInt(skilled.getText()));
 				dos.writeInt(Integer.parseInt(semiskilled.getText()));
 				dos.writeInt(Integer.parseInt(unskilled.getText()));

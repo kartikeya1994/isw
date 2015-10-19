@@ -12,7 +12,6 @@ import java.util.LinkedList;
 import org.isw.Component;
 import org.isw.FlagPacket;
 import org.isw.Job;
-import org.isw.Logger;
 import org.isw.Machine;
 import org.isw.Macros;
 import org.isw.MaintenanceRequestPacket;
@@ -23,6 +22,7 @@ public class JobExecutor{
 	DatagramSocket socket;
 	DatagramPacket timePacket, replanPacket;
 	ServerSocket tcpSocket;
+	Component[] compList;
 	InetAddress maintenanceIP;
 	long time;
 	public JobExecutor(DatagramSocket socket, ServerSocket tcpSocket, InetAddress maintenanceIP){
@@ -37,15 +37,19 @@ public class JobExecutor{
 		FlagPacket.receiveUDP(socket);
 	}
 	
-	public void execute(Schedule jobList) throws IOException
+	public void execute(Schedule schedule) throws IOException
 	{
+		compList = new Component[Machine.compList.length];
+		for(int i=0;i< Machine.compList.length;i++)
+			compList[i] = new Component(Machine.compList[i]);
+		Schedule jobList = new Schedule(schedule);	
 		Machine.setStatus(Machine.getOldStatus());
 		// find all machine failures and CM times for this shift
 		LinkedList<FailureEvent> failureEvents = new LinkedList<FailureEvent>();
 		FailureEvent upcomingFailure = null;
-		for(int compNo=0; compNo<Machine.compList.length; compNo++)
+		for(int compNo=0; compNo<compList.length; compNo++)
 		{
-			long ft = (long)Machine.compList[compNo].getCMTTF();
+			long ft = (long)compList[compNo].getCMTTF();
 			if(ft < Macros.SHIFT_DURATION - time)
 			{
 				// this component fails in this shift
@@ -88,13 +92,13 @@ public class JobExecutor{
 				 * Add CM job to top of schedule and run it. 
 				 */
 				System.out.println("Machine Failed. Requesting maintenance...");
-				Logger.log(Machine.getStatus(), "Machine Failed. Requesting maintenance...");
+				//Logger.log(Machine.getStatus(), "Machine Failed. Requesting maintenance...");
 				Job cmJob = new Job("CM", upcomingFailure.repairTime, Machine.compList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
 				cmJob.setFixedCost(Machine.compList[upcomingFailure.compNo].getCMFixedCost());
 				cmJob.setCompNo(upcomingFailure.compNo);
 				jobList.addJobTop(cmJob);
 				Machine.setStatus(Macros.MACHINE_WAITING_FOR_CM_LABOUR);
-				Logger.log(Machine.getStatus(), "");
+				//Logger.log(Machine.getStatus(), "");
 				current = jobList.peek();
 			}
 
@@ -105,9 +109,9 @@ public class JobExecutor{
 				int[] labour_req = null;
 				// determine labour requirement
 				if(current.getJobType() == Job.JOB_CM)
-					labour_req = Machine.compList[current.getCompNo()].getCMLabour();
+					labour_req = compList[current.getCompNo()].getCMLabour();
 				else if(current.getJobType() == Job.JOB_PM)
-					labour_req = Machine.compList[current.getCompNo()].getPMLabour();
+					labour_req = compList[current.getCompNo()].getPMLabour();
 				System.out.format("Labour: %d %d %d", labour_req[0],labour_req[1],labour_req[2]);
 				// send labour request
 				MaintenanceTuple mtTuple;
@@ -133,14 +137,14 @@ public class JobExecutor{
 						Machine.setStatus(Macros.MACHINE_CM);
 					if(current.getJobType() == Job.JOB_PM)
 						Machine.setStatus(Macros.MACHINE_PM);
-					Logger.log(Machine.getStatus(), "Request granted");
+					//Logger.log(Machine.getStatus(), "Request granted");
 					continue;
 				}
 				else if(flagPacket.flag == Macros.LABOUR_DENIED)
 				{
 					System.out.println("Request denied. Not enough labour");
 
-					Logger.log(Machine.getStatus(),"Request denied. Not enough labour");
+					//Logger.log(Machine.getStatus(),"Request denied. Not enough labour");
 					// machine waits for labour
 					// increment cost models accordingly
 					Machine.downTime++;
@@ -155,10 +159,10 @@ public class JobExecutor{
 				//System.out.println("Normal job");
 				Machine.setStatus(Macros.MACHINE_RUNNING_JOB);
 				current.setStatus(Job.STARTED);
-				Logger.log(Machine.getStatus(), "");
+				//Logger.log(Machine.getStatus(), "");
 				// no failure, no maintenance. Just increment cost models normally.
 				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
-				for(Component comp : Machine.compList)
+				for(Component comp : compList)
 					comp.initAge++;
 				Machine.runTime++;
 			}
@@ -170,7 +174,7 @@ public class JobExecutor{
 					// request PM if labours not yet allocated
 					System.out.println("Waiting for PM labour");
 					Machine.setStatus(Macros.MACHINE_WAITING_FOR_PM_LABOUR);
-					Logger.log(Machine.getStatus(), "");
+					//Logger.log(Machine.getStatus(), "");
 					continue;
 				}
 				System.out.println("Undergoing PM");
@@ -225,7 +229,7 @@ public class JobExecutor{
 				switch(current.getJobType())
 				{
 				case Job.JOB_PM:
-					Component comp1 = Machine.compList[current.getCompNo()];
+					Component comp1 = compList[current.getCompNo()];
 					comp1.initAge = (1-comp1.pmRF)*comp1.initAge;
 					Machine.compPMJobsDone[current.getCompNo()]++;
 					Machine.pmJobsDone++;
@@ -240,9 +244,9 @@ public class JobExecutor{
 					// recompute component failures
 					failureEvents = new LinkedList<FailureEvent>();
 					upcomingFailure = null;
-					for(int compNo=0; compNo<Machine.compList.length; compNo++)
+					for(int compNo=0; compNo< compList.length; compNo++)
 					{
-						long ft = time + (long) Machine.compList[compNo].getCMTTF()*Macros.TIME_SCALE_FACTOR;
+						long ft = time + (long)  compList[compNo].getCMTTF()*Macros.TIME_SCALE_FACTOR;
 						if(ft < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
 						{
 							// this component fails in this shift
@@ -259,7 +263,7 @@ public class JobExecutor{
 					
 				case Job.JOB_CM:
 					// 
-					Component comp = Machine.compList[current.getCompNo()];
+					Component comp = compList[current.getCompNo()];
 					comp.initAge = (1 - comp.cmRF)*comp.initAge;
 					Machine.cmJobsDone++;
 					Machine.compCMJobsDone[current.getCompNo()]++;
@@ -270,9 +274,9 @@ public class JobExecutor{
 					// recompute component failures
 					failureEvents = new LinkedList<FailureEvent>();
 					upcomingFailure = null;
-					for(int compNo=0; compNo<Machine.compList.length; compNo++)
+					for(int compNo=0; compNo<compList.length; compNo++)
 					{
-						long ft = time + (long) Machine.compList[compNo].getCMTTF()*Macros.TIME_SCALE_FACTOR;
+						long ft = time + (long) compList[compNo].getCMTTF()*Macros.TIME_SCALE_FACTOR;
 						if(ft < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
 						{
 							// this component fails in this shift
@@ -296,7 +300,7 @@ public class JobExecutor{
 					// update Machine status on job completion
 					if(jobList.isEmpty())
 						Machine.setStatus(Macros.MACHINE_IDLE);
-					Logger.log(Machine.getStatus(), "Job "+ job.getJobName()+" complete");
+					//Logger.log(Machine.getStatus(), "Job "+ job.getJobName()+" complete");
 				}
 				catch(IOException e){
 					e.printStackTrace();
@@ -322,7 +326,7 @@ public class JobExecutor{
 		public FailureEvent(int compNo, long failureTime)
 		{
 			this.compNo = compNo;
-			this.repairTime = Component.notZero(Machine.compList[compNo].getCMTTR()*Macros.TIME_SCALE_FACTOR);
+			this.repairTime = Component.notZero(compList[compNo].getCMTTR()*Macros.TIME_SCALE_FACTOR);
 			this.failureTime = failureTime;
 		}
 	}

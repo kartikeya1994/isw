@@ -75,6 +75,7 @@ public class Maintenance
 			DataInputStream dias =new DataInputStream(bais);
 			Macros.SHIFT_DURATION = dias.readInt();
 			Macros.TIME_SCALE_FACTOR = dias.readInt();
+			Macros.SIMULATION_COUNT = dias.readInt();
 			maxLabour[0] = dias.readInt();
 			maxLabour[1] = dias.readInt();
 			maxLabour[2] = dias.readInt();

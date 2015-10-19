@@ -79,7 +79,6 @@ public class ComponentTableView extends VBox {
 		componentData.addAll(components);
 		componentTable.setItems(componentData);
 		this.setPadding(new Insets(20));
-		
 		this.getChildren().addAll(componentTable,isMachineSelected,saveButton);
 	}
 
@@ -146,19 +145,18 @@ public class ComponentTableView extends VBox {
 	private static Component[] parseExcel() {
 		/**
 		 * Parse the component excel file into a list of components.
-		 * Total number of components should be 14 for our experiment.
+		 * Total number of components should be 24 for our experiment.
 		 * Different component excel file for different machineNo (Stick
 		 * to one for now)
 		 * 
 		 * */
-		Component[] c = new Component[14];
+		Component[] c = new Component[28];
 		try
 		{
 			FileInputStream file = new FileInputStream(new File("components.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
-			XSSFSheet labourSheet = workbook.getSheetAt(1);
-			for(int i=5;i<19;i++)
+			for(int i=5;i<33;i++)
 			{
 				Row row = sheet.getRow(i);
 				Component comp = new Component();
@@ -190,15 +188,10 @@ public class ComponentTableView extends VBox {
 				comp.pmRF = row.getCell(21).getNumericCellValue();
 				comp.pmCostSpare = row.getCell(22).getNumericCellValue();
 				comp.pmCostOther = row.getCell(23).getNumericCellValue();
-				row = labourSheet.getRow(i);
-				comp.pmLabour = new int[3];
-				comp.pmLabour[0] = (int)row.getCell(3).getNumericCellValue();
-				comp.pmLabour[1] = (int)row.getCell(5).getNumericCellValue();
-				comp.pmLabour[2] = (int)row.getCell(7).getNumericCellValue();
-				comp.cmLabour = new int[3];
-				comp.cmLabour[0] = (int)row.getCell(2).getNumericCellValue();
-				comp.cmLabour[1] = (int)row.getCell(4).getNumericCellValue();
-				comp.cmLabour[2] = (int)row.getCell(6).getNumericCellValue();
+				comp.labourCost = new double[]{500,0,0};
+				comp.pmLabour = new int[]{1,0,0};
+				comp.cmLabour = new int[]{1,0,0};
+
 				comp.initProps(i-5);
 				c[i-5] = comp;
 			}

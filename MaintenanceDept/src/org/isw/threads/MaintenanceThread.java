@@ -228,7 +228,7 @@ public class MaintenanceThread  extends Thread{
 		//sending PM incorporated schedule to respective machines
 		System.out.println("Sending to all machines...");
 		int count = 0;
-		while(count++ < 100){
+		while(count++ < Macros.SIMULATION_COUNT){
 			
 			System.out.println("Maintenance planning");
 			ExecutorService threadPool = Executors.newFixedThreadPool(5);
@@ -247,7 +247,7 @@ public class MaintenanceThread  extends Thread{
 			LabourAvailability realTimeLabour = new LabourAvailability(Maintenance.maxLabour.clone(), Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
 			int[] currentLabour = Maintenance.maxLabour.clone();
 	
-			Logger.log(currentLabour, "Shift started");
+			//Logger.log(currentLabour, "Shift started");
 			int mcnt = 0;
 			while(true)
 			{
@@ -255,7 +255,7 @@ public class MaintenanceThread  extends Thread{
 			
 				if(packet.mtTuple.start == -1) // packet sent by Scheduling Dept indicating shift is over
 				{
-					if(count < 100){
+					if(count < Macros.SIMULATION_COUNT){
 						System.out.println("Count: "+count);
 						if(mcnt++ == numOfMachines-1){
 							break;	
@@ -274,7 +274,7 @@ public class MaintenanceThread  extends Thread{
 				currentLabour[0]+=packet.mtTuple.labour[0];
 				currentLabour[1]+=packet.mtTuple.labour[1];
 				currentLabour[2]+=packet.mtTuple.labour[2];
-				Logger.log(currentLabour, "Maintenance job over at "+packet.machineIP.getHostAddress());
+				//Logger.log(currentLabour, "Maintenance job over at "+packet.machineIP.getHostAddress());
 			}
 			
 			else
@@ -291,7 +291,7 @@ public class MaintenanceThread  extends Thread{
 					currentLabour[0]-=packet.mtTuple.labour[0];
 					currentLabour[1]-=packet.mtTuple.labour[1];
 					currentLabour[2]-=packet.mtTuple.labour[2];
-					Logger.log(currentLabour, "Maintenance job started at " +packet.machineIP.getHostAddress());
+					//Logger.log(currentLabour, "Maintenance job started at " +packet.machineIP.getHostAddress());
 				}
 				else
 				{

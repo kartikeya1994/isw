@@ -30,8 +30,6 @@ public class JobSchedThread extends Thread
 	MachineList machineList;
 	Random r = new Random();
 	ServerSocket tcpSocket;
-	long procTimeArr[]={5,5,5,4,4,4,4,4,2,2,1,1};
-	int procCostArr[]={80,80,70,70,70,60,60,50,50,40,40,40};
 	ArrayList<Job> jobArray;
 	int shiftCount;
 	public JobSchedThread(MachineList machineList, int shiftCount)
@@ -132,7 +130,7 @@ public class JobSchedThread extends Thread
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
 
-			for(int i=1;i<=9;i++)
+			for(int i=1;i<=machineList.count()*3;i++)
 			{
 				Row row = sheet.getRow(i);
 				int demand = (int) row.getCell(5).getNumericCellValue();
