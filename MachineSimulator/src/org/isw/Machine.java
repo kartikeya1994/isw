@@ -46,6 +46,18 @@ public class Machine
 	}
 	
 	public static void main(String[] args) {
+		if(args.length > 0){
+			if(args[0].equals("BF"))
+			{
+				Macros.BF = true;
+			}
+			if(args[0].equals("MA"))
+			{
+				Macros.BF = false;
+			}
+			if(args[0].equals("NPM"))
+				Macros.NPM = true;
+		}
 		boolean maintenanceRegistered=false;
 		boolean iswRegistered = false;
 		boolean schedulerRegistered = false;

@@ -47,11 +47,10 @@ public class ListenerThread extends Thread
 						while(ips.hasMoreElements()){
 								DatagramPacket timePacket = FlagPacket.makePacket(ips.nextElement().getHostAddress(), fp.port, Macros.REPLY_TIME);
 								socket.send(timePacket);
-							
 							}
 						}
 						break;
-					case Macros.START_SCHEDULING:
+					case Macros.START_SCHEDULING: 
 						(new JobSchedThread(machineList,SchedulingDept.days*24/Macros.SHIFT_DURATION)).start();
 				}	
 			}

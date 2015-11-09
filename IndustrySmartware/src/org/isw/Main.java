@@ -99,11 +99,11 @@ public class Main extends Application {
 		pane.add(new Label("Simulation count"),0,6);
 		TextField shiftDuration = new TextField("1440");
 		pane.add(shiftDuration,1,1);
-		TextField skilled = new TextField("1");
-		TextField semiskilled = new TextField("0");
-		TextField unskilled = new TextField("0");
+		TextField skilled = new TextField("2");
+		TextField semiskilled = new TextField("4");
+		TextField unskilled = new TextField("8");
 		TextField scaleFactor = new TextField("1");
-		TextField simulationCount = new TextField("1000");
+		TextField simulationCount = new TextField("100");
 		pane.add(skilled,1,2);
 		pane.add(semiskilled,1,3);
 		pane.add(unskilled,1,4);

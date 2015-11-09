@@ -12,6 +12,7 @@ public class LoggingThread implements Runnable {
 	@Override
 	public void run() {
 		ServerSocket tcpSocket;
+		final Object lock = new Object();
 		try {
 			tcpSocket = new ServerSocket(Macros.ISW_TCP_PORT);
 			while(true){
@@ -20,7 +21,7 @@ public class LoggingThread implements Runnable {
 				if(socket.getInetAddress().equals(Main.maintenanceIP))
 					new Thread(new MaintenanceLoggingThread(socket)).start();
 				else
-					new Thread(new MachineLoggingThread(socket)).start();
+					new Thread(new MachineLoggingThread(socket,lock)).start();
 			}
 		
 		} catch (IOException e) {

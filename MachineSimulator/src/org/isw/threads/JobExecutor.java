@@ -122,7 +122,7 @@ public class JobExecutor{
 					mtTuple = new MaintenanceTuple(time, time+current.getSeriesTTR(), current.getSeriesLabour());
 				}
 
-				System.out.format("Labour: %d %d %d", mtTuple.labour[0],mtTuple.labour[1],mtTuple.labour[2]);
+				System.out.format("Labour: %d %d %d\n", mtTuple.labour[0],mtTuple.labour[1],mtTuple.labour[2]);
 
 				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, mtTuple);
 				mrp.sendTCP();
@@ -178,7 +178,6 @@ public class JobExecutor{
 					continue;
 				}
 				System.out.println("Undergoing PM");
-				System.out.println(current.getJobTime());
 				// since an actual PM job is a series of PM jobs of each comp in compCombo
 				// we set all jobs in series to SERIES_STARED
 				if(current.getStatus() == Job.NOT_STARTED)

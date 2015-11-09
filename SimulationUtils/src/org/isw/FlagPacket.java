@@ -96,8 +96,9 @@ public class FlagPacket implements Serializable{
 		
 		try
 		{
-			tcpSocket.setSoTimeout(timeout);
+			tcpSocket.setSoTimeout(0);
 			Socket tcpSchedSock = tcpSocket.accept();
+			tcpSchedSock.setSoTimeout(0);
 			ObjectInputStream ois = new ObjectInputStream(tcpSchedSock.getInputStream());
 			Object o = ois.readObject();
 
@@ -130,7 +131,8 @@ public class FlagPacket implements Serializable{
 		{
 			Socket socket = new Socket();
 			SocketAddress dest = new InetSocketAddress(ip,port);
-			socket.connect(dest, 88000);
+			socket.connect(dest, 8880000);
+			socket.setSoTimeout(0);
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 			oos.writeObject(fp);
 			oos.close();

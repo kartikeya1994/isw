@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.isw.BruteForceAlgorithm;
 import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.InitConfig;
@@ -37,6 +38,7 @@ public class ListenerThread extends Thread
 	DatagramSocket udpSocket;
 	private InetAddress maintenanceIP =null;
 	JobExecutor jobExecutor;
+	private double planningTime = 0;
 	public ListenerThread(InetAddress schedulerIP, InetAddress maintenanceIP,DatagramSocket udpSocket,ServerSocket tcpSocket) {
 		this.schedulerIP = schedulerIP;
 		this.tcpSocket = tcpSocket;
@@ -164,15 +166,24 @@ public class ListenerThread extends Thread
 		    intArray[i] = pmos.get(i);
 		}
 		SimulationResult[] results = null;
-		if(intArray.length > 0){
-			MemeticAlgorithm ma = new MemeticAlgorithm(intArray.length*Machine.compList.length*2,200,jl,intArray,result,false);
-			results = ma.execute();
-			//BruteForceAlgorithm bfa = new BruteForceAlgorithm(jl,intArray,result);
-			//results  = bfa.execute();
-		
+		if(!Macros.NPM){
+			if(Macros.BF){
+				System.out.println("BF");
+				BruteForceAlgorithm bfa = new BruteForceAlgorithm(jl,intArray,result);
+				results  = bfa.execute();
+				}
+			else{
+				System.out.println("MA");
+				MemeticAlgorithm ma = new MemeticAlgorithm(500,200,jl,intArray,result,false);
+				results = ma.execute();
+			}
 		}
 		else{
-			results = new SimulationResult[0];
+			System.out.println("NoPM");
+		 results = new SimulationResult[0];
+		//results = new SimulationResult[1];
+		//long combo[]= new long[]{0,0,7,0,0,7,0,0,7,0,0,7};
+		//results[0] = new SimulationResult(5,5,combo,intArray,false,1);
 		}
 		
 		
@@ -183,6 +194,8 @@ public class ListenerThread extends Thread
 		ifPacket.send(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP);
 		//receive PM incorporated schedule from maintenance
 		long endTime = System.nanoTime();
+		planningTime  = (endTime - starttime)/Math.pow(10, 9);
+		System.out.println("Planning complete in " +(endTime - starttime)/Math.pow(10, 9));
 		int count = 0;
 		while(count++ < Macros.SIMULATION_COUNT - 1)
 		{
@@ -201,6 +214,7 @@ public class ListenerThread extends Thread
 		
 		//Execute schedule received by maintenance
 		jobExecutor.execute(jl);
+		planningTime  = (endTime - starttime)/Math.pow(10, 9);
 		System.out.println("Planning complete in " +(endTime - starttime)/Math.pow(10, 9));
 		Machine.shiftCount++;
 		//Request Scheduling Dept for next shift
@@ -237,20 +251,26 @@ public class ListenerThread extends Thread
 		System.out.println("Jobs processed:" + (double)Machine.jobsDone/simCount);
 		System.out.println("Number of CM jobs:" + (double)Machine.cmJobsDone/simCount);
 		System.out.println("Number of PM jobs:" + (double)Machine.pmJobsDone/simCount);
-		MachineResultPacket mrp = new MachineResultPacket(); 
+		MachineResultPacket mrp = new MachineResultPacket();
+		mrp.planningTime = planningTime;
+		mrp.availabiltiy = availability;
 		mrp.downTime = Machine.downTime/simCount;
 		mrp.runTime = Machine.runTime/simCount;
 		mrp.cmDownTime = Machine.cmDownTime/simCount;
 		mrp.pmDownTime = Machine.pmDownTime/simCount;
 		mrp.waitTime = Machine.waitTime/simCount;
 		mrp.idleTime = Machine.idleTime/simCount;
-		mrp.jobsDone = Machine.jobsDone/simCount;
-		mrp.cmJobsDone = Machine.cmJobsDone/simCount;
-		mrp.pmJobsDone = Machine.pmJobsDone/simCount;
+		mrp.jobsDone = (double)Machine.jobsDone/simCount;
+		mrp.cmJobsDone = (double)Machine.cmJobsDone/simCount;
+		mrp.pmJobsDone = (double)Machine.pmJobsDone/simCount;
 		mrp.pmCost = Machine.pmCost/simCount;
 		mrp.cmCost = Machine.cmCost/simCount;
 		mrp.procCost = Machine.procCost/simCount;
 		mrp.penaltyCost = Machine.penaltyCost/simCount;
+		mrp.compNames = new String[Machine.compList.length];
+		for(int i=0;i<mrp.compNames.length;i++)
+			mrp.compNames[i] = Machine.compList[i].compName;
+		
 		mrp.compCMJobsDone = Machine.compCMJobsDone;
 		mrp.compPMJobsDone = Machine.compPMJobsDone;
 		for(int i=0 ;i<Machine.compList.length; i++){

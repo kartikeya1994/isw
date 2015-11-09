@@ -159,7 +159,7 @@ public class SimulationThread implements Callable<SimulationResult> {
 					Job job = simSchedule.remove();
 					switch(job.getJobType()){
 						case Job.JOB_NORMAL:	
-							penaltyCost += job.getPenaltyCost()*Macros.SHIFT_DURATION;
+							penaltyCost += job.getPenaltyCost()*job.getJobTime();
 						break;
 						case Job.JOB_PM:
 							pmCost += job.getFixedCost() + job.getJobCost()*job.getJobTime()*Macros.TIME_SCALE_FACTOR; 

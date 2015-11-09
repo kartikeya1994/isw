@@ -3,6 +3,7 @@ package org.isw;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Random;
@@ -72,11 +73,13 @@ public class MemeticAlgorithm {
 
 		int i =0;
 		ArrayList<SimulationResult> results = new ArrayList<SimulationResult>();
+		HashMap<Long,Boolean> hm = new HashMap<Long, Boolean>();
 		while(i < populationSize && population.get(i).fitnessValue < noPM.cost){
 			Chromosome c = population.get(i);
-			if(c.combo != 0){
+			if(c.combo != 0 && !hm.containsKey(c.combo)){
+				hm.put(c.combo, true);
 				//System.out.format("%f (%s) ",c.fitnessValue,Integer.toBinaryString(c.combo));
-				results.add(new SimulationResult(c.fitnessValue,c.pmAvgTime,c.getCombolist(),pmOpportunity,false,i));
+				results.add(new SimulationResult(noPM.cost - c.fitnessValue, c.pmAvgTime,c.getCombolist(),pmOpportunity,false,i));
 
 			}
 			i++;

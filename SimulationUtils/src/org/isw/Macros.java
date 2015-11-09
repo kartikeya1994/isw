@@ -68,6 +68,9 @@ public class Macros {
 	public static int TIME_SCALE_FACTOR = 1;
 	public static int SHIFT_DURATION = 8;
 	public static int SIMULATION_COUNT = 1000;
+	public static boolean BF = true;
+	public static boolean NPM = false;
+	public static int NO_OF_JOBS = 7;
 	
 	
 	

@@ -13,16 +13,21 @@ public class MachineResultPacket implements Serializable{
 	public double pmCost;
 	public long downTime;
 	public long waitTime;
-	public  int jobsDone;
-	public  int cmJobsDone;
-	public  int pmJobsDone;
+	public  double jobsDone;
+	public  double cmJobsDone;
+	public  double pmJobsDone;
 	public  int compCMJobsDone[];
 	public  int compPMJobsDone[];
+	public String compNames[];
 	public  long procCost;
 	public  long penaltyCost;
 	public long cmDownTime;
 	public  long pmDownTime;
 	public  long runTime;
 	public  long idleTime;
+
+	public double availabiltiy;
+
+	public double planningTime;
 	
 }

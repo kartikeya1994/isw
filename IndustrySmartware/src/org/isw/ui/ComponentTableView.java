@@ -150,17 +150,18 @@ public class ComponentTableView extends VBox {
 		 * to one for now)
 		 * 
 		 * */
-		Component[] c = new Component[28];
+		Component[] c = new Component[29];
 		try
 		{
 			FileInputStream file = new FileInputStream(new File("components.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
-			for(int i=5;i<33;i++)
+			XSSFSheet labourSheet = workbook.getSheetAt(1);
+			for(int i=5;i<34;i++)
 			{
 				Row row = sheet.getRow(i);
 				Component comp = new Component();
-				comp.labourCost = Main.labourCost;
+				//comp.labourCost = Main.labourCost;
 				//--------CM data------------
 				//0 is assembly name
 				comp.compName = row.getCell(1).getStringCellValue();
@@ -188,10 +189,17 @@ public class ComponentTableView extends VBox {
 				comp.pmRF = row.getCell(21).getNumericCellValue();
 				comp.pmCostSpare = row.getCell(22).getNumericCellValue();
 				comp.pmCostOther = row.getCell(23).getNumericCellValue();
-				comp.labourCost = new double[]{500,0,0};
-				comp.pmLabour = new int[]{1,0,0};
-				comp.cmLabour = new int[]{1,0,0};
+				comp.labourCost = new double[]{800d,500d,300d};
+				row = labourSheet.getRow(i);
+				comp.pmLabour = new int[3];
 
+				comp.pmLabour[0] = (int)row.getCell(3).getNumericCellValue();
+				comp.pmLabour[1] = (int)row.getCell(5).getNumericCellValue();
+				comp.pmLabour[2] = (int)row.getCell(7).getNumericCellValue();
+				comp.cmLabour = new int[3];
+				comp.cmLabour[0] = (int)row.getCell(2).getNumericCellValue();
+				comp.cmLabour[1] = (int)row.getCell(4).getNumericCellValue();
+				comp.cmLabour[2] = (int)row.getCell(6).getNumericCellValue();
 				comp.initProps(i-5);
 				c[i-5] = comp;
 			}
