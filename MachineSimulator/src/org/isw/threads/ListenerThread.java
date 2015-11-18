@@ -38,13 +38,13 @@ public class ListenerThread extends Thread
 	DatagramSocket udpSocket;
 	private InetAddress maintenanceIP =null;
 	JobExecutor jobExecutor;
-	private double planningTime = 0;
+
 	public ListenerThread(InetAddress schedulerIP, InetAddress maintenanceIP,DatagramSocket udpSocket,ServerSocket tcpSocket) {
 		this.schedulerIP = schedulerIP;
 		this.tcpSocket = tcpSocket;
 		this.udpSocket = udpSocket; 
 		this.maintenanceIP = maintenanceIP;	
-		jobExecutor = new JobExecutor(udpSocket,tcpSocket, maintenanceIP);
+		jobExecutor = new JobExecutor(udpSocket, tcpSocket, schedulerIP, maintenanceIP);
 	}
 
 	public void run()
@@ -58,9 +58,9 @@ public class ListenerThread extends Thread
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		
+
 		while(true)
-		 {
+		{
 			try{
 				Socket socket = tcpSocket.accept();
 				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
@@ -72,74 +72,82 @@ public class ListenerThread extends Thread
 				}
 				else if(o instanceof FlagPacket && ((FlagPacket)o).flag == Macros.PROCESS_COMPLETE){
 					// simulation is over
-					writeResults(Macros.SIMULATION_COUNT);	
+					writeResults();
+					return;
 				}
-				else if(o instanceof Schedule){
+				else if(o instanceof Schedule)
+				{
 					plan((Schedule)o);		
 				}
-				else if(o instanceof FlagPacket && ((FlagPacket)o).flag == Macros.REQUEST_PREVIOUS_SHIFT){ // send pending jobs to Scheduling Dept.
+				else if(o instanceof FlagPacket && ((FlagPacket)o).flag == Macros.REQUEST_PREVIOUS_SHIFT)
+				{ 
+					// send pending jobs to Scheduling Dept.
 					sendPreviousShift();
 				}
-				
-			 } catch(Exception e){
-				 e.printStackTrace();
-			 }
-				}
+
+			} catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
 	}
-	void removePMJobs() throws IOException{
+
+	void removePMJobs(Schedule jl) throws IOException{
 		// remove PM jobs that have not been started
-				for(int i=0; i<jl.getSize(); i++)
-				{
-					Job j = jl.jobAt(i);
-					if(j.getJobType()==Job.JOB_PM && j.getStatus()==Job.NOT_STARTED)
-					{
-						jl.remove(i);
-						i--;
-					}
-				}
-				
-				/*
-				 *  if partial PM series is present, set all jobs to NOT_STARTED
-				 *  and recalculate seriesTTR and seriesLabour
-				 */
-				if(!jl.isEmpty() && jl.jobAt(0).getJobType()==Job.JOB_PM)
-				{
-					long seriesTTR = 0;
-					int[] seriesLabour = {0,0,0};
-					for(int i=0; i<jl.getSize(); i++)
-					{
-						// change jobStatus to NOT_STARTED
-						Job j = jl.jobAt(i);
-						if(j.getJobType()!=Job.JOB_PM)
-							break;
-						j.setStatus(Job.NOT_STARTED);
-						
-						// recompute seriesTTR and seriesLabour
-						seriesTTR += j.getJobTime();
-						if(seriesLabour[0]<j.getSeriesLabour()[0])
-							seriesLabour[0] = j.getSeriesLabour()[0];
-						if(seriesLabour[1]<j.getSeriesLabour()[1])
-							seriesLabour[1] = j.getSeriesLabour()[1];
-						if(seriesLabour[2]<j.getSeriesLabour()[2])
-							seriesLabour[2] = j.getSeriesLabour()[2];
-					}
-					
-					for(int i=0; i<jl.getSize(); i++)
-					{
-						Job j = jl.jobAt(i);
-						if(j.getJobType()!=Job.JOB_PM)
-							break;
-						j.setSeriesTTR(seriesTTR);
-						j.setSeriesLabour(seriesLabour);
-					}
-				}
+		for(int i=0; i<jl.getSize(); i++)
+		{
+			Job j = jl.jobAt(i);
+			if(j.getJobType()==Job.JOB_PM && j.getStatus()==Job.NOT_STARTED)
+			{
+				jl.remove(i);
+				i--;
+			}
+		}
+
+		/*
+		 *  if partial PM series is present, set all jobs to NOT_STARTED
+		 *  and recalculate seriesTTR and seriesLabour
+		 */
+		if(!jl.isEmpty() && jl.jobAt(0).getJobType()==Job.JOB_PM)
+		{
+			long seriesTTR = 0;
+			int[] seriesLabour = {0,0,0};
+			for(int i=0; i<jl.getSize(); i++)
+			{
+				// change jobStatus to NOT_STARTED
+				Job j = jl.jobAt(i);
+				if(j.getJobType()!=Job.JOB_PM)
+					break;
+				j.setStatus(Job.NOT_STARTED);
+
+				// recompute seriesTTR and seriesLabour
+				seriesTTR += j.getJobTime();
+				if(seriesLabour[0]<j.getSeriesLabour()[0])
+					seriesLabour[0] = j.getSeriesLabour()[0];
+				if(seriesLabour[1]<j.getSeriesLabour()[1])
+					seriesLabour[1] = j.getSeriesLabour()[1];
+				if(seriesLabour[2]<j.getSeriesLabour()[2])
+					seriesLabour[2] = j.getSeriesLabour()[2];
+			}
+
+			for(int i=0; i<jl.getSize(); i++)
+			{
+				Job j = jl.jobAt(i);
+				if(j.getJobType()!=Job.JOB_PM)
+					break;
+				j.setSeriesTTR(seriesTTR);
+				j.setSeriesLabour(seriesLabour);
+			}
+		}
 	}
+
 	private void sendPreviousShift() throws IOException {
-		removePMJobs();
-		
+		removePMJobs(jl);
+
 		System.out.println("Sending previous shift to Scheduler");
 		jl.send(schedulerIP,Macros.SCHEDULING_DEPT_PORT_TCP);
 	}
+
 
 	private void plan(Schedule schedule) throws InterruptedException, ExecutionException, IOException {
 		//Parse schedule from packet.
@@ -151,71 +159,60 @@ public class ListenerThread extends Thread
 		System.out.println("Total time" + jl.getSum());
 		System.out.println("Planning started");
 		long starttime = System.nanoTime();
-		/* TODO:
-		 * Get simulation results by executing Memetic Algorithm
+		/*Get simulation results by executing Memetic Algorithm
 		 * */
+		//no PM
 		ExecutorService threadPool = Executors.newSingleThreadExecutor();
 		CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
 		pool.submit(new SimulationThread(jl,null,null,true,-1));
 		SimulationResult result = pool.take().get();
 		threadPool.shutdown();
 		while(!threadPool.isTerminated());
+
+
 		ArrayList<Integer> pmos = jl.getPMOpportunities();
 		int[] intArray = new int[pmos.size()];
 		for (int i = 0; i < intArray.length; i++) {
-		    intArray[i] = pmos.get(i);
+			intArray[i] = pmos.get(i);
 		}
 		SimulationResult[] results = null;
-		if(!Macros.NPM){
-			if(Macros.BF){
-				System.out.println("BF");
-				BruteForceAlgorithm bfa = new BruteForceAlgorithm(jl,intArray,result);
-				results  = bfa.execute();
-				}
-			else{
-				System.out.println("MA");
-				MemeticAlgorithm ma = new MemeticAlgorithm(500,200,jl,intArray,result,false);
-				results = ma.execute();
-			}
-		}
-		else{
-			System.out.println("NoPM");
-		 results = new SimulationResult[0];
-		//results = new SimulationResult[1];
-		//long combo[]= new long[]{0,0,7,0,0,7,0,0,7,0,0,7};
-		//results[0] = new SimulationResult(5,5,combo,intArray,false,1);
-		}
+
+		long problemSize = jl.getSize()*Machine.compList.length;
 		
-		
+		if(problemSize<12)
+		{
+			System.out.println("BF");
+			BruteForceAlgorithm bfa = new BruteForceAlgorithm(jl,intArray,result);
+			results  = bfa.execute();
+		}
+		else
+		{
+			System.out.println("MA");
+			MemeticAlgorithm ma = new MemeticAlgorithm(500,200,jl,intArray,result,false);
+			results = ma.execute();
+		}
+
 		System.out.println("Sending simulation results to Maintenance");
-		
+
 		//Send simulation results to Maintenance Dept.
 		IFPacket ifPacket =  new IFPacket(results,jl,Machine.compList);
 		ifPacket.send(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP);
 		//receive PM incorporated schedule from maintenance
+
 		long endTime = System.nanoTime();
-		planningTime  = (endTime - starttime)/Math.pow(10, 9);
+		Machine.planningTime  = (endTime - starttime)/Math.pow(10, 9);
+
 		System.out.println("Planning complete in " +(endTime - starttime)/Math.pow(10, 9));
-		int count = 0;
-		while(count++ < Macros.SIMULATION_COUNT - 1)
-		{
-			System.out.println("Maintenance planning");
-			jl = Schedule.receive(tcpSocket);
-			System.out.println("Received socket");
-			jobExecutor.execute(jl);
-			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
-			mrp.sendTCP();
-			
-		}
+
+		//receive PM incp schedule from Maintenance
 		jl = Schedule.receive(tcpSocket);
 		Logger.log(Machine.getStatus(),"Received schedule from maintenance:" + jl.printSchedule());
 		System.out.println("Received schedule from maintenance:" + jl.printSchedule());
-		System.out.println("Total time" + jl.getSum());
-		
+		System.out.println("Total time of scheduled jobs: " + jl.getSum());
+
 		//Execute schedule received by maintenance
 		jobExecutor.execute(jl);
-		planningTime  = (endTime - starttime)/Math.pow(10, 9);
-		System.out.println("Planning complete in " +(endTime - starttime)/Math.pow(10, 9));
+
 		Machine.shiftCount++;
 		//Request Scheduling Dept for next shift
 		FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);		
@@ -233,7 +230,9 @@ public class ListenerThread extends Thread
 		System.out.println("Machine initialized");
 	}
 
-	private void writeResults(int simCount) {
+	public static void writeResults() 
+	{
+		int simCount =1;
 		System.out.println("=========================================");
 		double cost = Machine.cmCost + Machine.pmCost + Machine.penaltyCost;
 		double downtime = (Machine.cmDownTime + Machine.pmDownTime + Machine.waitTime)/simCount;
@@ -252,7 +251,7 @@ public class ListenerThread extends Thread
 		System.out.println("Number of CM jobs:" + (double)Machine.cmJobsDone/simCount);
 		System.out.println("Number of PM jobs:" + (double)Machine.pmJobsDone/simCount);
 		MachineResultPacket mrp = new MachineResultPacket();
-		mrp.planningTime = planningTime;
+		mrp.planningTime = Machine.planningTime;
 		mrp.availabiltiy = availability;
 		mrp.downTime = Machine.downTime/simCount;
 		mrp.runTime = Machine.runTime/simCount;
@@ -270,7 +269,7 @@ public class ListenerThread extends Thread
 		mrp.compNames = new String[Machine.compList.length];
 		for(int i=0;i<mrp.compNames.length;i++)
 			mrp.compNames[i] = Machine.compList[i].compName;
-		
+
 		mrp.compCMJobsDone = Machine.compCMJobsDone;
 		mrp.compPMJobsDone = Machine.compPMJobsDone;
 		for(int i=0 ;i<Machine.compList.length; i++){
@@ -278,5 +277,6 @@ public class ListenerThread extends Thread
 		}
 		Logger.log(mrp);
 	}
-	
+
+
 }

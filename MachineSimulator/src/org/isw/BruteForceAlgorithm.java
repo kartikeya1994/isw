@@ -20,7 +20,9 @@ public class BruteForceAlgorithm {
 		
 	}
 	
-	public SimulationResult[] execute() throws InterruptedException, ExecutionException{
+	public SimulationResult[] execute() throws InterruptedException, ExecutionException
+	{
+		System.out.println("Beginning Brute Force Search");
 		ExecutorService threadPool = Executors.newFixedThreadPool(5);
 		CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
 		long cnt = 0 ;
@@ -46,6 +48,7 @@ public class BruteForceAlgorithm {
 		}
 		threadPool.shutdown();
 		while(!threadPool.isTerminated());
+		System.out.println("100%");
 
 		SimulationResult[] results2 = new SimulationResult[results.size()];
 		for(int i=0;i<results.size();i++){

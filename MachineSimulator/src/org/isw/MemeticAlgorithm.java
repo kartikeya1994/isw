@@ -50,7 +50,7 @@ public class MemeticAlgorithm {
 	{
 		System.out.println("Initializing population");
 		initializePopulation();
-		System.out.println("Evaluating fitness");
+		System.out.println("Evolving generations");
 		evaluateFitness(population);
 		int cnt=0;
 		while(true)
@@ -70,7 +70,6 @@ public class MemeticAlgorithm {
 			if(cnt++ >= stopCrit || hasConverged())
 				break;
 			
-			System.out.println("Generation: "+cnt);
 			generatePopulation();
 			
 			if(cnt%20==0)
@@ -79,7 +78,7 @@ public class MemeticAlgorithm {
 		}
 
 		Collections.sort(population);
-		//System.out.format("%f (%s)\n",population.get(0).fitnessValue,Long.toBinaryString(population.get(0).combo));
+		System.out.format("Solution: %f (%s)\n",population.get(0).fitnessValue, population.get(0).combo.toString(2));
 
 
 		int i =0;

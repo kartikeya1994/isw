@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class Schedule implements  Comparable<Schedule>,Serializable{
 
-	
+
 	private static final long serialVersionUID = 1L;
 	private ArrayList<Job> jobs;
 	private long sum;
@@ -21,7 +21,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		sum = 0;
 		jobs = new ArrayList<Job>();
 	}
-	
+
 	public Schedule(Schedule source){
 		sum = source.sum;
 		jobs =  new ArrayList<Job>();
@@ -29,7 +29,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 			jobs.add(new Job(source.jobAt(i)));
 		}		
 	}
-	
+
 	public Schedule(InetAddress byName) {
 		//check this
 		sum = 0;
@@ -41,13 +41,13 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		sum+=job.getJobTime();
 		//System.out.println("Added Job, new sum: "+sum);
 	}
-	
+
 	public void addJobTop(Job job){
 		jobs.add(0, job);
 		sum+=job.getJobTime();
 		//System.out.println("Added Job, new sum: "+sum);
 	}
-	
+
 	public int numOfJobs()
 	{
 		return jobs.size();
@@ -55,33 +55,33 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	/**
 	 * Add CM Job. If a CM job overlaps with a normal job, split the normal job and insert CM job 
 	 * in between. If a CM job overlaps with a PM/CM job, add it after the CM/PM job.
-	**/
+	 **/
 	public void addCMJob(Job cmJob, long TTF){
 		if (TTF >= sum)
 			return;
 		int i = jobIndexAt(TTF);
 		long time = getFinishingTime(i);
-		
+
 		if(jobs.get(i).getJobType() == Job.JOB_NORMAL){
-				Job job  = jobs.remove(i);
-				time -= job.getJobTime();
-				Job j1 =  new Job(job.getJobName(),TTF-time,job.getJobCost(),Job.JOB_NORMAL);
-				Job j2 = new Job(job.getJobName(),time+job.getJobTime()-TTF,job.getJobCost(),Job.JOB_NORMAL);
-				if(TTF == time){
-					jobs.add(i,cmJob);
-					jobs.add(i+1,j2);
-				}
-				else{
-					jobs.add(i,j1);
-					jobs.add(i+1,cmJob);
-					jobs.add(i+2,j2);
-				}
+			Job job  = jobs.remove(i);
+			time -= job.getJobTime();
+			Job j1 =  new Job(job.getJobName(),TTF-time,job.getJobCost(),Job.JOB_NORMAL);
+			Job j2 = new Job(job.getJobName(),time+job.getJobTime()-TTF,job.getJobCost(),Job.JOB_NORMAL);
+			if(TTF == time){
+				jobs.add(i,cmJob);
+				jobs.add(i+1,j2);
 			}
 			else{
-				while(i< jobs.size() && jobs.get(i).getJobType() == Job.JOB_PM)
-					i++;
-				jobs.add(i,cmJob);
+				jobs.add(i,j1);
+				jobs.add(i+1,cmJob);
+				jobs.add(i+2,j2);
 			}
+		}
+		else{
+			while(i< jobs.size() && jobs.get(i).getJobType() == Job.JOB_PM)
+				i++;
+			jobs.add(i,cmJob);
+		}
 		sum += cmJob.getJobTime();
 		//System.out.println("Added CM Job, new sum: "+sum);
 	}
@@ -91,7 +91,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		sum += pmJob.getJobTime();
 		//System.out.println("Added PM Job, new sum: "+sum);
 	}
-	
+
 	public synchronized Job remove() throws IOException{
 		Job job = jobs.remove(0);
 		sum -= job.getJobTime();
@@ -101,15 +101,17 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		}
 		return job;
 	}
-	
-	public void remove(int i) throws IOException{
+
+	public Job remove(int i) throws IOException
+	{
 		Job job = jobs.remove(i);
 		sum -= job.getJobTime();
 		if(sum < 0){
-			throw new IOException();
+			throw new IOException("Negative Sum");
 		}
+		return job;
 	}
-	
+
 	@Override
 	public int compareTo(Schedule other) {
 		return Long.compare(this.getSum(), other.getSum());
@@ -118,11 +120,11 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	public synchronized boolean isEmpty() {
 		return jobs.isEmpty();
 	}
-	
+
 	public synchronized Job peek(){
 		return jobs.get(0);
 	}
-	
+
 	public synchronized void decrement(long delta) throws IOException{
 		/*
 		 * Decrements the first job and the total time sum by delta
@@ -140,7 +142,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 			str += jobs.get(i).getJobName()+": "+ String.valueOf(jobs.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR)+"hrs ";			
 		return str;
 	}
-	
+
 	//check these two
 	public InetAddress getAddress() {
 		// TODO Auto-generated method stub
@@ -149,7 +151,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 
 	public void setAddress(InetAddress ip) {
 		this.ip = ip;
-		
+
 	}
 
 	public long getSum() {
@@ -169,7 +171,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		}
 		return i-1;
 	}
-/*
+	/*
 	public void addWaitJob(long startTime, long waitTime, int jobIndex) {
 		Job job = jobs.remove(jobIndex);
 		long time = getFinishingTime(jobIndex-1);
@@ -189,7 +191,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		}
 		sum += waitTime;
 	}
-	*/
+	 */
 
 	public long getFinishingTime(int index){
 		long sum = 0;
@@ -200,7 +202,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		}
 		return sum;
 	}
-	
+
 	public Job jobAt(int i) {
 		return jobs.get(i);
 	}
@@ -244,7 +246,7 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 		ArrayList<Integer> arr = new ArrayList<Integer>();
 		if(jobs.isEmpty())
 			return arr;
-		
+
 		if(jobs.get(0).getJobType() == Job.JOB_NORMAL && jobs.get(0).getStatus() == Job.NOT_STARTED)
 			arr.add(0);
 		int i=1;
@@ -255,15 +257,15 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 			i++;
 		}
 		if(getFinishingTime(i-1) < Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR)
-			arr.add(i);
+		arr.add(i);
 		return arr;
 	}
-	
+
 	public ArrayList<Job> getPMJobs() {
 		ArrayList<Job> pmJobs = new ArrayList<Job>();
 		for(int i = jobs.size()-1; i>0; i--){
-				if(jobs.get(i).jobType == Job.JOB_PM)
-					pmJobs.add(jobs.get(i));
+			if(jobs.get(i).jobType == Job.JOB_PM)
+				pmJobs.add(jobs.get(i));
 		}
 		return pmJobs;
 	}
@@ -271,8 +273,8 @@ public class Schedule implements  Comparable<Schedule>,Serializable{
 	public ArrayList<Job> getCMJobs() {
 		ArrayList<Job> cmJobs = new ArrayList<Job>();
 		for(int i = jobs.size()-1; i>0; i--){
-				if(jobs.get(i).jobType == Job.JOB_CM)
-					cmJobs.add(jobs.get(i));
+			if(jobs.get(i).jobType == Job.JOB_CM)
+				cmJobs.add(jobs.get(i));
 		}
 		return cmJobs;
 	}

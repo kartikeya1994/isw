@@ -1,7 +1,7 @@
 Fix:
 - CM job labour at Maintenance Thread
 - upcoming failure at Machine JobExecutor
-- Least Processing Time first instead of Longest
+- Least Processing Time instead of Longest
 
 Sending object over TCP: http://stackoverflow.com/questions/5957790/how-do-you-send-a-user-defined-class-object-over-a-tcp-ip-network-connection-in
 How TCP streams in java work: http://www.javaworld.com/article/2077322/core-java/core-java-sockets-programming-in-java-a-tutorial.html

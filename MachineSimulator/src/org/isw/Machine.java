@@ -34,6 +34,7 @@ public class Machine
 	public static long pmDownTime;
 	public static long runTime;
 	public static long idleTime;
+	public static double planningTime =0;
 	
 	public static void setStatus(int status)
 	{

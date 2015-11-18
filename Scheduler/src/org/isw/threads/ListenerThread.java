@@ -14,6 +14,8 @@ import org.isw.SchedulingDept;
 public class ListenerThread extends Thread
 {
 	MachineList machineList;
+	boolean replan = false;
+	int idleMachines = 0;
 	public ListenerThread(MachineList machineList)
 	{
 		this.machineList=machineList;
@@ -33,28 +35,63 @@ public class ListenerThread extends Thread
 				 * Listen for incoming packets and take following actions
 				 */
 				FlagPacket fp = FlagPacket.receiveMulticast(socket);
-				switch(fp.flag){
-					case Macros.REQUEST_SCHEDULING_DEPT_IP:
-						// Register incoming machine and reply with own IP
-						ClientHandlerThread worker = new ClientHandlerThread(socket, fp, machineList);
-						worker.start();
+				switch(fp.flag)
+				{
+				case Macros.REQUEST_SCHEDULING_DEPT_IP:
+					// Register incoming machine and reply with own IP
+					ClientHandlerThread worker = new ClientHandlerThread(socket, fp, machineList);
+					worker.start();
 					break;
-					case Macros.REQUEST_TIME:
-						if(machineCount++ == machineList.count()-1){
+					
+				case Macros.JOBS_DONE:
+					idleMachines ++;
+//					if(idleMachines == machineList.count())
+//					{
+//						System.out.println("All jobs processed");
+//						// send end to all machines
+//						Enumeration<InetAddress> ips = machineList.getIPs();
+//						while(ips.hasMoreElements())
+//						{
+//							DatagramPacket timeSyncResponse = 
+//									FlagPacket.makePacket(ips.nextElement().getHostAddress(), 
+//															fp.port, Macros.END_OF_EVERYTHING);
+//							socket.send(timeSyncResponse);
+//						}	
+//						
+//						//TODO: Send end to maintenance
+//						
+//						System.exit(0);
+//					}
+
+				case Macros.REPLAN:
+					//replan
+					System.out.println("\n******\nREPLANNING\n******\n");
+					replan = true;
+
+				case Macros.REQUEST_TIME:
+					if(( (machineCount++)+idleMachines ) == machineList.count()-1)
+					{
 						machineCount = 0;
 						Enumeration<InetAddress> ips = machineList.getIPs();
 						//sleep(1000);
-						while(ips.hasMoreElements()){
-								DatagramPacket timePacket = FlagPacket.makePacket(ips.nextElement().getHostAddress(), fp.port, Macros.REPLY_TIME);
-								socket.send(timePacket);
-							}
+						while(ips.hasMoreElements())
+						{
+							DatagramPacket timeSyncResponse;
+							if(replan)
+								timeSyncResponse = FlagPacket.makePacket(ips.nextElement().getHostAddress(), fp.port, Macros.INITIATE_REPLAN);
+							else
+								timeSyncResponse = FlagPacket.makePacket(ips.nextElement().getHostAddress(), fp.port, Macros.REPLY_TIME);
+							socket.send(timeSyncResponse);
 						}
-						break;
-					case Macros.START_SCHEDULING: 
-						(new JobSchedThread(machineList,SchedulingDept.days*24/Macros.SHIFT_DURATION)).start();
+						replan = false;
+					}
+					break;
+
+				case Macros.START_SCHEDULING: 
+					// run only once, at beginning
+					(new JobSchedThread(machineList,SchedulingDept.days*24/Macros.SHIFT_DURATION)).start();
 				}	
 			}
-
 		}catch(IOException e)
 		{
 			e.printStackTrace();

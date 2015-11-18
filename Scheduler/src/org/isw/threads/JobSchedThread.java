@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.PriorityQueue;
@@ -33,7 +34,7 @@ public class JobSchedThread extends Thread
 	int shiftCount;
 	public JobSchedThread(MachineList machineList, int shiftCount)
 	{
-		this.machineList=machineList;
+		this.machineList= machineList;
 		this.shiftCount = shiftCount;
 	}
 
@@ -47,96 +48,138 @@ public class JobSchedThread extends Thread
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		int cnt = 0;
+
 		parseJobs(); // from Excel sheet
 		
-		while(cnt++ < shiftCount)
+		int shiftsDone  = 0;
+		while(shiftsDone < shiftCount)
 		{	
-			// Priority Queue fetches schedules with least total job time
-			PriorityQueue<Schedule> pq = new PriorityQueue<Schedule>();
-			Enumeration<InetAddress> machineIPs = machineList.getIPs();
-			while(machineIPs.hasMoreElements())
-			{	
-				InetAddress ip = machineIPs.nextElement();
-				FlagPacket.sendTCP(Macros.REQUEST_PREVIOUS_SHIFT, ip, Macros.MACHINE_PORT_TCP);		
-				System.out.println("Sent schedule get req to machines");
-				Schedule jl = Schedule.receive(tcpSocket);
-				jl.setAddress(ip);
-				pq.add(jl);	// add pending job lists to priority queue
-			}
-
-			System.out.println("Job list: ");
-			for(int i=0;i<jobArray.size();i++){
-				/*
-				 * Generate new schedule: Get schedule with minimum total time,
-				 * and add the first job in jobArray to it.
-				 */
-				Schedule min = pq.remove(); 
-				min.addJob(jobArray.get(i));
-				System.out.print(jobArray.get(i).getJobName()+": "+String.valueOf(jobArray.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR)+" ");
-				pq.add(min);
-			}
-			
-			
-			Random rand = new Random();
-			int count1 = 0;
-			machineIPs = machineList.getIPs();
-			while(machineIPs.hasMoreElements()){
-				InetAddress ip = machineIPs.nextElement();
-				Schedule sched = new Schedule();
-				sched.setAddress(ip);
-				for(int i=0;i<Macros.NO_OF_JOBS;i++){
-					sched.addJob(jobArray.get(count1++));		
-				}
-				try {
-					sched.send(sched.getAddress(), Macros.MACHINE_PORT_TCP);
-					System.out.println("Sending schedule to "+sched.getAddress());
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-			}
-			/*
-			while(!pq.isEmpty())
-			{
-				try {
-					pq.peek().send(pq.peek().getAddress(), Macros.MACHINE_PORT_TCP);
-					System.out.println("Sending schedule to "+pq.poll().getAddress());
-				} catch (SocketException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}*/
+			doScheduling();
 			// schedules are sent
-			// wait till all machines send REQUEST_NEXT_SHIFT
+			
 			FlagPacket fp;
-			int count =0;
-			while(count < machineList.count()){
+			int count = 0;
+			boolean replan = false;
+			while(count < machineList.count())
+			{
 				fp = FlagPacket.receiveTCP(tcpSocket,0);
-				if(fp.flag == Macros.REQUEST_NEXT_SHIFT) // shift is over
-					count++;
+				if(fp.flag == Macros.SCHED_REPLAN_INIT)
+					replan = true;
+				else if(fp.flag != Macros.REQUEST_NEXT_SHIFT)
+					continue;
+				
+				count++;
+			}
+			if(replan)
+			{
+				// -3 packet to Maintenance indicating replan
+				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, 
+						Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-3));
+				mrp.sendTCP();
+				continue;
 			}
 			
-			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
+			shiftsDone++;
+			
+			//Let maintenance know that shift is over
+			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, 
+					Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
 			mrp.sendTCP();
-				
 		}
-		
-		// Simulation Complete
+
 		System.out.println("Process Complete");
 		Enumeration<InetAddress> en = machineList.getIPs();
 		while(en.hasMoreElements())
 		{
 			FlagPacket.sendTCP(Macros.PROCESS_COMPLETE, en.nextElement(), Macros.MACHINE_PORT_TCP);
 		}
+	}
+
+	private void doScheduling()
+	{
+		// Priority Queue fetches schedules with least total job time
+		PriorityQueue<Schedule> pq = new PriorityQueue<Schedule>();
+		Enumeration<InetAddress> machineIPs = machineList.getIPs();
+		while(machineIPs.hasMoreElements())
+		{	
+			//collect remaining schedules from machines
+			InetAddress ip = machineIPs.nextElement();
+			FlagPacket.sendTCP(Macros.REQUEST_PREVIOUS_SHIFT, ip, Macros.MACHINE_PORT_TCP);		
+			System.out.println("Sent schedule get req to machines");
+			try 
+			{
+				Schedule jl = Schedule.receive(tcpSocket);
+
+				collectRemainingJobs(jl);
+
+				jl.setAddress(ip);
+
+				pq.add(jl);
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		//sort jobs in descending order of job time
+		Collections.sort(jobArray, new JobComparator());
+
+		System.out.println("Job list: ");
+		for(int i=0;i<jobArray.size();i++){
+			/*
+			 * Generate new schedule: Get schedule with minimum total time,
+			 * and add the first job in jobArray to it.
+			 */
+			Schedule min = pq.remove(); 
+			min.addJob(jobArray.get(i));
+			System.out.print(jobArray.get(i).getJobName()+": "+String.valueOf(jobArray.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR)+" ");
+			pq.add(min);
+		}
+		jobArray = new ArrayList<Job>(); //empty jobArray
+		System.out.println();
+
+		//send schedules back to machines
+		while(!pq.isEmpty())
+		{
+			try {
+				pq.peek().send(pq.peek().getAddress(), Macros.MACHINE_PORT_TCP);
+				System.out.println("Sending schedule to "+pq.poll().getAddress());
+			} catch (SocketException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void collectRemainingJobs(Schedule jl) throws IOException 
+	{
+		if(jl.isEmpty())
+			return;
+		Job first = jl.peek();
+		int start = 0;
+		if( first.getJobType() == Job.JOB_CM ||
+				(first.getJobType() == Job.JOB_NORMAL && first.getStatus() == Job.STARTED))
+		{
+			// Dont remove first job if CM job or Normal Job that was started
+			start = 1;
+		}
+
+		else if(first.getJobType() == Job.JOB_PM && 
+				(first.getStatus() == Job.STARTED || first.getStatus() == Job.SERIES_STARTED))
+		{
+			// if PM job was started, remove entire series
+			while(first.getJobType() == Job.JOB_PM)
+				first = jl.jobAt(++start);	
+		}
+
+		//add jobs that were not started to jobArray
+		for(int r=jl.getSize()-1; r>=start; r--)
+			jobArray.add(jl.remove(r));
 
 	}
+
+
 	private void parseJobs() 
 	{
 		/*
@@ -152,7 +195,7 @@ public class JobSchedThread extends Thread
 				file = new FileInputStream(new File("Jobs_3.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
-			
+
 			for(int i=1;i<=machineList.count()*Macros.NO_OF_JOBS;i++)
 			{
 				Row row = sheet.getRow(i);
@@ -169,8 +212,6 @@ public class JobSchedThread extends Thread
 		{
 			e.printStackTrace();
 		}	
-		//sort jobs in descending order of job time
-		//Collections.sort(jobArray, new JobComparator());
 	}
 }
 
@@ -181,8 +222,8 @@ class JobComparator implements Comparator<Job> {
 	@Override
 	public int compare(Job a, Job b) 
 	{
-		return Double.compare(b.getJobTime(),a.getJobTime());
+		return Double.compare(a.getJobTime(),b.getJobTime());
 	}
 
-	
+
 }
