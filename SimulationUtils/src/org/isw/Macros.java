@@ -42,6 +42,8 @@ public class Macros {
 	public static final int SCHED_REPLAN_INIT = 35;
 	public static final int JOBS_DONE = 36;
 	public static final int END_OF_EVERYTHING = 37;
+	public static final int MACHINE_PROCESS_COMPLETE = 38;
+	public static final int MACHINE_REPLANNING = 39;
 
 	
 	public static final int MAINTENANCE_DEPT_MULTICAST_PORT = 8886;

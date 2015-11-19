@@ -88,6 +88,7 @@ public class JobSchedThread extends Thread
 		}
 
 		System.out.println("Process Complete");
+		SchedulingDept.processComplete = true;
 		Enumeration<InetAddress> en = machineList.getIPs();
 		while(en.hasMoreElements())
 		{

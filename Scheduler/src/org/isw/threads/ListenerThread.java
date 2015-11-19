@@ -29,7 +29,7 @@ public class ListenerThread extends Thread
 		{
 			socket = new MulticastSocket(Macros.SCHEDULING_DEPT_MULTICAST_PORT);
 			socket.joinGroup(InetAddress.getByName(Macros.SCHEDULING_DEPT_GROUP));
-			while(true)
+			while(!SchedulingDept.processComplete)
 			{
 				/*
 				 * Listen for incoming packets and take following actions
@@ -43,8 +43,14 @@ public class ListenerThread extends Thread
 					worker.start();
 					break;
 					
+				case Macros.REPLAN:
+					//replan
+					System.out.println("\n******\nREPLANNING\n******\n");
+					replan = true;
+					
 				case Macros.JOBS_DONE:
-					idleMachines ++;
+					//idleMachines ++;
+					
 //					if(idleMachines == machineList.count())
 //					{
 //						System.out.println("All jobs processed");
@@ -63,17 +69,14 @@ public class ListenerThread extends Thread
 //						System.exit(0);
 //					}
 
-				case Macros.REPLAN:
-					//replan
-					System.out.println("\n******\nREPLANNING\n******\n");
-					replan = true;
-
 				case Macros.REQUEST_TIME:
-					if(( (machineCount++)+idleMachines ) == machineList.count()-1)
+					if(machineCount++ == machineList.count()-1)
 					{
 						machineCount = 0;
 						Enumeration<InetAddress> ips = machineList.getIPs();
-						//sleep(1000);
+						
+						if(SchedulingDept.sleepWhileTimeSync)
+							sleep(SchedulingDept.sleepTime);
 						while(ips.hasMoreElements())
 						{
 							DatagramPacket timeSyncResponse;
@@ -92,7 +95,8 @@ public class ListenerThread extends Thread
 					(new JobSchedThread(machineList,SchedulingDept.days*24/Macros.SHIFT_DURATION)).start();
 				}	
 			}
-		}catch(IOException e)
+			System.out.println("ListenerThread exit");
+		}catch(IOException | InterruptedException e)
 		{
 			e.printStackTrace();
 		}

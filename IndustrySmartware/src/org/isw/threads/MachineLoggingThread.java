@@ -38,9 +38,11 @@ public class MachineLoggingThread implements Runnable{
 	public void run() {
 		try {
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-			while(true){
+			while(true)
+			{
 				Object o = in.readObject();
-				if(o instanceof MachineStatusPacket){
+				if(o instanceof MachineStatusPacket)
+				{
 					MachineStatusPacket msp = (MachineStatusPacket) o;	 
 					Platform.runLater(new Runnable(){
 						@Override
@@ -51,15 +53,16 @@ public class MachineLoggingThread implements Runnable{
 
 					});
 				}
-				else if(o instanceof MachineResultPacket){
-
-
+				else if(o instanceof MachineResultPacket)
+				{
 					Platform.runLater(new Runnable(){
 						@Override
-						public void run() {
+						public void run() 
+						{
 							MachineResultPacket mrp = (MachineResultPacket) o;	 
 							synchronized(lock){
-								try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("results.csv",true)))){ 
+								try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("results.csv",true))))
+								{ 
 									for(int i=0;i<mrp.compNames.length;i++)
 										out.format("%s;", mrp.compNames[i]);
 									out.print(",");
@@ -78,11 +81,11 @@ public class MachineLoggingThread implements Runnable{
 									out.format("%f,",  mrp.jobsDone);
 									out.format("%f,", mrp.pmJobsDone);
 									out.format("%f\n",  mrp.cmJobsDone);
-								
 								}
 								catch(IOException e){
-
-								}}
+									e.printStackTrace();
+								}
+							}
 							/*ObservableList<Result> results = FXCollections.observableArrayList();
 							results.add(new Result("CM downtime",String.valueOf(mrp.cmDownTime)+" hours"));
 							results.add(new Result("PM downtime",String.valueOf(mrp.pmDownTime)+" hours"));
@@ -101,6 +104,8 @@ public class MachineLoggingThread implements Runnable{
 						}
 
 					}); 
+					// Process Complete
+					return;
 				}
 			}
 		} catch (IOException | ClassNotFoundException e) {

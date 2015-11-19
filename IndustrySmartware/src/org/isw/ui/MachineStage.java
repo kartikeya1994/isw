@@ -102,7 +102,7 @@ public class MachineStage extends Stage{
 		case Macros.MACHINE_CM:
 			return "STATUS: UNDERGOING CORRECTIVE MAINTENANCE";
 		case Macros.MACHINE_PM:
-			return "STATUS: STATUS: UNDERGOING PREVENTIVE MAINTENANCE";
+			return "STATUS: UNDERGOING PREVENTIVE MAINTENANCE";
 		case Macros.MACHINE_RUNNING_JOB:
 			return "STATUS: RUNNING JOB";
 		case Macros.MACHINE_WAITING_FOR_CM_LABOUR:
@@ -110,6 +110,10 @@ public class MachineStage extends Stage{
 			return "STATUS: WAITING FOR LABOUR";	
 		case Macros.MACHINE_PLANNING:
 			return "STATUS: PLANNING";
+		case Macros.MACHINE_REPLANNING:
+			return "STATUS: REPLANNING";
+		case Macros.MACHINE_PROCESS_COMPLETE:
+			return "STATUS: PROCESS COMPLETE";
 		}
 		return "";
 	}

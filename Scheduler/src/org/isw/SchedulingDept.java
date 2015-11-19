@@ -14,15 +14,35 @@ public class SchedulingDept
 {
 	public static int days;
 	public static InetAddress maintenanceIP;
+	public static boolean processComplete = false;
+	public static boolean sleepWhileTimeSync = false;
+	public static long sleepTime = 0;
 	public static void main(String args[])
 	{
+		if(args.length == 0)
+		{
+			System.out.println("Need two args\nFirst arg: 3 or 7 (which job sheet to pick)\nSecond arg: time in millis to sleep per hour");
+			System.exit(-1);
+		}
 		if(args.length > 0)
 		{
 			if(args[0].equals("3"))
 				Macros.NO_OF_JOBS = 3;
 			else if(args[0].equals("7"))
 				Macros.NO_OF_JOBS = 7;
+			else
+			{
+				System.out.println("Incorrect arg");
+				System.out.println("Need two args\nFirst arg: 3 or 7 (which job sheet to pick)\nSecond arg: time in millis to sleep per hour");
+				System.exit(-1);
+			}
 		}
+		if(args.length > 1)
+		{
+			sleepWhileTimeSync = true;
+			sleepTime = Long.valueOf(args[1]);
+		}
+		
 		DatagramSocket socket = null;
 		
 		try {

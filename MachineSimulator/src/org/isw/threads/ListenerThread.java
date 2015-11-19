@@ -24,8 +24,6 @@ import org.isw.Logger;
 import org.isw.Machine;
 import org.isw.MachineResultPacket;
 import org.isw.Macros;
-import org.isw.MaintenanceRequestPacket;
-import org.isw.MaintenanceTuple;
 import org.isw.MemeticAlgorithm;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
@@ -72,6 +70,8 @@ public class ListenerThread extends Thread
 				}
 				else if(o instanceof FlagPacket && ((FlagPacket)o).flag == Macros.PROCESS_COMPLETE){
 					// simulation is over
+					Machine.setStatus(Macros.MACHINE_PROCESS_COMPLETE);
+					Logger.log(Machine.getStatus(), "Process complete.");
 					writeResults();
 					return;
 				}
@@ -149,7 +149,8 @@ public class ListenerThread extends Thread
 	}
 
 
-	private void plan(Schedule schedule) throws InterruptedException, ExecutionException, IOException {
+	private void plan(Schedule schedule) throws InterruptedException, ExecutionException, IOException 
+	{
 		//Parse schedule from packet.
 		jl = schedule;
 		Machine.setOldStatus(Machine.getStatus());
