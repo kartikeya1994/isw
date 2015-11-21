@@ -1,6 +1,5 @@
 package org.isw.threads;
 
-import java.awt.JobAttributes;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
@@ -42,7 +41,7 @@ public class JobExecutor{
 	Schedule jobList;
 	LinkedList<FailureEvent> failureEvents;
 	FailureEvent upcomingFailure;
-	boolean replan = false;
+	boolean replan;
 	long time;
 	public JobExecutor(DatagramSocket socket, ServerSocket tcpSocket,InetAddress schedulerIP, InetAddress maintenanceIP){
 		this.socket = socket;
@@ -53,30 +52,38 @@ public class JobExecutor{
 		replanPacket = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REPLAN);
 		idlePacket = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.JOBS_DONE);
 		time = 0;
+		replan = false;
 	}
 
 	public void timeSync() throws IOException //end of one time unit
 	{
 		//send appropriate timeSync packet
+		//System.out.println("Time: "+time);
 		if(replan)
-			socket.send(replanPacket);
-		else if(Machine.getStatus() == Macros.MACHINE_IDLE)
-			socket.send(idlePacket);
+		{
+			//System.out.println("Sending replan packet time: "+ time);
+			//socket.send(replanPacket);
+			FlagPacket.sendTCP(Macros.REPLAN, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP_TIMESYNC);
+		}
 		else
-			socket.send(timePacket);
-
-		replan = false;
-
+			//socket.send(timePacket);
+			FlagPacket.sendTCP(Macros.REQUEST_TIME, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP_TIMESYNC);
+			
 		//get timesync response
-		FlagPacket res = FlagPacket.receiveUDP(socket);
+		//FlagPacket res = FlagPacket.receiveUDP(socket);
+		FlagPacket res = FlagPacket.receiveTCP(tcpSocket,0);
+		
+//		if(replan)
+//			if(res.flag == Macros.INITIATE_REPLAN)
+//				System.out.println("Replan start packet received, time: "+ time);
 
 		if(res.flag == Macros.INITIATE_REPLAN)
 		{
 			try{
-				//int oldStatus = Machine.getStatus();
+				int oldStatus = Machine.getStatus();
 				Machine.setStatus(Macros.MACHINE_REPLANNING);
 				Logger.log(Machine.getStatus(), "Replanning");
-				System.out.println("Replanning");
+				System.out.println("Replanning, time: "+time);
 
 				FlagPacket.sendTCP(Macros.SCHED_REPLAN_INIT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);
 
@@ -86,9 +93,10 @@ public class JobExecutor{
 
 				planPM();
 
-				//Machine.setStatus(oldStatus);
+				Machine.setStatus(oldStatus);
 				Logger.log(Machine.getStatus(), "Replanning finished.");
-				System.out.println("Replanning finished.");;
+				System.out.println("Replanning finished.");
+				replan = false;
 			}catch (Exception e){
 				e.printStackTrace();
 			}
@@ -155,7 +163,9 @@ public class JobExecutor{
 
 		//receive PM incp schedule from Maintenance
 		jobList = Schedule.receive(tcpSocket);
-		System.out.println("Received PM incorporated schedule from Maintenance");
+		System.out.println("Received PM incorporated schedule from Maintenance.");
+		Logger.log(Machine.getStatus(), "New schedule: "+jobList.printSchedule());
+		System.out.println("New schedule: "+jobList.printSchedule());
 	}
 
 	void removePMJobs(Schedule jl) throws IOException{
@@ -295,7 +305,7 @@ public class JobExecutor{
 				 * Add CM job to top of schedule.
 				 * Set replan to true
 				 */
-				System.out.println("Machine Failed.");
+				System.out.println("\n**************\nMachine Failed\n**************");
 				Logger.log(Machine.getStatus(), "Machine Failed. Requesting maintenance...");
 				Job cmJob = new Job("CM", upcomingFailure.repairTime, Machine.compList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
 				cmJob.setFixedCost(Machine.compList[upcomingFailure.compNo].getCMFixedCost());
@@ -307,16 +317,16 @@ public class JobExecutor{
 				current = jobList.peek();
 
 				replan = true;
-				time++;
-				System.out.println("Requesting replan.");
-				timeSync();
-				continue;
+				//time++;
+				System.out.println("Initiating replan. time: "+time);
+				//timeSync();
+				//continue;
 			}
 
 			if(!replan && (Machine.getStatus() == Macros.MACHINE_WAITING_FOR_CM_LABOUR 
 					|| Machine.getStatus() == Macros.MACHINE_WAITING_FOR_PM_LABOUR))
 			{
-				System.out.println("Waiting for labour");
+				System.out.println("Waiting for labour "+ replan);
 				// see if maintenance labour is available at this time instant
 				int[] labour_req = null;
 

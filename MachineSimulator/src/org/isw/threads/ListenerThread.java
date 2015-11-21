@@ -34,7 +34,7 @@ public class ListenerThread extends Thread
 	InetAddress schedulerIP;
 	ServerSocket tcpSocket;
 	DatagramSocket udpSocket;
-	private InetAddress maintenanceIP =null;
+	private InetAddress maintenanceIP = null;
 	JobExecutor jobExecutor;
 
 	public ListenerThread(InetAddress schedulerIP, InetAddress maintenanceIP,DatagramSocket udpSocket,ServerSocket tcpSocket) {
@@ -73,6 +73,7 @@ public class ListenerThread extends Thread
 					Machine.setStatus(Macros.MACHINE_PROCESS_COMPLETE);
 					Logger.log(Machine.getStatus(), "Process complete.");
 					writeResults();
+					FlagPacket.sendTCP(Macros.PROCESS_COMPLETE, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP_TIMESYNC);
 					return;
 				}
 				else if(o instanceof Schedule)

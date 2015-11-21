@@ -106,7 +106,7 @@ public class JobSchedThread extends Thread
 			//collect remaining schedules from machines
 			InetAddress ip = machineIPs.nextElement();
 			FlagPacket.sendTCP(Macros.REQUEST_PREVIOUS_SHIFT, ip, Macros.MACHINE_PORT_TCP);		
-			System.out.println("Sent schedule get req to machines");
+			System.out.println("Getting leftover jobs from machine: "+ip);
 			try 
 			{
 				Schedule jl = Schedule.receive(tcpSocket);
@@ -125,7 +125,7 @@ public class JobSchedThread extends Thread
 		//sort jobs in descending order of job time
 		Collections.sort(jobArray, new JobComparator());
 
-		System.out.println("Job list: ");
+		System.out.println("Jobs to rearrange: ");
 		for(int i=0;i<jobArray.size();i++){
 			/*
 			 * Generate new schedule: Get schedule with minimum total time,
@@ -164,6 +164,11 @@ public class JobSchedThread extends Thread
 		{
 			// Dont remove first job if CM job or Normal Job that was started
 			start = 1;
+			if(first.getJobType() == Job.JOB_CM 
+					&& jl.jobAt(1).getJobType() == Job.JOB_NORMAL 
+					&& jl.jobAt(1).getStatus() == Job.STARTED)
+				start = 2; //CM job followed by started normal job
+				
 		}
 
 		else if(first.getJobType() == Job.JOB_PM && 

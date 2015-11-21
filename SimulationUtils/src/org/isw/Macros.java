@@ -1,5 +1,7 @@
 package org.isw;
 
+import java.net.SocketImpl;
+
 
 public class Macros {
 	public static final int REQUEST_SCHEDULING_DEPT_IP = 1;
@@ -57,10 +59,10 @@ public class Macros {
 	public static final int MAINTENANCE_DEPT_PORT_TCP = 8894;
 	public static final int ISW_PORT = 8895;
 	public static final int ISW_TCP_PORT = 8896;
+	public static final int SCHEDULING_DEPT_PORT_TCP_TIMESYNC = 8897;
 	public static final String SCHEDULING_DEPT_GROUP = "224.1.1.1";
 	public static final String ISW_GROUP = "224.1.1.3";
-	public static final String MAINTENANCE_DEPT_GROUP = "224.1.1.4";
-	
+	public static final String MAINTENANCE_DEPT_GROUP = "224.1.1.4";	
 
 	
 	public static int TIME_SCALE_FACTOR = 1;
