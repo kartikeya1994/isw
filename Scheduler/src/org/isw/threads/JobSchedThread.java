@@ -50,13 +50,13 @@ public class JobSchedThread extends Thread
 		}
 
 		parseJobs(); // from Excel sheet
-		
+
 		int shiftsDone  = 0;
 		while(shiftsDone < shiftCount)
 		{	
 			doScheduling();
 			// schedules are sent
-			
+
 			FlagPacket fp;
 			int count = 0;
 			boolean replan = false;
@@ -67,7 +67,7 @@ public class JobSchedThread extends Thread
 					replan = true;
 				else if(fp.flag != Macros.REQUEST_NEXT_SHIFT)
 					continue;
-				
+
 				count++;
 			}
 			if(replan)
@@ -78,13 +78,23 @@ public class JobSchedThread extends Thread
 				mrp.sendTCP();
 				continue;
 			}
-			
+
 			shiftsDone++;
-			
-			//Let maintenance know that shift is over
-			MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, 
-					Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
-			mrp.sendTCP();
+
+			if(shiftsDone == shiftCount)
+			{
+				//Let maintenance know that all shifts are over
+				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, 
+						Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-4));
+				mrp.sendTCP();
+			}
+			else
+			{
+				//Let maintenance know that shift is over
+				MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(SchedulingDept.maintenanceIP, 
+						Macros.MAINTENANCE_DEPT_PORT_TCP, new MaintenanceTuple(-1));
+				mrp.sendTCP();
+			}
 		}
 
 		System.out.println("Process Complete");
@@ -168,15 +178,13 @@ public class JobSchedThread extends Thread
 					&& jl.jobAt(1).getJobType() == Job.JOB_NORMAL 
 					&& jl.jobAt(1).getStatus() == Job.STARTED)
 				start = 2; //CM job followed by started normal job
-				
+
 		}
 
-		else if(first.getJobType() == Job.JOB_PM && 
-				(first.getStatus() == Job.STARTED || first.getStatus() == Job.SERIES_STARTED))
+		else if(first.getJobType() == Job.JOB_PM)
 		{
-			// if PM job was started, remove entire series
 			while(first.getJobType() == Job.JOB_PM)
-				first = jl.jobAt(++start);	
+				first = jl.jobAt(++start);
 		}
 
 		//add jobs that were not started to jobArray
@@ -228,7 +236,7 @@ class JobComparator implements Comparator<Job> {
 	@Override
 	public int compare(Job a, Job b) 
 	{
-		return Double.compare(a.getJobTime(),b.getJobTime());
+		return Double.compare(b.getJobTime(),a.getJobTime());
 	}
 
 

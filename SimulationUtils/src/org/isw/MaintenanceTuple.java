@@ -16,7 +16,7 @@ public class MaintenanceTuple implements Serializable
 	{
 		this.start = start;
 		this.end = end;
-		this.labour = labour;
+		this.labour = labour.clone();
 	}
 	
 	public MaintenanceTuple()
@@ -26,7 +26,7 @@ public class MaintenanceTuple implements Serializable
 	
 	public MaintenanceTuple(int start)
 	{
-		this.start = -1;
+		this.start = start;
 	}
 
 	public void print() {

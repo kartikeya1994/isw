@@ -140,13 +140,19 @@ public class JobExecutor{
 
 		if(problemSize<12)
 		{
-			System.out.println("BF");
+			/*
+			 * Use Brute Force Search for smaller problem sizes
+			 * problemSize = no. of components * no. of PM opportunities
+			 * 2^(problemSize) gives all possible PM schedules.
+			 */
+			System.out.println("Using: Brute Force Search");
 			BruteForceAlgorithm bfa = new BruteForceAlgorithm(jobList,intArray,noPMSim);
 			results  = bfa.execute();
 		}
 		else
 		{
-			System.out.println("MA");
+			System.out.println("Using: Memetic Algorithm");
+			//TODO:
 			MemeticAlgorithm ma = new MemeticAlgorithm(500,200,jobList,intArray,noPMSim,false);
 			results = ma.execute();
 		}
@@ -187,7 +193,7 @@ public class JobExecutor{
 		if(!jl.isEmpty() && jl.jobAt(0).getJobType()==Job.JOB_PM)
 		{
 			long seriesTTR = 0;
-			int[] seriesLabour = {0,0,0};
+			//int[] seriesLabour = {0,0,0};
 			for(int i=0; i<jl.getSize(); i++)
 			{
 				// change jobStatus to NOT_STARTED
@@ -198,12 +204,12 @@ public class JobExecutor{
 
 				// recompute seriesTTR and seriesLabour
 				seriesTTR += j.getJobTime();
-				if(seriesLabour[0]<j.getSeriesLabour()[0])
-					seriesLabour[0] = j.getSeriesLabour()[0];
-				if(seriesLabour[1]<j.getSeriesLabour()[1])
-					seriesLabour[1] = j.getSeriesLabour()[1];
-				if(seriesLabour[2]<j.getSeriesLabour()[2])
-					seriesLabour[2] = j.getSeriesLabour()[2];
+//				if(seriesLabour[0]<j.getSeriesLabour()[0])
+//					seriesLabour[0] = j.getSeriesLabour()[0];
+//				if(seriesLabour[1]<j.getSeriesLabour()[1])
+//					seriesLabour[1] = j.getSeriesLabour()[1];
+//				if(seriesLabour[2]<j.getSeriesLabour()[2])
+//					seriesLabour[2] = j.getSeriesLabour()[2];
 			}
 
 			for(int i=0; i<jl.getSize(); i++)
@@ -212,7 +218,7 @@ public class JobExecutor{
 				if(j.getJobType()!=Job.JOB_PM)
 					break;
 				j.setSeriesTTR(seriesTTR);
-				j.setSeriesLabour(seriesLabour);
+				//j.setSeriesLabour(seriesLabour);
 			}
 		}
 	}
@@ -326,7 +332,7 @@ public class JobExecutor{
 			if(!replan && (Machine.getStatus() == Macros.MACHINE_WAITING_FOR_CM_LABOUR 
 					|| Machine.getStatus() == Macros.MACHINE_WAITING_FOR_PM_LABOUR))
 			{
-				System.out.println("Waiting for labour "+ replan);
+				System.out.println("Waiting for labour ");
 				// see if maintenance labour is available at this time instant
 				int[] labour_req = null;
 
@@ -395,9 +401,6 @@ public class JobExecutor{
 					System.out.format("Job %s started.\n",current.getJobName());
 					Logger.log(Machine.getStatus(), "Job "+current.getJobName()+" started.");
 				}
-				
-//				else
-//					Logger.log(Machine.getStatus(), "");
 				
 				// no failure, no maintenance. Just increment cost models normally.
 				Machine.procCost += current.getJobCost()/Macros.TIME_SCALE_FACTOR;
@@ -475,11 +478,12 @@ public class JobExecutor{
 					comp1.initAge = (1-comp1.pmRF)*comp1.initAge;
 					Machine.compPMJobsDone[current.getCompNo()]++;
 					Machine.pmJobsDone++;
-					// let maintenance know how much labour has been released (for logging purpose only)
-					if(jobList.getSize()<=1 || jobList.jobAt(1).getStatus()!=Job.SERIES_STARTED)
+
+					if(jobList.getSize()<=1 || jobList.jobAt(1).getJobType() != Job.JOB_PM)
 					{
 						MaintenanceTuple release = new MaintenanceTuple(-2, 0, current.getSeriesLabour());
-						MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, release);
+						MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, 
+																			Macros.MAINTENANCE_DEPT_PORT_TCP, release);
 						mrp.sendTCP();
 					}
 
@@ -494,7 +498,7 @@ public class JobExecutor{
 					comp.initAge = (1 - comp.cmRF)*comp.initAge;
 					Machine.cmJobsDone++;
 					Machine.compCMJobsDone[current.getCompNo()]++;
-					// let maintenance know how much labour has been released (for logging purpose only)
+
 					MaintenanceTuple release = new MaintenanceTuple(-2, 0, comp.getCMLabour());
 					MaintenanceRequestPacket mrp = new MaintenanceRequestPacket(maintenanceIP, Macros.MAINTENANCE_DEPT_PORT_TCP, release);
 					mrp.sendTCP();

@@ -5,7 +5,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
 import org.isw.threads.ListenerThread;
@@ -48,12 +47,8 @@ public class Maintenance
 				else
 					continue;
 			}
-		} catch (SocketException e1) {
-			// TODO Auto-generated catch block
+		} catch (IOException e1) {
 			e1.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 		MachineList machineList = new MachineList();
 		ListenerThread listener = new ListenerThread(machineList);
@@ -66,7 +61,7 @@ public class Maintenance
 				//Receive signals from Scheduling Dept
 				try
 				{
-					socket.receive(packet); 
+					socket.receive(packet);
 				}
 				catch(SocketTimeoutException stoe) {
 					continue; 

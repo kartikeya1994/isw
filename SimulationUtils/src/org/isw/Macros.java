@@ -1,6 +1,5 @@
 package org.isw;
 
-import java.net.SocketImpl;
 
 
 public class Macros {

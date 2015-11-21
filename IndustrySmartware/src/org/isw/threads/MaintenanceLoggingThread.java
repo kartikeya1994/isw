@@ -38,7 +38,8 @@ public class MaintenanceLoggingThread implements Runnable{
 					@Override
 					public void run() {
 						 ms.appendLog(msp.logMessage);
-						 ms.setLabourStatus(msp.labour);
+						 if(msp.labour != null)
+							 ms.setLabourStatus(msp.labour);
 					}
 					 
 				 });

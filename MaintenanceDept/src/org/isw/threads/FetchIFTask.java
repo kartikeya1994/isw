@@ -22,7 +22,7 @@ public class FetchIFTask implements Callable<IFPacket>
 
 	@Override
 	public IFPacket call() throws Exception {
-		System.out.println(port);
+		//System.out.println(port);
 		return IFPacket.receive(tcpSocket); //blocking call that waits for reply
 	}
 	
