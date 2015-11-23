@@ -1,4 +1,0 @@
-#!/bin/sh
-ant -buildfile MachineSimulator.xml
-ant -buildfile Scheduler.xml
-ant -buildfile MaintenanceDept.xml

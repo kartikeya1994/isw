@@ -22,7 +22,7 @@ import org.isw.Component;
 import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.Job;
-import org.isw.Logger;
+import org.isw.MachineLogger;
 import org.isw.Machine;
 import org.isw.MachineResultPacket;
 import org.isw.Macros;
@@ -59,6 +59,7 @@ public class JobExecutor{
 	{
 		//send appropriate timeSync packet
 		//System.out.println("Time: "+time);
+		MachineLogger.timeLog(time);
 		if(replan)
 		{
 			//System.out.println("Sending replan packet time: "+ time);
@@ -82,7 +83,7 @@ public class JobExecutor{
 			try{
 				int oldStatus = Machine.getStatus();
 				Machine.setStatus(Macros.MACHINE_REPLANNING);
-				Logger.log(Machine.getStatus(), "Replanning");
+				MachineLogger.log(Machine.getStatus(), "Replanning");
 				System.out.println("Replanning, time: "+time);
 
 				FlagPacket.sendTCP(Macros.SCHED_REPLAN_INIT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);
@@ -94,7 +95,7 @@ public class JobExecutor{
 				planPM();
 
 				Machine.setStatus(oldStatus);
-				Logger.log(Machine.getStatus(), "Replanning finished.");
+				MachineLogger.log(Machine.getStatus(), "Replanning finished.");
 				System.out.println("Replanning finished.");
 				replan = false;
 			}catch (Exception e){
@@ -170,7 +171,7 @@ public class JobExecutor{
 		//receive PM incp schedule from Maintenance
 		jobList = Schedule.receive(tcpSocket);
 		System.out.println("Received PM incorporated schedule from Maintenance.");
-		Logger.log(Machine.getStatus(), "New schedule: "+jobList.printSchedule());
+		MachineLogger.log(Machine.getStatus(), "New schedule: "+jobList.printSchedule());
 		System.out.println("New schedule: "+jobList.printSchedule());
 	}
 
@@ -303,8 +304,14 @@ public class JobExecutor{
 			 * Perform action according to what job is running
 			 * Increment costs or wait for labour to arrive for CM/PM
 			 */
+			boolean failureEvent = false;
+			synchronized(Machine.lock){
+				failureEvent = Machine.failureEvent;
+				if(failureEvent)
+					Machine.failureEvent = false;
+			}
 			if(current.getJobType()!= Job.JOB_CM && current.getJobType()!= Job.JOB_PM 
-					&& upcomingFailure!=null && time == upcomingFailure.failureTime)
+					&& (failureEvent ||upcomingFailure!=null && time == upcomingFailure.failureTime))
 			{
 				/*
 				 * Machine fails. 
@@ -312,14 +319,14 @@ public class JobExecutor{
 				 * Set replan to true
 				 */
 				System.out.println("\n**************\nMachine Failed\n**************");
-				Logger.log(Machine.getStatus(), "Machine Failed. Requesting maintenance...");
+				MachineLogger.log(Machine.getStatus(), "Machine Failed. Requesting maintenance...");
 				Job cmJob = new Job("CM", upcomingFailure.repairTime, Machine.compList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
 				cmJob.setFixedCost(Machine.compList[upcomingFailure.compNo].getCMFixedCost());
 				cmJob.setCompNo(upcomingFailure.compNo);
 				jobList.addJobTop(cmJob);
 
 				Machine.setStatus(Macros.MACHINE_WAITING_FOR_CM_LABOUR);
-				Logger.log(Machine.getStatus(), "");
+				MachineLogger.log(Machine.getStatus(), "");
 				current = jobList.peek();
 
 				replan = true;
@@ -366,14 +373,14 @@ public class JobExecutor{
 						Machine.setStatus(Macros.MACHINE_CM);
 					if(current.getJobType() == Job.JOB_PM)
 						Machine.setStatus(Macros.MACHINE_PM);
-					Logger.log(Machine.getStatus(), "Request granted");
+					MachineLogger.log(Machine.getStatus(), "Request granted");
 					continue;
 				}
 				else if(flagPacket.flag == Macros.LABOUR_DENIED)
 				{
 					System.out.println("Request denied. Not enough labour");
 
-					Logger.log(Machine.getStatus(),"Request denied. Not enough labour");
+					MachineLogger.log(Machine.getStatus(),"Request denied. Not enough labour");
 					// machine waits for labour
 					// increment cost models accordingly
 					Machine.downTime++;
@@ -391,7 +398,7 @@ public class JobExecutor{
 					if(current.getStatus() == Job.STARTED)
 					{
 						System.out.println("Resuming Job "+ current.getJobName());
-						Logger.log(Machine.getStatus(), "Resuming Job "+ current.getJobName());
+						MachineLogger.log(Machine.getStatus(), "Resuming Job "+ current.getJobName());
 					}
 				}
 				
@@ -399,7 +406,7 @@ public class JobExecutor{
 				{
 					current.setStatus(Job.STARTED);
 					System.out.format("Job %s started.\n",current.getJobName());
-					Logger.log(Machine.getStatus(), "Job "+current.getJobName()+" started.");
+					MachineLogger.log(Machine.getStatus(), "Job "+current.getJobName()+" started.");
 				}
 				
 				// no failure, no maintenance. Just increment cost models normally.
@@ -416,7 +423,7 @@ public class JobExecutor{
 					// request PM if labours not yet allocated
 					System.out.println("Waiting for PM labour");
 					Machine.setStatus(Macros.MACHINE_WAITING_FOR_PM_LABOUR);
-					Logger.log(Machine.getStatus(), "");
+					MachineLogger.log(Machine.getStatus(), "");
 					continue;
 				}
 
@@ -448,7 +455,7 @@ public class JobExecutor{
 				{
 					System.out.println("CM started.");
 					current.setStatus(Job.STARTED);
-					Logger.log(Machine.getStatus(), "CM started.");
+					MachineLogger.log(Machine.getStatus(), "CM started.");
 				}
 				Machine.cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
@@ -519,7 +526,7 @@ public class JobExecutor{
 					// update Machine status on job completion
 					if(jobList.isEmpty())
 						Machine.setStatus(Macros.MACHINE_IDLE);
-					Logger.log(Machine.getStatus(), "Job "+ job.getJobName()+" complete");
+					MachineLogger.log(Machine.getStatus(), "Job "+ job.getJobName()+" complete");
 				}
 				catch(IOException e){
 					e.printStackTrace();
@@ -577,7 +584,7 @@ public class JobExecutor{
 		for(int i=0 ;i<Machine.compList.length; i++){
 			System.out.format("Component %s: PM %f| CM %f\n",Machine.compList[i].compName,(double)Machine.compPMJobsDone[i]/simCount,(double)Machine.compCMJobsDone[i]/simCount);
 		}
-		Logger.log(mrp);
+		MachineLogger.log(mrp);
 	}
 
 

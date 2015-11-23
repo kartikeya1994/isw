@@ -20,7 +20,7 @@ import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.InitConfig;
 import org.isw.Job;
-import org.isw.Logger;
+import org.isw.MachineLogger;
 import org.isw.Machine;
 import org.isw.MachineResultPacket;
 import org.isw.Macros;
@@ -71,7 +71,7 @@ public class ListenerThread extends Thread
 				else if(o instanceof FlagPacket && ((FlagPacket)o).flag == Macros.PROCESS_COMPLETE){
 					// simulation is over
 					Machine.setStatus(Macros.MACHINE_PROCESS_COMPLETE);
-					Logger.log(Machine.getStatus(), "Process complete.");
+					MachineLogger.log(Machine.getStatus(), "Process complete.");
 					writeResults();
 					FlagPacket.sendTCP(Macros.PROCESS_COMPLETE, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP_TIMESYNC);
 					return;
@@ -156,7 +156,8 @@ public class ListenerThread extends Thread
 		jl = schedule;
 		Machine.setOldStatus(Machine.getStatus());
 		Machine.setStatus(Macros.MACHINE_PLANNING);
-		Logger.log(Machine.getStatus(), "Received schedule from scheduler:" + jl.printSchedule()+"\nRunning simulations..");
+		MachineLogger.log(Machine.getStatus(), "Received schedule from scheduler:" + jl.printSchedule()+"\nRunning simulations..");
+		
 		System.out.println("Received schedule from scheduler:" + jl.printSchedule());
 		System.out.println("Total time" + jl.getSum());
 		System.out.println("Planning started");
@@ -208,7 +209,7 @@ public class ListenerThread extends Thread
 
 		//receive PM incp schedule from Maintenance
 		jl = Schedule.receive(tcpSocket);
-		Logger.log(Machine.getStatus(),"Received schedule from maintenance:" + jl.printSchedule());
+		MachineLogger.log(Machine.getStatus(),"Received schedule from maintenance:" + jl.printSchedule());
 		System.out.println("Received schedule from maintenance:" + jl.printSchedule());
 		System.out.println("Total time of scheduled jobs: " + jl.getSum());
 
@@ -228,7 +229,7 @@ public class ListenerThread extends Thread
 		System.out.println(Machine.compList.length);
 		Machine.compCMJobsDone = new int[Machine.compList.length];
 		Machine.compPMJobsDone = new int[Machine.compList.length];
-		Logger.connect();
+		MachineLogger.connect();
 		System.out.println("Machine initialized");
 	}
 
@@ -277,7 +278,7 @@ public class ListenerThread extends Thread
 		for(int i=0 ;i<Machine.compList.length; i++){
 			System.out.format("Component %s: PM %f| CM %f\n",Machine.compList[i].compName,(double)Machine.compPMJobsDone[i]/simCount,(double)Machine.compCMJobsDone[i]/simCount);
 		}
-		Logger.log(mrp);
+		MachineLogger.log(mrp);
 	}
 
 

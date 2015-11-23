@@ -9,5 +9,8 @@
 	<classpathentry kind="lib" path="lib/poi-ooxml-schemas-3.10-FINAL-20140208.jar"/>
 	<classpathentry kind="lib" path="lib/xmlbeans-5.3.0-m7.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/SimulationUtils/lib/nanohttpd-websocket-2.2.0.jar"/>
+	<classpathentry kind="lib" path="/SimulationUtils/lib/nanohttpd-2.2.0.jar"/>
+	<classpathentry kind="lib" path="/SimulationUtils/lib/json-simple-1.1.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

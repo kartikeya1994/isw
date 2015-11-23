@@ -7,15 +7,17 @@ import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 
 import org.isw.threads.ListenerThread;
+import org.isw.threads.ServerThread;
 
 public class Machine 
 {
 	static int machineStatus = Macros.MACHINE_IDLE;
-
+	public static final Object lock = new Object();
+	static ServerThread serverThread;
+	public static WebSocketServer wsd;
 	static InetAddress schedulerIP;
 	static InetAddress maintenanceIP;
 	public static ServerSocket tcpSocket;
-	
 	static int machineNo;
 	public static int shiftCount;
 	public static Component[] compList;
@@ -59,6 +61,10 @@ public class Machine
 			if(args[0].equals("NPM"))
 				Macros.NPM = true;
 		}
+		failureEvent = false;
+		wsd = new WebSocketServer(9091);
+		serverThread = new ServerThread(wsd);
+		serverThread.start();
 		boolean maintenanceRegistered=false;
 		boolean iswRegistered = false;
 		boolean schedulerRegistered = false;
@@ -105,7 +111,7 @@ public class Machine
 					schedulerRegistered = true;
 					break;
 				case Macros.REPLY_ISW_IP:	
-					Logger.init(packetIn.ip);
+					MachineLogger.init(packetIn.ip);
 					System.out.println("Registered to isw: "+ packetIn.ip.getHostAddress());
 					iswRegistered = true;
 					break;
@@ -137,6 +143,8 @@ public class Machine
 		}
 	}
 	static int oldStatus = 0;
+	public static boolean failureEvent;
+	
 	public static void setOldStatus(int status) {
 		oldStatus = status;
 		

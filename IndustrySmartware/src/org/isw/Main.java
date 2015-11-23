@@ -33,6 +33,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.isw.threads.ListenerThread;
 import org.isw.threads.LoggingThread;
+import org.isw.threads.ServerThread;
 
 import com.aquafx_project.AquaFx;
 
@@ -48,27 +49,30 @@ public class Main extends Application {
 	Stage stage;
 	DatagramSocket udpSocket;
 	public static double[] labourCost;
+	private WebSocketServer ws;
+	static MachineList machineList;
 	@Override
 	public void start(Stage primaryStage) {
-		
+		ws = new WebSocketServer(9091);
 		try {
 			parseExcel();
-			 udpSocket = new DatagramSocket(Macros.ISW_PORT);
-			 stage = primaryStage;
-			 scene1 = getScene1();
-			 scene2 = getScene2();
-			//FlatterFX.style();
-			//scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+			udpSocket = new DatagramSocket(Macros.ISW_PORT);
+			stage = primaryStage;
+			scene1 = getScene1();
+			scene2 = getScene2();
 			primaryStage.setTitle("Industry Smartware App");
 			primaryStage.setScene(scene1);
 			primaryStage.show();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+		ServerThread serverThread = new ServerThread(ws);
+		serverThread.start();
 		machines = new HashMap<InetAddress,Component[]>();
-		MachineList machineList = new MachineList();
-		ListenerThread listener = new ListenerThread(machineList);
+		machineList = new MachineList();
+		ListenerThread listener = new ListenerThread(machineList,ws);
 		listener.start();
+		
 	}
 	
 	private void parseExcel() throws IOException {
@@ -239,7 +243,7 @@ public class Main extends Application {
 	}
 
 	public static void main(String[] args) {
-		AquaFx.style();
+		//AquaFx.style();
 		launch(args);
 	}
 }

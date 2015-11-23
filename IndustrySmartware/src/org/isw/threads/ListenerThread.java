@@ -12,13 +12,16 @@ import org.isw.FlagPacket;
 import org.isw.MachineList;
 import org.isw.Macros;
 import org.isw.Main;
+import org.isw.WebSocketServer;
 
 public class ListenerThread extends Thread
 {
 	MachineList machineList;
-	public ListenerThread(MachineList machineList)
+	WebSocketServer ws; 
+	public ListenerThread(MachineList machineList, WebSocketServer	ws)
 	{
 		this.machineList=machineList;
+		this.ws = ws;
 	}
 
 	public void run()
@@ -34,7 +37,7 @@ public class ListenerThread extends Thread
 				FlagPacket fp = FlagPacket.receiveMulticast(socket);
 				if((fp.flag & Macros.REQUEST_ISW_IP) != 0){
 					if((fp.flag & Macros.MACHINE_FLAG) != 0){
-					ClientHandlerThread worker = new ClientHandlerThread(socket, fp, machineList);
+					ClientHandlerThread worker = new ClientHandlerThread(socket, fp, machineList,ws);
 					worker.start();
 					}
 					else if((fp.flag & Macros.SCHEDULING_DEPT_FLAG) !=0 ){
