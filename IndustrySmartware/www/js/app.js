@@ -87,8 +87,8 @@ $(document).ready(function() {
 		this.ws.onclose = function()
 		{ 
 			console.log("closing connection");
-			context.list_el.remove();
-			context.window_el.remove();
+			//context.list_el.remove();
+			//context.window_el.remove();
 		};
 		this.ws.onerror = function()
 		{
