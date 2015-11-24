@@ -1,4 +1,10 @@
 $(document).ready(function() { 
+	
+	var is_mobile = false;
+
+    if( $('#menu-toggle').css('display')=='none') {
+        is_mobile = true;       
+    }
 	var statusList = {
 			"25" : "IDLE",
 			"30" : "UNDERGOING CORRECTIVE MAINTENANCE",
@@ -103,7 +109,8 @@ $(document).ready(function() {
 				machines[ip].window_el.hide();
 			}
 			 context.window_el.show();
-			 $("#wrapper").toggleClass("toggled");
+			 if(is_mobile == true)
+				 $("#wrapper").toggleClass("toggled");
 		});
 		
 	}
