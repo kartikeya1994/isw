@@ -25,7 +25,8 @@ public class MachineLogger{
 		obj.put("type", "log");
 		obj.put("log", logMessage);
 		obj.put("status_code", String.valueOf(status));
-		Machine.wsd.getWebSocket().send(obj.toJSONString());
+		for(NanoWebSocket nws : Machine.wsd.getWebSockets())
+			 nws.send(obj.toJSONString());
 	}
 	
 	public static void log(MachineResultPacket mrp) {
@@ -35,7 +36,8 @@ public class MachineLogger{
 		JSONObject obj = new JSONObject();
 		obj.put("type", "time_stamp");
 		obj.put("time", String.valueOf(time));
-		Machine.wsd.getWebSocket().send(obj.toJSONString());
+		for(NanoWebSocket nws : Machine.wsd.getWebSockets())
+			 nws.send(obj.toJSONString());
 		
 	}
 }

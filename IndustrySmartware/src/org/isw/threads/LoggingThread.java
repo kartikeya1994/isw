@@ -18,7 +18,7 @@ public class LoggingThread implements Runnable {
 			while(true){
 				
 				Socket socket = tcpSocket.accept();
-				if(socket.getInetAddress().equals(Main.maintenanceIP))
+				if(socket.getPort() == Macros.MAINTENANCE_DEPT_PORT_TCP)
 					new Thread(new MaintenanceLoggingThread(socket)).start();
 				else
 					new Thread(new MachineLoggingThread(socket,lock)).start();

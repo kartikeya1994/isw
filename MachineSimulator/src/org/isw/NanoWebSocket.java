@@ -8,15 +8,16 @@ import fi.iki.elonen.NanoWSD.WebSocketFrame;
 import fi.iki.elonen.NanoWSD.WebSocketFrame.CloseCode;
 
 public class NanoWebSocket extends WebSocket{
-
-	public NanoWebSocket(IHTTPSession handshakeRequest) {
+	WebSocketServer wsd;
+	public NanoWebSocket(IHTTPSession handshakeRequest, WebSocketServer wsd) {
 		super(handshakeRequest);
-		// TODO Auto-generated constructor stub
+		this.wsd = wsd;
+		
 	}
 
 	@Override
 	protected void onClose(CloseCode arg0, String arg1, boolean arg2) {
-		// TODO Auto-generated method stub
+		wsd.removeWebSocket(this);
 		
 	}
 

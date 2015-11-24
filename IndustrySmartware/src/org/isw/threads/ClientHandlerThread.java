@@ -14,6 +14,7 @@ import org.isw.FlagPacket;
 import org.isw.MachineList;
 import org.isw.Macros;
 import org.isw.Main;
+import org.isw.NanoWebSocket;
 import org.isw.WebSocketServer;
 import org.isw.ui.ComponentTableView;
 import org.json.simple.JSONObject;
@@ -42,11 +43,13 @@ class ClientHandlerThread extends Thread {
 			{
 				System.out.println("Newly joined: "+packet.ip);
 				machineList.add(packet.ip, packet.port);
-				if(ws.getWebSocket() != null){
-				JSONObject obj = new JSONObject();
+				if(!ws.getWebSockets().isEmpty()){
+					JSONObject obj = new JSONObject();
 					obj.put("type","machine");
 					obj.put("ip", packet.ip.getHostAddress());
-					ws.getWebSocket().send(obj.toJSONString());
+				for(NanoWebSocket nws : ws.getWebSockets()){			
+						nws.send(obj.toJSONString());
+					}
 				}
 				Main.machines.put(packet.ip,null);
 				Platform.runLater(new Runnable(){

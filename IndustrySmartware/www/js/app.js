@@ -51,7 +51,10 @@ $(document).ready(function() {
 		this.ws = new WebSocket("ws://"+ip+":9091/");
 		
 		this.appendLog = function(log){
-			this.window_el.find("#console").append(log+"<br/>");
+			var console_el = this.window_el.find("#console");
+			console_el.append(log+"<br/>");
+			console_el.scrollTop(console_el.scrollHeight);
+			
 		};
 		this.setStatus = function(status_code){
 			var el = this.window_el.find("#status");

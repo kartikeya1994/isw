@@ -13,15 +13,17 @@ import fi.iki.elonen.NanoWSD.WebSocketFrame.CloseCode;
 
 public class NanoWebSocket extends WebSocket{
 
-	public NanoWebSocket(IHTTPSession handshakeRequest) {
+	WebSocketServer wsd;
+	public NanoWebSocket(IHTTPSession handshakeRequest, WebSocketServer wsd) {
 		super(handshakeRequest);
+		this.wsd = wsd;
 		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	protected void onClose(CloseCode arg0, String arg1, boolean arg2) {
 		System.out.println("Connection closed");
-		
+		wsd.removeWebSocket(this);		
 	}
 
 	@Override
