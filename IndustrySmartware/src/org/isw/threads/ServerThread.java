@@ -12,20 +12,13 @@ public class ServerThread extends Thread{
 	int port = 9091;
 	public ServerThread(WebSocketServer ws) {
 		this.ws = ws;
+		this.setDaemon(false);
 		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		 String[] args = {
-                 "--host",
-                 "127.0.0.1",
-                 "--port",
-                 "9090",
-                 "--dir",
-                 "www"
-             };
 		 
 		 
          try {
@@ -39,9 +32,21 @@ public class ServerThread extends Thread{
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-             SimpleWebServer.main(args);
-             
+            
+         runWebServer();
             
 	}
-
+	private void runWebServer() {
+		 String[] args = {
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "9090",
+                "--dir",
+                "www"
+            };
+		 
+		SimpleWebServer.main(args);
+		
+	}
 }
