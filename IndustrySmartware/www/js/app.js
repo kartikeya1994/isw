@@ -53,7 +53,7 @@ $(document).ready(function() {
 		this.appendLog = function(log){
 			var console_el = this.window_el.find("#console");
 			console_el.append(log+"<br/>");
-			console_el.scrollTop(console_el.scrollHeight);
+			console_el.scrollTop(console_el[0].scrollHeight);
 			
 		};
 		this.setStatus = function(status_code){
@@ -103,6 +103,7 @@ $(document).ready(function() {
 				machines[ip].window_el.hide();
 			}
 			 context.window_el.show();
+			 $("#wrapper").toggleClass("toggled");
 		});
 		
 	}
