@@ -7,5 +7,5 @@ Scheduler.xml
 MachineSimulator.xml
 MaintenanceDept.xml
 IndustrySmartware.xml
-#build
+build
 jar-in-jar-loader.zip
