@@ -1,10 +1,13 @@
 $(document).ready(function() { 
-	
-	var is_mobile = false;
 
-    if( $('#menu-toggle').css('display')=='none') {
-        is_mobile = true;       
-    }
+	var is_mobile = true;
+	var home_window_el = $("#home-window");
+	var home_list_el = $("#home-item");
+	var machine_count_el = home_window_el.find("#machine-count");
+	var machine_count = 0;
+	if( $('#menu-toggle').css('display')=='none') {
+		is_mobile = false;       
+	}
 	var statusList = {
 			"25" : "IDLE",
 			"30" : "UNDERGOING CORRECTIVE MAINTENANCE",
@@ -18,14 +21,24 @@ $(document).ready(function() {
 	};
 	var machines = {};
 	$("#connected-label").hide();
+	
+	home_list_el.click(function() {
+		if(is_mobile == true)
+			$("#wrapper").toggleClass("toggled");
+		for(var ip in machines){
+			machines[ip].window_el.hide();
+		}
+		home_window_el.show();
+		
+	});
 	var ws = new WebSocket("ws://"+window.location.hostname+":9091/");
 	ws.onopen = function()
 	{
 		$("#disconnected-label").hide();
 		$("#connected-label").show();
-		
+
 	};
-		
+
 	ws.onmessage = function (evt) 
 	{ 
 		var message = JSON.parse(evt.data);
@@ -33,7 +46,7 @@ $(document).ready(function() {
 		if (message.type == "machine")
 			machines[message.ip] = new Machine(message.ip);
 	};
-		
+
 	ws.onclose = function()
 	{ 
 		$("#disconnected-label").show();
@@ -43,24 +56,24 @@ $(document).ready(function() {
 	{
 		console.log("error");
 	};
-	
+
 	function Machine(ip){
 		var context = this;
 		console.log("Adding machine: "+ ip);
 		this.list_el = $("<li><a>Machine - " + ip + "</a></li>");
 		this.window_el = $("<div></div>");
-		this.window_el.append("<h2>Machine - " + ip + "</h2>");
-		this.window_el.append("<h3>Time: <span id=\"time\">0</span> hrs.")
+		this.window_el.append("<h3>Machine - " + ip + "</h3>");
+		this.window_el.append("<h4>Time: <span id=\"time\">0</span> hrs.</h4>")
 		this.window_el.append("<div class=\"status-label\">Status: <span id=\"status\"></span></div>");
 		this.window_el.append("<button type=\"button\" class=\"btn btn-primary\" id=\"trigger-failure\">Report Machine Failure</button>")
 		this.window_el.append("<div class=\"well\" id=\"console\"></div>");
 		this.ws = new WebSocket("ws://"+ip+":9091/");
-		
+		this.status_el = $("Machine-"+ip+": <span id=\"status\"></span>");
 		this.appendLog = function(log){
 			var console_el = this.window_el.find("#console");
 			console_el.append(log+"<br/>");
 			console_el.scrollTop(console_el[0].scrollHeight);
-			
+
 		};
 		this.setStatus = function(status_code){
 			var el = this.window_el.find("#status");
@@ -69,6 +82,8 @@ $(document).ready(function() {
 				this.window_el.find("#trigger-failure").prop("disabled",false);
 			else 
 				this.window_el.find("#trigger-failure").prop("disabled", true);
+			this.status_el.find("status").text(statusList[status_code]);
+		
 		};
 		this.window_el.find("#trigger-failure").click(function() {
 			context.ws.send("failure");
@@ -77,10 +92,15 @@ $(document).ready(function() {
 		{
 			$("#machine-list").append(context.list_el);
 			$("#machine-window").append(context.window_el);
+			machine_count += 1;
+			machine_count_el.text(machine_count);
+			home_window_el.append(context.status_el);
 			context.setStatus("25");
 			context.window_el.hide();
-		};
 			
+			
+		};
+
 		this.ws.onmessage = function (evt) 
 		{ 
 			var message = JSON.parse(evt.data);
@@ -92,7 +112,7 @@ $(document).ready(function() {
 				context.window_el.find("#time").text(message.time);
 			}
 		}
-			
+
 		this.ws.onclose = function()
 		{ 
 			console.log("closing connection");
@@ -101,17 +121,18 @@ $(document).ready(function() {
 		};
 		this.ws.onerror = function()
 		{
-			
+
 		};
-		
+
 		context.list_el.click(function() {
 			for(var ip in machines){
 				machines[ip].window_el.hide();
 			}
-			 context.window_el.show();
-			 if(is_mobile == true)
-				 $("#wrapper").toggleClass("toggled");
+			home_window_el.hide();
+			context.window_el.show();
+			if(is_mobile == true)
+				$("#wrapper").toggleClass("toggled");
 		});
-		
+
 	}
 });

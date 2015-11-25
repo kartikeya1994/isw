@@ -1,11 +1,11 @@
 package org.isw.threads;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 import org.isw.Macros;
-import org.isw.Main;
 
 public class LoggingThread implements Runnable {
 
@@ -18,7 +18,8 @@ public class LoggingThread implements Runnable {
 			while(true){
 				
 				Socket socket = tcpSocket.accept();
-				if(socket.getPort() == Macros.MAINTENANCE_DEPT_PORT_TCP)
+				DataInputStream dis = new DataInputStream(socket.getInputStream());
+				if(dis.readInt() == 1)
 					new Thread(new MaintenanceLoggingThread(socket)).start();
 				else
 					new Thread(new MachineLoggingThread(socket,lock)).start();

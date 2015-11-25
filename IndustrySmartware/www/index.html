@@ -12,44 +12,30 @@
 <link href="css/app.css" rel="stylesheet">
 </head>
 <body>
-	<nav class="navbar navbar-inverse navbar-fixed-top">
-		<div class="container-fluid">
-		<div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" >
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-			<a class="navbar-brand" href="#">Industry Smartware Testing Tool</a>
-			</div>
-			<div id="navbar" class="navbar-collapse collapse">
-				<ul class="nav navbar-nav navbar-right">
-					<li id="disconnected-label"><a><span
+	<div id="wrapper">
+		<div id="sidebar-wrapper">
+			<ul class="sidebar-nav" id="machine-list">
+				<li id="disconnected-label"><a><span
 							class="glyphicon glyphicon-remove-circle">Disconnected</span></a></li>
-					<li id="connected-label"><a><span
+				<li id="connected-label"><a><span
 							class="glyphicon glyphicon-ok-circle">Connected</span></a></li>
-				</ul>
+				<li id="home-item"><a href="#">Home</a></li>				
+			</ul>
+		</div>
+		<div id="page-content-wrapper">
+			<div class="container-fluid">
+				<div class="row">
+					<div class="col-lg-12" id="machine-window">
+						<a href="#menu-toggle" class="btn btn-success" id="menu-toggle"><span class="glyphicon glyphicon-menu-left">Menu</span></a>
+						<div id="home-window">
+						<h2>Industry Smartware Testing Tool</h2>
+							<h3>Number of machines: <span id="machine-count">0</span></h3>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
-	</nav>
-	<div id="wrapper">
-	 <div id="sidebar-wrapper">
-            <ul class="sidebar-nav" id="machine-list">
-            
-            
-            </ul></div>
-	<div id="page-content-wrapper">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-lg-12" id="machine-window">
-             		<a href="#menu-toggle" class="btn btn-success" id="menu-toggle">Show Machines</a>
-             		
-             </div>
-                    </div>
-                    </div>
-                    </div>
-	
+
 	</div>
 	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 	<script src="js/jquery-1.11.3.min.js"></script>
@@ -62,6 +48,6 @@
         $("#wrapper").toggleClass("toggled");
     });
     </script>
-	
+
 </body>
 </html>

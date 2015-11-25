@@ -45,7 +45,7 @@ public class ListenerThread extends Thread
 				
 				else if (fp.flag == Macros.START_MAINTENANCE_PLANNING)
 				{
-					Logger.connect();
+					Logger.connect(1);
 					// start planning after receiving signal from central logging
 					MaintenanceThread mt = new MaintenanceThread(machineList);
 					mt.start();

@@ -15,7 +15,7 @@ public class MachineLogger{
 		Logger.init(ip);
 	}
 	public static void connect() throws IOException{
-		Logger.connect();
+		Logger.connect(2);
 	}
 	
 	public static void log(int status, String logMessage) throws IOException {
