@@ -8,9 +8,12 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import org.isw.MachineResultPacket;
 import org.isw.MachineStatusPacket;
+import org.isw.Result;
 import org.isw.ui.MachineStage;
 
 public class MachineLoggingThread implements Runnable{
@@ -86,7 +89,7 @@ public class MachineLoggingThread implements Runnable{
 									e.printStackTrace();
 								}
 							}
-							/*ObservableList<Result> results = FXCollections.observableArrayList();
+							ObservableList<Result> results = FXCollections.observableArrayList();
 							results.add(new Result("CM downtime",String.valueOf(mrp.cmDownTime)+" hours"));
 							results.add(new Result("PM downtime",String.valueOf(mrp.pmDownTime)+" hours"));
 							results.add(new Result("Waiting time",String.valueOf(mrp.waitTime)+" hours"));
@@ -98,9 +101,9 @@ public class MachineLoggingThread implements Runnable{
 							results.add(new Result("Jobs processed",String.valueOf(mrp.jobsDone)));
 							results.add(new Result("CM jobs",String.valueOf(mrp.cmJobsDone)));
 							results.add(new Result("PM jobs",String.valueOf(mrp.pmJobsDone)));
-							 */
-							//ms.showResults(results,socket.getInetAddress().getHostAddress());
-							//ms.showChart(mrp.compPMJobsDone, mrp.compCMJobsDone,socket.getInetAddress().getHostAddress());
+							 
+							ms.showResults(results,socket.getInetAddress().getHostAddress());
+							ms.showChart(mrp.compPMJobsDone, mrp.compCMJobsDone,socket.getInetAddress().getHostAddress());
 						}
 
 					}); 
