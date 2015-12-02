@@ -1,6 +1,5 @@
 package org.isw;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
@@ -16,9 +15,8 @@ public class Logger {
 	
 	public static void connect(int flag) throws IOException {
 		socket = new Socket(ip, Macros.ISW_TCP_PORT);
-		out = new ObjectOutputStream(socket.getOutputStream()); 
-		DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-		dos.writeInt(flag);
+		out = new ObjectOutputStream(socket.getOutputStream());
+		out.writeInt(flag);
 	}
 	
 	public static void log(int status, String logMessage){

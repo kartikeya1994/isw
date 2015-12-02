@@ -5,7 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
-import java.net.Socket;
+import java.net.InetAddress;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -19,28 +19,29 @@ import org.isw.ui.MachineStage;
 public class MachineLoggingThread implements Runnable{
 
 	private MachineStage ms;
-	Socket socket;
+	InetAddress ip;
 	Object lock; 
-	public MachineLoggingThread(Socket socket,Object lock){
+	ObjectInputStream in;
+	public MachineLoggingThread(InetAddress ip,ObjectInputStream in, Object lock){
 		this.lock = lock;
+		this.in = in;
+		this.ip = ip;
 		Platform.runLater(new Runnable(){
 
 			@Override
 			public void run() {
 				ms = new MachineStage();
-				ms.setTitle("Machine: "+socket.getInetAddress().getHostAddress());
+				ms.setTitle("Machine: "+ ip.getHostAddress());
 				ms.show();
 			}
 
 		});
-		this.socket = socket;
 
 	}
 
 	@Override
 	public void run() {
 		try {
-			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 			while(true)
 			{
 				Object o = in.readObject();
@@ -102,8 +103,8 @@ public class MachineLoggingThread implements Runnable{
 							results.add(new Result("CM jobs",String.valueOf(mrp.cmJobsDone)));
 							results.add(new Result("PM jobs",String.valueOf(mrp.pmJobsDone)));
 							 
-							ms.showResults(results,socket.getInetAddress().getHostAddress());
-							ms.showChart(mrp.compPMJobsDone, mrp.compCMJobsDone,socket.getInetAddress().getHostAddress());
+							ms.showResults(results, ip.getHostAddress());
+							ms.showChart(mrp.compPMJobsDone, mrp.compCMJobsDone, ip.getHostAddress());
 						}
 
 					}); 

@@ -40,6 +40,13 @@ public class NanoWebSocket extends WebSocket{
 	@Override
 	protected void onOpen() {
 		System.out.println("Connected");
+		if(Machine.getStatus() != Macros.MACHINE_IDLE)
+			try {
+				MachineLogger.log(Machine.getStatus(), "");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		
 	}
 

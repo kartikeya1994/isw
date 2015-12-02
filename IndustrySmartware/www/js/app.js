@@ -3,6 +3,7 @@ $(document).ready(function() {
 	var is_mobile = true;
 	var home_window_el = $("#home-window");
 	var home_list_el = $("#home-item");
+	var timestamp_el = $("#time-stamp");
 	var machine_count_el = home_window_el.find("#machine-count");
 	var machine_count = 0;
 	if( $('#menu-toggle').css('display')=='none') {
@@ -68,7 +69,7 @@ $(document).ready(function() {
 		this.window_el.append("<button type=\"button\" class=\"btn btn-primary\" id=\"trigger-failure\">Report Machine Failure</button>")
 		this.window_el.append("<div class=\"well\" id=\"console\"></div>");
 		this.ws = new WebSocket("ws://"+ip+":9091/");
-		this.status_el = $("Machine-"+ip+": <span id=\"status\"></span>");
+		this.status_el = $("<p>Machine-"+ip+": <span id=\"status\">IDLE</span></p>");
 		this.appendLog = function(log){
 			var console_el = this.window_el.find("#console");
 			console_el.append(log+"<br/>");
@@ -82,7 +83,8 @@ $(document).ready(function() {
 				this.window_el.find("#trigger-failure").prop("disabled",false);
 			else 
 				this.window_el.find("#trigger-failure").prop("disabled", true);
-			this.status_el.find("status").text(statusList[status_code]);
+			
+			this.status_el.find("#status").text(statusList[status_code]);
 		
 		};
 		this.window_el.find("#trigger-failure").click(function() {
@@ -97,19 +99,19 @@ $(document).ready(function() {
 			home_window_el.append(context.status_el);
 			context.setStatus("25");
 			context.window_el.hide();
-			
-			
 		};
 
 		this.ws.onmessage = function (evt) 
 		{ 
 			var message = JSON.parse(evt.data);
 			if(message.type == "log"){
-				context.appendLog(message.log);
+				if(message.log != "")
+					context.appendLog(message.log);
 				context.setStatus(message.status_code);
 			}
 			else if(message.type == "time_stamp"){
 				context.window_el.find("#time").text(message.time);
+				timestamp_el.text(message.time);
 			}
 		}
 
@@ -132,6 +134,9 @@ $(document).ready(function() {
 			context.window_el.show();
 			if(is_mobile == true)
 				$("#wrapper").toggleClass("toggled");
+			
+			var  console_el = context.window_el.find("#console");
+			console_el.scrollTop(console_el[0].scrollHeight);
 		});
 
 	}

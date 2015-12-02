@@ -6,6 +6,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 
+import javax.sound.sampled.LineUnavailableException;
+
 import org.isw.threads.ListenerThread;
 import org.isw.threads.ServerThread;
 
@@ -48,7 +50,7 @@ public class Machine
 		return machineStatus;
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		if(args.length > 0){
 			if(args[0].equals("BF"))
 			{
@@ -60,6 +62,10 @@ public class Machine
 			}
 			if(args[0].equals("NPM"))
 				Macros.NPM = true;
+			
+			if(args[1] != null && args[1].equals("MUTE"))
+				noSound = true;
+			
 		}
 		failureEvent = false;
 		wsd = new WebSocketServer(9091);
@@ -68,7 +74,7 @@ public class Machine
 		boolean maintenanceRegistered=false;
 		boolean iswRegistered = false;
 		boolean schedulerRegistered = false;
-		
+	 
 		try
 		{
 			DatagramPacket schedulerPacket  = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_SCHEDULING_DEPT_IP);
@@ -144,6 +150,7 @@ public class Machine
 	}
 	static int oldStatus = 0;
 	public static boolean failureEvent;
+	private static boolean noSound = false;
 	
 	public static void setOldStatus(int status) {
 		oldStatus = status;
@@ -152,6 +159,36 @@ public class Machine
 
 	public static int getOldStatus() {
 		return oldStatus;
+	}
+
+	public static void failure_beep() {
+		if(noSound)return; 
+		try {
+			SoundUtils.tone(2000,800);
+		} catch (LineUnavailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
+	}
+	
+	public static void pm_beep(){
+		if(noSound)return; 
+		try {
+			SoundUtils.tone(4500,500);
+			SoundUtils.tone(4500,500);
+		} catch (LineUnavailableException e) {
+			e.printStackTrace();
+		}	
+	}
+	
+	public static void job_beep(){
+		if(noSound)return; 
+		try {
+			SoundUtils.tone(3000,500);
+			SoundUtils.tone(3000,500);
+		} catch (LineUnavailableException e) {
+			e.printStackTrace();
+		}	
 	}
 	
 }

@@ -1,7 +1,7 @@
 package org.isw.threads;
 
-import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -18,11 +18,11 @@ public class LoggingThread implements Runnable {
 			while(true){
 				
 				Socket socket = tcpSocket.accept();
-				DataInputStream dis = new DataInputStream(socket.getInputStream());
-				if(dis.readInt() == 1)
-					new Thread(new MaintenanceLoggingThread(socket)).start();
+				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+				if(ois.readInt() == 1)
+					new Thread(new MaintenanceLoggingThread(socket.getInetAddress(),ois)).start();
 				else
-					new Thread(new MachineLoggingThread(socket,lock)).start();
+					new Thread(new MachineLoggingThread(socket.getInetAddress(),ois,lock)).start();
 			}
 		
 		} catch (IOException e) {

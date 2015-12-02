@@ -1,5 +1,6 @@
 package org.isw.threads;
 
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
@@ -43,6 +44,7 @@ public class JobExecutor{
 	FailureEvent upcomingFailure;
 	boolean replan;
 	long time;
+	
 	public JobExecutor(DatagramSocket socket, ServerSocket tcpSocket,InetAddress schedulerIP, InetAddress maintenanceIP){
 		this.socket = socket;
 		this.tcpSocket = tcpSocket;
@@ -324,16 +326,12 @@ public class JobExecutor{
 				cmJob.setFixedCost(Machine.compList[upcomingFailure.compNo].getCMFixedCost());
 				cmJob.setCompNo(upcomingFailure.compNo);
 				jobList.addJobTop(cmJob);
-
 				Machine.setStatus(Macros.MACHINE_WAITING_FOR_CM_LABOUR);
 				MachineLogger.log(Machine.getStatus(), "");
 				current = jobList.peek();
-
 				replan = true;
-				//time++;
 				System.out.println("Initiating replan. time: "+time);
-				//timeSync();
-				//continue;
+				Machine.failure_beep();
 			}
 
 			if(!replan && (Machine.getStatus() == Macros.MACHINE_WAITING_FOR_CM_LABOUR 
@@ -374,6 +372,7 @@ public class JobExecutor{
 					if(current.getJobType() == Job.JOB_PM)
 						Machine.setStatus(Macros.MACHINE_PM);
 					MachineLogger.log(Machine.getStatus(), "Request granted");
+					
 					continue;
 				}
 				else if(flagPacket.flag == Macros.LABOUR_DENIED)
@@ -406,6 +405,10 @@ public class JobExecutor{
 				{
 					current.setStatus(Job.STARTED);
 					System.out.format("Job %s started.\n",current.getJobName());
+					if(current.getJobType() == Job.JOB_NORMAL)
+						Machine.job_beep();
+					else if(current.getJobType() == Job.JOB_PM)
+						Machine.pm_beep();
 					MachineLogger.log(Machine.getStatus(), "Job "+current.getJobName()+" started.");
 				}
 				

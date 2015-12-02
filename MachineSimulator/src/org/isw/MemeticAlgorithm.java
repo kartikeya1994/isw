@@ -102,7 +102,8 @@ public class MemeticAlgorithm {
 
 
 	private boolean hasConverged() {
-		if(population.get(0).combo == best.combo){
+		return false;
+		/*if(population.get(0).combo == best.combo){
 			convergenceCount++;
 			if(convergenceCount == 25)
 				return true;
@@ -112,7 +113,8 @@ public class MemeticAlgorithm {
 			best.combo =  population.get(0).combo;
 		}
 		return false;
-	}
+	*/
+		}
 
 	private void generatePopulation() throws InterruptedException, ExecutionException {
 		//TODO: Mutation, crossover ratio
@@ -319,13 +321,13 @@ class Chromosome implements Comparable<Chromosome>{
 		long time = 0;
 		time = Math.min(Macros.SHIFT_DURATION, schedule.getSum());
 		time -= pmO;
-		for(int i=0;i<50;i++){
+		for(int i=0;i<10;i++){
 			Double cmTTF = component.getCMTTF();
 			if(cmTTF < time){
 				failureCount++;
 			}
 		}
-		return failureCount/50d;
+		return failureCount/10d;
 	}
 
 	private long[] getCombolist(BigInteger combo) {

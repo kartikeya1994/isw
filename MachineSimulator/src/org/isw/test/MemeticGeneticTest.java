@@ -28,18 +28,13 @@ public class MemeticGeneticTest {
 	public static void main(String[] args) throws InterruptedException, ExecutionException, NumberFormatException, IOException {
 		// TODO Auto-generated method stub
 		Macros.SHIFT_DURATION = 24*60;
+		Macros.SIMULATION_COUNT = 1000;
 		Schedule schedule = new Schedule();
-		Job job = new Job("J1",24*10,5000,Job.JOB_NORMAL);
-		schedule.addJob(job);
-		Job job1 = new Job("J2",24*10,5000,Job.JOB_NORMAL);
-		schedule.addJob(job1);
-		Job job2 = new Job("J3",24*10,5000,Job.JOB_NORMAL);
-		schedule.addJob(job2);
-		schedule.addJob( new Job("J4",24*10,5000,Job.JOB_NORMAL));
-		schedule.addJob( new Job("J5",24*10,5000,Job.JOB_NORMAL));
-		schedule.addJob( new Job("J6",24*10,5000,Job.JOB_NORMAL));
-		
-		Machine.compList = parseExcel(6);
+		for(int i=0;i<20;i++)
+			schedule.addJob(new Job("J"+String.valueOf(i+1),72,5000,Job.JOB_NORMAL));
+		int arr[] = {20,30};
+		for(int n : arr){
+		Machine.compList = parseExcel(n);
 		ExecutorService threadPool = Executors.newSingleThreadExecutor();
 		CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
 		pool.submit(new SimulationThread(schedule,null,null,true,-1));
@@ -47,16 +42,22 @@ public class MemeticGeneticTest {
 		result = pool.take().get();
 		threadPool.shutdown();
 		while(!threadPool.isTerminated());
-		System.out.println("Cost of no PM: "+result.cost);
+		System.out.println("Cost of no PM: " + result.cost);
 		ArrayList<Integer> pmos = schedule.getPMOpportunities();
 		pmOpportunity = new int[pmos.size()];
 		for (int i = 0; i < pmOpportunity.length; i++) {
 			pmOpportunity[i] = pmos.get(i);
 		}
-		MemeticAlgorithm ma = new MemeticAlgorithm(pmOpportunity.length*Machine.compList.length*2,100,schedule,pmOpportunity,result,true);
+		
+		MemeticAlgorithm ma = new MemeticAlgorithm(60,100,schedule,pmOpportunity,result,false);
+		Long time = System.nanoTime();
 		ma.execute();
-	
-	}
+		System.out.format("time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
+		time = System.nanoTime();
+		ma = new MemeticAlgorithm(60,100,schedule,pmOpportunity,result,true);
+		ma.execute();
+		System.out.format("time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
+	}}
 	
 	private static Component[] parseExcel(int n) {
 		/**
@@ -69,7 +70,7 @@ public class MemeticGeneticTest {
 		Component[] c = new Component[n];
 		try
 		{
-			FileInputStream file = new FileInputStream(new File("components.xlsx"));
+			FileInputStream file = new FileInputStream(new File("components_maga.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
 			XSSFSheet labourSheet = workbook.getSheetAt(1);

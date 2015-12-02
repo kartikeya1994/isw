@@ -29,16 +29,10 @@ public class MemeticTest {
 		try {
 			Macros.SHIFT_DURATION = 24*60;
 			Schedule schedule = new Schedule();
-			Job job = new Job("J1",15*24,5000,Job.JOB_NORMAL);
-			schedule.addJob(job);
-			Job job1 = new Job("J2",15*24,5000,Job.JOB_NORMAL);
-			schedule.addJob(job1);
-			Job job2 = new Job("J3",15*24,5000,Job.JOB_NORMAL);
-			schedule.addJob(job2);
-			schedule.addJob(new Job("J4",15*24,5000,Job.JOB_NORMAL));
+			for(int i=0;i<10;i++)
+				schedule.addJob(new Job("J"+String.valueOf(i+1),144,5000,Job.JOB_NORMAL));
+
 			
-			//schedule.addJob(new Job("J5",10*24,5000,Job.JOB_NORMAL));
-			//schedule.addJob(new Job("J6",10*24,5000,Job.JOB_NORMAL));
 			int arr[] ={4};
 			//FileWriter writer = new FileWriter("mavsbf.csv");
 			for(int c=0;c<arr.length;c++){

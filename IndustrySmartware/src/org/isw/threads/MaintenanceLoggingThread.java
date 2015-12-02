@@ -2,7 +2,7 @@ package org.isw.threads;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.net.Socket;
+import java.net.InetAddress;
 
 import javafx.application.Platform;
 
@@ -12,8 +12,11 @@ import org.isw.ui.MaintenanceDeptStage;
 public class MaintenanceLoggingThread implements Runnable{
 	
 	private MaintenanceDeptStage ms;
-	Socket socket;
-	public MaintenanceLoggingThread(Socket socket){
+	InetAddress ip;
+	ObjectInputStream in;
+	public MaintenanceLoggingThread(InetAddress ip, ObjectInputStream in){
+		this.ip = ip;
+		this.in = in;
 		Platform.runLater(new Runnable(){
 
 			@Override
@@ -24,14 +27,12 @@ public class MaintenanceLoggingThread implements Runnable{
 			}
 			
 		});
-		this.socket = socket;
 		
 	}
 	
 	@Override
 	public void run() {
 			try {
-				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 				while(true){
 				 MaintenanceStatusPacket msp =	(MaintenanceStatusPacket) in.readObject();
 				 Platform.runLater(new Runnable(){
