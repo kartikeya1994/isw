@@ -19,6 +19,10 @@ public class SimulationResult implements Serializable,Comparable<SimulationResul
 	public long pmTTRs[][];
 
 	public long chromosomeID;
+
+	private double[] costArray;
+
+	private double[] downTimeArray;
 	
 	public SimulationResult(double cost, double pmAvgTime, long[] compCombo,int[] pmOpportunity, boolean noPM,long chromosomeID){
 		this.cost = cost;
@@ -30,6 +34,14 @@ public class SimulationResult implements Serializable,Comparable<SimulationResul
 		if(!noPM)
 			this.startTimes = new long[pmOpportunity.length];
 	}
+	
+	public void setCostArray(double[] costArray){
+		this.costArray = costArray;
+	};
+	public void setDownTimeArray(double[] downTimeArray){
+		this.downTimeArray = downTimeArray;
+	}
+	
 	public double getCost(){
 		return cost;
 	}
@@ -76,6 +88,21 @@ public class SimulationResult implements Serializable,Comparable<SimulationResul
 	@Override
 	public int compareTo(SimulationResult o) {
 		return Double.compare(cost, o.cost);
+	}
+
+	public void print() {
+		System.out.format("pmCost: %f\n cmCost: %f \n penaltyCost %f\n", costArray[0], costArray[1], costArray[2]);
+		System.out.format("avgPMTime: %f \n avgCMTime: %f \n", downTimeArray[0],downTimeArray[1]);
+	}
+
+	public double[] getDownTimeArray() {
+		// TODO Auto-generated method stub
+		return downTimeArray;
+	}
+
+	public double[] getCostArray() {
+		// TODO Auto-generated method stub
+		return costArray;
 	}
 
 

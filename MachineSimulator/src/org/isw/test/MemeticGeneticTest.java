@@ -30,9 +30,13 @@ public class MemeticGeneticTest {
 		Macros.SHIFT_DURATION = 24*60;
 		Macros.SIMULATION_COUNT = 1000;
 		Schedule schedule = new Schedule();
-		for(int i=0;i<20;i++)
-			schedule.addJob(new Job("J"+String.valueOf(i+1),72,5000,Job.JOB_NORMAL));
-		int arr[] = {20,30};
+		for(int i=0;i<3;i++){
+			Job j = new Job("J"+String.valueOf(i+1),480,5000,Job.JOB_NORMAL);
+			j.setPenaltyCost(200);
+			schedule.addJob(j);
+		}
+			
+		int arr[] = {8};
 		for(int n : arr){
 		Machine.compList = parseExcel(n);
 		ExecutorService threadPool = Executors.newSingleThreadExecutor();
@@ -51,11 +55,13 @@ public class MemeticGeneticTest {
 		
 		MemeticAlgorithm ma = new MemeticAlgorithm(60,100,schedule,pmOpportunity,result,false);
 		Long time = System.nanoTime();
-		ma.execute();
+		SimulationResult[] results = ma.execute();
+		results[0].print();
 		System.out.format("time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
 		time = System.nanoTime();
 		ma = new MemeticAlgorithm(60,100,schedule,pmOpportunity,result,true);
-		ma.execute();
+		results = ma.execute();
+		results[0].print();
 		System.out.format("time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
 	}}
 	

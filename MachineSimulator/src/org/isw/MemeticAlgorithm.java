@@ -48,9 +48,9 @@ public class MemeticAlgorithm {
 
 	public SimulationResult[] execute() throws InterruptedException, ExecutionException, NumberFormatException, IOException
 	{
-		System.out.println("Initializing population");
+		//System.out.println("Initializing population");
 		initializePopulation();
-		System.out.println("Evolving generations");
+		//System.out.println("Evolving generations");
 		evaluateFitness(population);
 		int cnt=0;
 		while(true)
@@ -72,8 +72,8 @@ public class MemeticAlgorithm {
 			
 			generatePopulation();
 			
-			if(cnt%20==0)
-				System.out.format("%d%%",(int)(cnt/(float)stopCrit*100));
+			//if(cnt%20==0)
+			//	System.out.format("%d%%",(int)(cnt/(float)stopCrit*100));
 			//System.out.format("%d,%f\n",cnt,population.get(0).fitnessValue);
 		}
 
@@ -88,9 +88,11 @@ public class MemeticAlgorithm {
 			Chromosome c = population.get(i);
 			if((!c.combo.equals(BigInteger.valueOf(0))) && !hm.containsKey(c.combo)){
 				hm.put(c.combo, true);
+				SimulationResult sr = new SimulationResult(noPM.cost - c.fitnessValue, c.pmAvgTime,c.getCombolist(),pmOpportunity,false,i);
+				sr.setCostArray(c.costArray);
+				sr.setDownTimeArray(c.downTimeArray);
 				//System.out.format("%f (%s) ",c.fitnessValue,Integer.toBinaryString(c.combo));
-				results.add(new SimulationResult(noPM.cost - c.fitnessValue, c.pmAvgTime,c.getCombolist(),pmOpportunity,false,i));
-
+				results.add(sr);
 			}
 			i++;
 		}
@@ -202,6 +204,8 @@ public class MemeticAlgorithm {
 			SimulationResult result = pool.take().get();
 			list.get((int)result.chromosomeID).fitnessValue = result.cost;
 			list.get((int)result.chromosomeID).pmAvgTime = result.pmAvgTime;
+			list.get((int)result.chromosomeID).downTimeArray = result.getDownTimeArray();
+			list.get((int)result.chromosomeID).costArray = result.getCostArray();
 			totalFitness += result.cost;
 		}
 		threadPool.shutdown();
@@ -220,7 +224,6 @@ public class MemeticAlgorithm {
 	private void initializePopulation() throws NumberFormatException, IOException 
 	{
 		//BufferedReader br = new BufferedReader(new FileReader("init_population"));
-
 		/*
 		 * Initialize population of size 2*number of components * number of pm Opp
 		 */
@@ -249,6 +252,8 @@ class Chromosome implements Comparable<Chromosome>{
 	double fitnessValue;
 	int[] pmOpportunity;
 	Schedule schedule;
+	double[] costArray;
+	double[] downTimeArray;
 	//Binary representation of the chromosome
 	BigInteger combo;
 	public Chromosome(BigInteger combo ,MemeticAlgorithm ma){

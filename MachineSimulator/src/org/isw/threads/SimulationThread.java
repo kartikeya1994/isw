@@ -35,12 +35,13 @@ public class SimulationThread implements Callable<SimulationResult> {
 	 * **/
 	public SimulationResult call() throws IOException{
 		double totalCost = 0;
-		double pmAvgTime = 0;
+		double avgPMTime = 0;
+		double avgCMTime = 0;
+		double pmCost = 0;   //PM cost 
+		double cmCost = 0;   //CM cost
+		double penaltyCost = 0; //Penalty cost
 		int cnt = 0;
 		while(cnt++ < noOfSimulations){
-			double pmCost = 0;   //PM cost 
-			double cmCost = 0;   //CM cost
-			double penaltyCost = 0; //Penalty cost
 			Schedule simSchedule = new Schedule(schedule);
 			simCompList = new Component[Machine.compList.length];
 			for(int i=0;i< Machine.compList.length;i++)
@@ -90,11 +91,12 @@ public class SimulationThread implements Callable<SimulationResult> {
 				else if(current.getJobType() == Job.JOB_PM){
 					pmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 					current.setFixedCost(0);
-					pmAvgTime += 1;
+					avgPMTime += 1;
 				}
 				else if(current.getJobType() == Job.JOB_CM){
 					cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 					current.setFixedCost(0);
+					avgCMTime += 1;
 				}
 				// decrement job time by unit time
 				
@@ -163,10 +165,11 @@ public class SimulationThread implements Callable<SimulationResult> {
 						break;
 						case Job.JOB_PM:
 							pmCost += job.getFixedCost() + job.getJobCost()*job.getJobTime()*Macros.TIME_SCALE_FACTOR; 
-							pmAvgTime += job.getJobTime();
+							avgPMTime += job.getJobTime();
 							break;
 						case Job.JOB_CM:
 							cmCost += job.getFixedCost() + job.getJobCost()*job.getJobTime()*Macros.TIME_SCALE_FACTOR; 
+							avgCMTime += job.getJobTime();
 					}
 					
 				
@@ -177,12 +180,16 @@ public class SimulationThread implements Callable<SimulationResult> {
 				System.exit(0);
 			}
 			//Calculate totalCost for the shift
-			totalCost +=  pmCost + cmCost + penaltyCost;
 
 		}
+		totalCost = pmCost+cmCost+penaltyCost;
 		totalCost /= noOfSimulations;
-		pmAvgTime /= noOfSimulations;
-		return new SimulationResult(totalCost,pmAvgTime,compCombo,pmOpportunity,noPM,chromosomeID);
+		avgPMTime /= noOfSimulations;
+		avgCMTime /= noOfSimulations;
+		SimulationResult sr =  new SimulationResult(totalCost,avgPMTime,compCombo,pmOpportunity,noPM,chromosomeID);
+		sr.setCostArray(new double[]{pmCost/1000,cmCost/1000,penaltyCost/1000});
+		sr.setDownTimeArray(new double[]{avgPMTime,avgCMTime});
+		return sr;
 	}
 	/*Add PM job for the given combination of components.
 	 * The PM jobs are being split into smaller PM jobs for each component.
