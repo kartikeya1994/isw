@@ -29,42 +29,55 @@ public class MemeticGeneticTest {
 		// TODO Auto-generated method stub
 		Macros.SHIFT_DURATION = 24*60;
 		Macros.SIMULATION_COUNT = 1000;
-		Schedule schedule = new Schedule();
-		for(int i=0;i<3;i++){
-			Job j = new Job("J"+String.valueOf(i+1),480,5000,Job.JOB_NORMAL);
-			j.setPenaltyCost(200);
-			schedule.addJob(j);
-		}
-			
-		int arr[] = {8};
-		for(int n : arr){
-		Machine.compList = parseExcel(n);
-		ExecutorService threadPool = Executors.newSingleThreadExecutor();
-		CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
-		pool.submit(new SimulationThread(schedule,null,null,true,-1));
-		SimulationResult result;
-		result = pool.take().get();
-		threadPool.shutdown();
-		while(!threadPool.isTerminated());
-		System.out.println("Cost of no PM: " + result.cost);
-		ArrayList<Integer> pmos = schedule.getPMOpportunities();
-		pmOpportunity = new int[pmos.size()];
-		for (int i = 0; i < pmOpportunity.length; i++) {
-			pmOpportunity[i] = pmos.get(i);
-		}
 		
-		MemeticAlgorithm ma = new MemeticAlgorithm(60,100,schedule,pmOpportunity,result,false);
-		Long time = System.nanoTime();
-		SimulationResult[] results = ma.execute();
-		results[0].print();
-		System.out.format("time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
-		time = System.nanoTime();
-		ma = new MemeticAlgorithm(60,100,schedule,pmOpportunity,result,true);
-		results = ma.execute();
-		results[0].print();
-		System.out.format("time: %f\n",(System.nanoTime() - time)/Math.pow(10, 9));	
-	}}
-	
+		int arrOpp[] = {4,6}; //no. of opp
+		for(int m: arrOpp)
+		{
+			System.out.format("m = %d\n",m);
+			Schedule schedule = new Schedule();
+			for(int i=0;i<m;i++)
+			{
+				Job j = new Job("J"+String.valueOf(i+1),1440/m,5000,Job.JOB_NORMAL);
+				j.setPenaltyCost(2000);
+				schedule.addJob(j);
+			}
+
+			int arr[] = {20};
+			for(int n : arr)
+			{
+				Machine.compList = parseExcel(n);
+				ExecutorService threadPool = Executors.newSingleThreadExecutor();
+				CompletionService<SimulationResult> pool = new ExecutorCompletionService<SimulationResult>(threadPool);
+				pool.submit(new SimulationThread(schedule,null,null,true,-1));
+				SimulationResult result;
+				result = pool.take().get();
+				threadPool.shutdown();
+				while(!threadPool.isTerminated());
+				System.out.println("Cost of no PM: " + result.cost);
+				ArrayList<Integer> pmos = schedule.getPMOpportunities();
+				pmOpportunity = new int[pmos.size()];
+				for (int i = 0; i < pmOpportunity.length; i++)
+				{
+					pmOpportunity[i] = pmos.get(i);
+				}
+				int terminate = 100; //termination generation
+				MemeticAlgorithm ma = new MemeticAlgorithm(60,terminate,schedule,pmOpportunity,result,false);
+				//ma.setObjectionFunction(MemeticAlgorithm.OBJ_DOWNTIME);
+				Long time = System.nanoTime();
+				SimulationResult[] results = ma.execute();
+				results[0].print();
+				System.out.format("time: %f\n---\n\n",(System.nanoTime() - time)/Math.pow(10, 9));	
+				time = System.nanoTime();
+				ma = new MemeticAlgorithm(60,terminate,schedule,pmOpportunity,result,true);
+				//ma.setObjectionFunction(MemeticAlgorithm.OBJ_DOWNTIME);
+				results = ma.execute();
+				results[0].print();
+				System.out.format("time: %f\n---\n",(System.nanoTime() - time)/Math.pow(10, 9));
+			}//component loop end
+			
+		} //opp loop end
+	}
+
 	private static Component[] parseExcel(int n) {
 		/**
 		 * Parse the component excel file into a list of components.

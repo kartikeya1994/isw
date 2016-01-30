@@ -91,8 +91,8 @@ public class SimulationResult implements Serializable,Comparable<SimulationResul
 	}
 
 	public void print() {
-		System.out.format("pmCost: %f\n cmCost: %f \n penaltyCost %f\n", costArray[0], costArray[1], costArray[2]);
-		System.out.format("avgPMTime: %f \n avgCMTime: %f \n", downTimeArray[0],downTimeArray[1]);
+		System.out.format("pmCost: %f\n cmCost: %f \n penaltyCost: %f\n totalCost: %f\n", costArray[0], costArray[1], costArray[2], costArray[0]+costArray[1]+costArray[2]);
+		System.out.format("avgPMTime: %f \n avgCMTime: %f \n totalDowntime: %f\n", downTimeArray[0],downTimeArray[1], downTimeArray[0]+downTimeArray[1]);
 	}
 
 	public double[] getDownTimeArray() {

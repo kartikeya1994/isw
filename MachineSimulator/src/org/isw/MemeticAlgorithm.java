@@ -19,6 +19,8 @@ import org.apache.commons.math3.util.Pair;
 import org.isw.threads.SimulationThread;
 
 public class MemeticAlgorithm {
+	public static final int OBJ_COST = 0;
+	public static final int OBJ_DOWNTIME = 1;
 	private int populationSize;
 	private int stopCrit;
 	int pmOpportunity[];
@@ -32,6 +34,7 @@ public class MemeticAlgorithm {
 	EnumeratedDistribution<Chromosome> distribution;
 	private int convergenceCount;
 	private boolean noLS;
+	private int obj;
 	public MemeticAlgorithm(int populationSize, int stopCrit, Schedule schedule ,int[] pmOpportunity, SimulationResult noPM, boolean noLS){
 		this.populationSize = populationSize;
 		this.population = new ArrayList<Chromosome>();
@@ -44,8 +47,13 @@ public class MemeticAlgorithm {
 		best.fitnessValue = 0;
 		convergenceCount = 0;
 		this.noLS = noLS;
+		obj = OBJ_COST;
 	}
 
+	public void setObjectionFunction(int obj){
+		this.obj = obj;
+		
+	}
 	public SimulationResult[] execute() throws InterruptedException, ExecutionException, NumberFormatException, IOException
 	{
 		//System.out.println("Initializing population");
@@ -55,6 +63,7 @@ public class MemeticAlgorithm {
 		int cnt=0;
 		while(true)
 		{
+			//System.out.println(cnt);
 			totalFitness = 0;
 			for(Chromosome individual: population)
 				totalFitness += individual.fitnessValue;
@@ -79,12 +88,15 @@ public class MemeticAlgorithm {
 
 		Collections.sort(population);
 		System.out.format("Solution: %f (%s)\n",population.get(0).fitnessValue, population.get(0).combo.toString(2));
-
-
-		int i =0;
+		SimulationResult[] sr  = new SimulationResult[1];
+		sr[0] = new SimulationResult(0,0,population.get(0).getCombolist(),pmOpportunity,false,0);
+		sr[0].setCostArray(population.get(0).costArray);
+		sr[0].setDownTimeArray(population.get(0).downTimeArray);
+		return sr;
+		/*int i = 0;
 		ArrayList<SimulationResult> results = new ArrayList<SimulationResult>();
 		HashMap<BigInteger,Boolean> hm = new HashMap<BigInteger, Boolean>();
-		while(i < populationSize && population.get(i).fitnessValue < noPM.cost){
+		while(i < populationSize && population.get(i).getCost() < noPM.cost){
 			Chromosome c = population.get(i);
 			if((!c.combo.equals(BigInteger.valueOf(0))) && !hm.containsKey(c.combo)){
 				hm.put(c.combo, true);
@@ -98,7 +110,7 @@ public class MemeticAlgorithm {
 		}
 		SimulationResult[] r = new SimulationResult[results.size()];
 		r = results.toArray(r);
-		return r;
+		return r;*/
 	}
 
 
@@ -202,12 +214,19 @@ public class MemeticAlgorithm {
 		}
 		for(int i=0;i<cnt;i++){
 			SimulationResult result = pool.take().get();
-			list.get((int)result.chromosomeID).fitnessValue = result.cost;
+			double[] arr = result.getDownTimeArray();
+			double fitness;
+			if(obj == OBJ_DOWNTIME)
+				fitness = arr[0] + arr[1]; //0 - pm 1 - cm
+			else
+				fitness = result.cost;
+			list.get((int)result.chromosomeID).fitnessValue = fitness;
 			list.get((int)result.chromosomeID).pmAvgTime = result.pmAvgTime;
 			list.get((int)result.chromosomeID).downTimeArray = result.getDownTimeArray();
 			list.get((int)result.chromosomeID).costArray = result.getCostArray();
-			totalFitness += result.cost;
+			totalFitness += fitness;
 		}
+		
 		threadPool.shutdown();
 		while(!threadPool.isTerminated());
 
@@ -261,6 +280,11 @@ class Chromosome implements Comparable<Chromosome>{
 		this.fitnessValue = 0;
 		this.pmOpportunity = ma.pmOpportunity;
 		this.schedule = ma.schedule;
+	}
+
+	public double getCost() {
+		// TODO Auto-generated method stub
+		return costArray[0]+ costArray[1]+costArray[2];
 	}
 
 	public long[] getCombolist() {
