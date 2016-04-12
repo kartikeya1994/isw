@@ -1,38 +1,43 @@
-Sending object over TCP: http://stackoverflow.com/questions/5957790/how-do-you-send-a-user-defined-class-object-over-a-tcp-ip-network-connection-in
-How TCP streams in java work: http://www.javaworld.com/article/2077322/core-java/core-java-sockets-programming-in-java-a-tutorial.html
-Simple TCP client server example: https://systembash.com/a-simple-java-tcp-server-and-tcp-client/
-Thread Pool - https://docs.oracle.com/javase/tutorial/essential/concurrency/pools.html
+************************
+To run event-based jars: 
+************************
+java -jar IndustrySmartware.jar
+java -jar Scheduler.jar 3 500
+java -jar MaintenanceDept.jar
+java -jar MachineSimulator.jar MA MUTE
 
---------------------
-MAINTENANCE DEPT
---------------------
-1. Get machine list - main thread
-2. Query each machine for IFs and schedule- thread pool
-3. Listen for breakdowns, stop ongoing PM, perform CM, resume interrupted PM - BreakdownManagerThread
-4. Incorporate PM into schedule - main thread
-5. Convey PM incorporated schedule to all machines - thread pool
+***********
+Other notes
+***********
 
---------------------
-MACHINE
---------------------
-1. Setup(parse Excel data sheet), connect to SchedulingDept - one time - main thread
-2. receive sans PM schedule, calculate IFs - main thread
-3. convey IFs to Maintenance Dept, listen for PM incorporated schedule - main thread
-4. Report current status - StatusThread
+ISW, Maintenance: No parameters
+Scheduler: No. of jobs, seconds multiplication
+Machine: MA/BF, MUTE
 
-While running a job, if it is a PM job:
-1. Before running job wait for Maintenance Dept to arrive.
-2. While running job listen for PM interrupt due to breakdown of some other machine, listen for PM resume if interrupt occurs.
+order of args must be maintained. 
+MA/BF arg is not functional anymore, but required if MUTE arg needs to be used. Use random MA/BF for mute.
 
-if it is a normal job: 
-1. Simulate breakdown if any.
+IMPORTANT: RUN IN THE FOLLOWING ORDER (Bakshi - do not switch scheduler and maintenance)
+1. IndustrySmartware
+2. Scheduler
+3. MaintenanceDept
+4. Machines
 
---------------------
-SCHEDULING DEPT
---------------------
-1. Listen for joining machines - WelcomeThread
-2. Query machines for pending jobs - thread pool
-3. Create job schedule - main thread
-4. Send schedule to all machines - thread pool
-5. Listen and wait till all machines report that 8 hours are over - main thread
+*************
+To run docker
+*************
+sudo docker run -it --rm -v /home/kartikeya/btp/isw/isw/out:/tmp/isw  isw
+sudo docker run -it --rm -v /home/kartikeya:/tmp/isw  isw
+sudo route add -net 224.0.0.0/4 dev docker0
+
+****************
+To set and unset git proxy
+****************
+git config --global http.proxy http://cse1200114:passwordx@webproxy.indore.iiti.ac.in:8080
+git config --global --unset http.proxy
+
+
+
+
+
 

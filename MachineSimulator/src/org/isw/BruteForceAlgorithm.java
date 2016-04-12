@@ -33,8 +33,15 @@ public class BruteForceAlgorithm {
 		for(long i=0;i<cnt;i++){
 			SimulationResult result = pool.take().get();
 			if(noPM.cost > result.cost){
+				result.cost = noPM.cost - result.cost;
 				results.add(result);
 			}
+			if(i == (long)cnt/4)
+				System.out.println("25%");
+			if(i == (long)cnt/2)
+				System.out.println("50%");
+			if(i == (long)3*cnt/4)
+				System.out.println("75%");
 
 		}
 		threadPool.shutdown();

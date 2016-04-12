@@ -28,7 +28,9 @@ public class IFPacket implements Serializable
 	{
 		try
 		{
+			tcpSocket.setSoTimeout(0);
 			Socket tcpSchedSock = tcpSocket.accept();
+			tcpSchedSock.setSoTimeout(0);
 			ObjectInputStream ois = new ObjectInputStream(tcpSchedSock.getInputStream());
 			Object o = ois.readObject();
 			if(o instanceof IFPacket) 

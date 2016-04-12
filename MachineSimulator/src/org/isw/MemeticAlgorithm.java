@@ -1,8 +1,10 @@
 package org.isw;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Random;
@@ -38,7 +40,7 @@ public class MemeticAlgorithm {
 		this.pmOpportunity = pmOpportunity;
 		rand = new Random();
 		this.noPM = noPM;
-		best = new Chromosome(0 ,this);
+		best = new Chromosome(new BigInteger("0") ,this);
 		best.fitnessValue = 0;
 		convergenceCount = 0;
 		this.noLS = noLS;
@@ -46,37 +48,49 @@ public class MemeticAlgorithm {
 
 	public SimulationResult[] execute() throws InterruptedException, ExecutionException, NumberFormatException, IOException
 	{
+		System.out.println("Initializing population");
 		initializePopulation();
+		System.out.println("Evaluating fitness");
 		evaluateFitness(population);
 		int cnt=0;
-		while(true){
+		while(true)
+		{
 			totalFitness = 0;
 			for(Chromosome individual: population)
 				totalFitness += individual.fitnessValue;
-			
-			try{
-				distribution = new EnumeratedDistribution<Chromosome>(populationDistribution());
-			}catch(Exception e){
-				e.printStackTrace();
 
+			try
+			{
+				distribution = new EnumeratedDistribution<Chromosome>(populationDistribution());
+			}catch(Exception e)
+			{
+				e.printStackTrace();
 			}
+			
 			if(cnt++ >= stopCrit || hasConverged())
 				break;
+			
+			System.out.println("Generation: "+cnt);
 			generatePopulation();
+			
+			if(cnt%20==0)
+				System.out.format("%d%%",(int)(cnt/(float)stopCrit*100));
 			//System.out.format("%d,%f\n",cnt,population.get(0).fitnessValue);
 		}
 
 		Collections.sort(population);
-		System.out.format("%f (%s)\n",population.get(0).fitnessValue,Long.toBinaryString(population.get(0).combo));
+		//System.out.format("%f (%s)\n",population.get(0).fitnessValue,Long.toBinaryString(population.get(0).combo));
 
 
 		int i =0;
 		ArrayList<SimulationResult> results = new ArrayList<SimulationResult>();
+		HashMap<BigInteger,Boolean> hm = new HashMap<BigInteger, Boolean>();
 		while(i < populationSize && population.get(i).fitnessValue < noPM.cost){
 			Chromosome c = population.get(i);
-			if(c.combo != 0){
+			if((!c.combo.equals(BigInteger.valueOf(0))) && !hm.containsKey(c.combo)){
+				hm.put(c.combo, true);
 				//System.out.format("%f (%s) ",c.fitnessValue,Integer.toBinaryString(c.combo));
-				results.add(new SimulationResult(c.fitnessValue,c.pmAvgTime,c.getCombolist(),pmOpportunity,false,i));
+				results.add(new SimulationResult(noPM.cost - c.fitnessValue, c.pmAvgTime,c.getCombolist(),pmOpportunity,false,i));
 
 			}
 			i++;
@@ -86,8 +100,8 @@ public class MemeticAlgorithm {
 		return r;
 	}
 
-	
-	
+
+
 	private boolean hasConverged() {
 		if(population.get(0).combo == best.combo){
 			convergenceCount++;
@@ -105,29 +119,30 @@ public class MemeticAlgorithm {
 		//TODO: Mutation, crossover ratio
 		offsprings = new ArrayList<Chromosome>();
 		int numberOfPairs = (populationSize/4%2==0)?populationSize/4:populationSize/4+1; 
-		for(int i=0;i<numberOfPairs;i++){
+		for(int i=0;i<numberOfPairs;i++)
+		{
 			Chromosome[] parents = selectParents();
-			if(parents[0].combo != parents[1].combo){
+			if(!parents[0].combo.equals(parents[1].combo)){
 				Chromosome[] offspring = crossover(parents[0],parents[1]);
-				if(offspring[0].combo != 0)
+				if(!offspring[0].combo.equals(BigInteger.valueOf(0)))
 					offsprings.add(offspring[0]);
-				if(offspring[0].combo != 0)
+				if(!offspring[0].combo.equals(BigInteger.valueOf(0)))
 					offsprings.add(offspring[1]);	
 			}
 		}
 		//Do mutation here
 		for(Chromosome offspring: offsprings){
 			if(rand.nextDouble() < 0.4){
-				int mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length);
-				if((offspring.combo^1<<mutationPoint) !=0)
-					offspring.combo ^= 1<<mutationPoint;
+				int mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length-1);
 
-				mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length);
-				if((offspring.combo^1<<mutationPoint) !=0)
-					offspring.combo ^= 1<<mutationPoint;
+				do
+				{
+					offspring.combo = offspring.combo.flipBit(mutationPoint);
+					mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length-1);
+				}while(offspring.combo.equals(BigInteger.valueOf(0)));
 			}
 		}
-		
+
 		if(!noLS){
 			optimizeOffsprings();
 		}
@@ -140,23 +155,20 @@ public class MemeticAlgorithm {
 	//Single point crossover
 	private Chromosome[] crossover(Chromosome parent1, Chromosome parent2) {
 		Chromosome[] offsprings = new Chromosome[2];
-		long combo1[] = {parent1.combo,parent1.combo};
-		long combo2[] = {parent2.combo,parent2.combo};
+		BigInteger rights[] = {parent1.combo,parent1.combo};
+		BigInteger lefts[] = {parent2.combo,parent2.combo};
 
-		int crossoverPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length-1)+1;
-		for(int i=0; i<Machine.compList.length*pmOpportunity.length;i++){
-			if(i < crossoverPoint){
-				combo2[0] = combo2[0] & ~(1<<i);
-				combo1[1] = combo2[1] & ~(1<<i);
-			}
-			else{
-				combo1[0] = combo1[0] & ~(1<<i);
-				combo2[1] = combo2[1] & ~(1<<i);
-			}
-		}
+		int crossoverPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length-2)+1;
 
-		offsprings[0] = new Chromosome(combo1[0]|combo2[0],this);
-		offsprings[1] = new Chromosome(combo1[1]|combo2[1],this);
+		rights[0] = rights[0].and(BigInteger.valueOf(1<<crossoverPoint-1));
+		rights[1] = rights[1].and(BigInteger.valueOf(1<<crossoverPoint-1));
+
+		lefts[0] = lefts[0].shiftRight(crossoverPoint).shiftLeft(crossoverPoint);
+		lefts[1] = lefts[1].shiftRight(crossoverPoint).shiftLeft(crossoverPoint);	
+
+		offsprings[0] = new Chromosome(lefts[0].or(rights[1]),this);
+		offsprings[1] = new Chromosome(lefts[1].or(rights[0]),this);
+
 		return offsprings;
 	}
 
@@ -202,29 +214,31 @@ public class MemeticAlgorithm {
 		}	
 	}
 
-	
-	
+
+
 	private void initializePopulation() throws NumberFormatException, IOException 
 	{
 		//BufferedReader br = new BufferedReader(new FileReader("init_population"));
-		
+
 		/*
 		 * Initialize population of size 2*number of components * number of pm Opp
 		 */
-		long upper =(long) Math.pow(2, Machine.compList.length*pmOpportunity.length)-2;
-		long num;
-		Hashtable<Long, Boolean> hashTable = new Hashtable<Long, Boolean>();
+		int bits = Machine.compList.length*pmOpportunity.length;
+		BigInteger num;
+		Random rnd = new Random();
+		Hashtable<BigInteger, Boolean> hashTable = new Hashtable<BigInteger, Boolean>();
 		for(int i=0;i<populationSize;i++)
 		{
-			
+
 			//num = Long.parseLong(br.readLine());
-			num = (long)(Math.random()*upper+1);
-			while(hashTable.containsKey(new Long(num)))
+			num = new BigInteger(bits, rnd);
+			while(hashTable.containsKey(num))
 			{
-				num = (long)(Math.random()*upper+1);
+				num = new BigInteger(bits, rnd);
 			}
+
 			population.add(new Chromosome(num,this));
-			hashTable.put(new Long(num), new Boolean(true));
+			hashTable.put(num, new Boolean(true));
 		}
 	}
 }
@@ -235,8 +249,8 @@ class Chromosome implements Comparable<Chromosome>{
 	int[] pmOpportunity;
 	Schedule schedule;
 	//Binary representation of the chromosome
-	long combo;
-	public Chromosome(long combo ,MemeticAlgorithm ma){
+	BigInteger combo;
+	public Chromosome(BigInteger combo ,MemeticAlgorithm ma){
 		this.combo = combo;
 		this.fitnessValue = 0;
 		this.pmOpportunity = ma.pmOpportunity;
@@ -246,23 +260,24 @@ class Chromosome implements Comparable<Chromosome>{
 	public long[] getCombolist() {
 		long combos[] = new long[pmOpportunity.length];
 		for(int i =0;i<pmOpportunity.length;i++){
-			combos[i] = (combo>>(Machine.compList.length*i))&((int)Math.pow(2,Machine.compList.length)-1);
+			combos[i] = combo.shiftRight(Machine.compList.length*i).and(BigInteger.valueOf((long)Math.pow(2,Machine.compList.length)-1)).longValue();
 		}
 		return combos;
 	}
 
-	public void applyLocalSearch() {
-		long new_combo = combo;
+	public void applyLocalSearch() 
+	{
+		BigInteger new_combo = combo;
 		int cnt = 0;
-		while(cnt++<5){
-			int mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length);
-			if((combo^1<<mutationPoint) !=0)
-				new_combo = combo^1<<mutationPoint;
+		while(cnt++<5)
+		{
+			int mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length-1);
+			do
+			{
+				new_combo = combo.flipBit(mutationPoint);
+				mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length-1);
+			}while(new_combo.equals(BigInteger.valueOf(0)));
 
-			mutationPoint = rand.nextInt(Machine.compList.length*pmOpportunity.length);
-			if((combo^1<<mutationPoint) !=0)
-				new_combo = combo^1<<mutationPoint;
-			
 			if(heuristic(new_combo)>heuristic(combo)){
 				combo = new_combo;
 			}
@@ -271,7 +286,7 @@ class Chromosome implements Comparable<Chromosome>{
 
 
 
-	private long heuristic(long combo) {
+	private long heuristic(BigInteger combo) {
 		Component[] temp = new Component[Machine.compList.length];
 		for(int i=0; i < Machine.compList.length; i++)
 			temp[i] = new Component(Machine.compList[i]);
@@ -296,9 +311,9 @@ class Chromosome implements Comparable<Chromosome>{
 		}
 		return heuristicN+heuristicP;
 	}
-	
-	
-	 
+
+
+
 
 	private Double getFailureProbablity(Component component, int pmO) {
 		int failureCount =0;
@@ -314,10 +329,10 @@ class Chromosome implements Comparable<Chromosome>{
 		return failureCount/50d;
 	}
 
-	private long[] getCombolist(long combo) {
+	private long[] getCombolist(BigInteger combo) {
 		long combos[] = new long[pmOpportunity.length];
 		for(int i =0;i<pmOpportunity.length;i++){
-			combos[i] = (combo>>(Machine.compList.length*i))&((int)Math.pow(2,Machine.compList.length)-1);
+			combos[i] = combo.shiftRight(Machine.compList.length*i).and( BigInteger.valueOf((long) Math.pow(2,Machine.compList.length)-1) ).longValue();
 		}
 		return combos;
 	}

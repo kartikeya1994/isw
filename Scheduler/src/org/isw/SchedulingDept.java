@@ -16,6 +16,13 @@ public class SchedulingDept
 	public static InetAddress maintenanceIP;
 	public static void main(String args[])
 	{
+		if(args.length > 0)
+		{
+			if(args[0].equals("3"))
+				Macros.NO_OF_JOBS = 3;
+			else if(args[0].equals("7"))
+				Macros.NO_OF_JOBS = 7;
+		}
 		DatagramSocket socket = null;
 		
 		try {

@@ -2,7 +2,10 @@
 
 package org.isw.threads;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -17,15 +20,13 @@ import java.util.concurrent.Executors;
 
 import org.isw.Component;
 import org.isw.CustomComparator;
-import org.isw.FlagPacket;
 import org.isw.IFPacket;
 import org.isw.Job;
 import org.isw.LabourAvailability;
-import org.isw.Logger;
+import org.isw.Machine;
 import org.isw.MachineList;
 import org.isw.Macros;
 import org.isw.Maintenance;
-import org.isw.MaintenanceRequestPacket;
 import org.isw.Schedule;
 import org.isw.SimulationResult;
 
@@ -41,6 +42,7 @@ public class MaintenanceThread  extends Thread{
 	static int numOfMachines;
 	static PriorityQueue<CompTTF> ttfList;
 	LabourAvailability pmLabourAssignment;
+	private ArrayList<Machine> machines;
 	
 	public MaintenanceThread(MachineList machineList){
 		this.machineList = machineList;
@@ -82,6 +84,7 @@ public class MaintenanceThread  extends Thread{
 			ip = new ArrayList<InetAddress>();
 			port = new ArrayList<Integer>();
 			schedule = new ArrayList<Schedule>();
+			machines = new ArrayList<Machine>();
 			component = new ArrayList<Component[]>();
 			ttfList = new PriorityQueue<CompTTF>();
 
@@ -93,6 +96,7 @@ public class MaintenanceThread  extends Thread{
 				ip.add(p.ip);
 				port.add(p.port);
 				Schedule sched = p.jobList;
+				machines.add(new Machine(i,p.compList));
 				schedule.add(sched);
 				component.add(p.compList);
 				pmTTRList.add(new double[p.compList.length]);
@@ -197,7 +201,7 @@ public class MaintenanceThread  extends Thread{
 							if(seriesLabour[pmOpp][2] < labour1[2])
 								seriesLabour[pmOpp][2] = labour1[2];
 							System.out.format("Series Labour: %d %d %d\n", seriesLabour[pmOpp][0],seriesLabour[pmOpp][1],seriesLabour[pmOpp][2]);
-							pmLabourAssignment.print();
+							//pmLabourAssignment.print();
 						}
 					}
 					if(!pmLabourAssignment.checkAvailability(row.startTimes[pmOpp], row.startTimes[pmOpp]+seriesTTR[pmOpp], seriesLabour[pmOpp]))
@@ -212,7 +216,25 @@ public class MaintenanceThread  extends Thread{
 				{
 					System.out.println("Met requirements for all pmOpp");
 					//incorporate the PM job(s) into schedule of machine
+					
+					
 					addPMJobs(schedule.get(row.id), component.get(row.id), row, seriesTTR, seriesLabour);
+					long[] chromosome = row.compCombo;
+					String str = schedule.get(row.id).printSchedule();
+					try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("final_schedule_"+schedule.size(),true)))){ 
+						out.print("Combo:" );
+						for(int k=0;k<component.get(row.id).length;k++)
+							out.format("%s,",component.get(row.id)[k].compName);
+						for(int k=0;k<chromosome.length;k++)
+							out.print(String.format("%3s |", Long.toBinaryString(chromosome[k]).replace(" ","0")));
+						out.println();	
+						out.println(str);
+						out.println();
+						out.println();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					toPerformPM.put(row.id, true);
 					
 					//reserve labour
@@ -225,8 +247,16 @@ public class MaintenanceThread  extends Thread{
 		System.out.println("PM incorporated schedule- ");
 		for(int i=0; i<numOfMachines;i++)
 			System.out.println("Machine: "+ip.get(i)+"\nSchedule: "+schedule.get(i).printSchedule());
+		
+		ExecutorService threadPool = Executors.newFixedThreadPool(1);
+		for(int i=0;i<Macros.SIMULATION_COUNT;i++)
+			threadPool.execute(new ScheduleExecutionThread(schedule,machines));
+		threadPool.shutdown();
+		while(!threadPool.isTerminated()); 
+		for(Machine machine : machines)
+			writeResults(machine,Macros.SIMULATION_COUNT);
 		//sending PM incorporated schedule to respective machines
-		System.out.println("Sending to all machines...");
+		/*System.out.println("Sending to all machines...");
 		int count = 0;
 		while(count++ < Macros.SIMULATION_COUNT){
 			
@@ -241,13 +271,13 @@ public class MaintenanceThread  extends Thread{
 			threadPool.shutdown();
 			while(!threadPool.isTerminated()); //block till all tasks are done
 			System.out.println("Successfully sent PM incorporated schedules to all connected machines.\nShift can now begin.");
-		
+			
 			// shift has begun
 			// receive and process requests for labour
 			LabourAvailability realTimeLabour = new LabourAvailability(Maintenance.maxLabour.clone(), Macros.SHIFT_DURATION*Macros.TIME_SCALE_FACTOR);
 			int[] currentLabour = Maintenance.maxLabour.clone();
 	
-			//Logger.log(currentLabour, "Shift started");
+			Logger.log(currentLabour, "Shift started: "+count);
 			int mcnt = 0;
 			while(true)
 			{
@@ -284,7 +314,7 @@ public class MaintenanceThread  extends Thread{
 					
 					//labour is available. Grant request and reserve labour
 					realTimeLabour.employLabour(packet.mtTuple);
-					realTimeLabour.print();
+					//realTimeLabour.print();
 					FlagPacket.sendTCP(Macros.LABOUR_GRANTED, packet.machineIP, Macros.MACHINE_PORT_TCP);
 					
 					// log a decrease in available labour
@@ -296,7 +326,7 @@ public class MaintenanceThread  extends Thread{
 				else
 				{
 					
-					realTimeLabour.print();
+					//realTimeLabour.print();
 					System.out.println("Denied");
 					//deny request
 					FlagPacket.sendTCP(Macros.LABOUR_DENIED, packet.machineIP,Macros.MACHINE_PORT_TCP);
@@ -306,9 +336,58 @@ public class MaintenanceThread  extends Thread{
 		}
 		System.out.println("Printing final schedule: ");
 		for(int i=0;i<schedule.size();i++)
-			System.out.println(i+':'+schedule.get(i).printSchedule());
+			System.out.println(i+':'+schedule.get(i).printSchedule());*/
 	}
 
+	private static void writeResults(Machine machine, int simCount) {
+		double cost = machine.cmCost + machine.pmCost + machine.penaltyCost;
+		double downtime = (machine.cmDownTime + machine.pmDownTime + machine.waitTime)/simCount;
+		double runtime = 1440 - machine.idleTime/simCount;
+		double availability = 100  - 100*downtime/runtime;
+		System.out.println("=========================================");
+		System.out.println("Machine "+ (machine.machineNo+1));
+		System.out.format("%f| %f \n",availability,cost/simCount);
+		//System.out.println("Downtime:" + String.valueOf(machine.downTime*100/(machine.runTime)) +"%");
+		System.out.println("CMDowntime: "+ machine.cmDownTime/simCount +" hours");
+		System.out.println("PM Downtime: "+ machine.pmDownTime/simCount +" hours");
+		System.out.println("Waiting Downtime: "+ machine.waitTime/simCount +" hours");
+		System.out.println("Machine Idle time: "+ machine.idleTime/simCount+" hours");
+		System.out.println("PM Cost: "+ machine.pmCost/simCount);
+		System.out.println("CM Cost: "+ machine.cmCost/simCount);
+		System.out.println("Penalty Cost: "+ machine.penaltyCost/simCount);
+		System.out.println("Processing Cost: "+ machine.procCost/simCount);
+		System.out.println("Number of jobs:" + (double)machine.jobsDone/simCount);
+		System.out.println("Number of CM jobs:" + (double)machine.cmJobsDone/simCount);
+		System.out.println("Number of PM jobs:" + (double)machine.pmJobsDone/simCount);
+		for(int i=0 ;i<machine.compList.length; i++)
+			System.out.println("Component "+machine.compList[i].compName+": PM "+(double)machine.compPMJobsDone[i]/simCount+"|CM "+(double)machine.compCMJobsDone[i]/simCount);
+		
+		try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("results.csv",true)))){ 
+			for(int i=0;i<machine.compList.length;i++)
+				out.format("%s;", machine.compList[i].compName);
+			out.print(",");
+			out.format("%f,", 0f);
+			out.format("%f,", availability);
+			out.format("%d,",  machine.idleTime/simCount);
+			out.format("%d,", machine.pmDownTime/simCount);
+			out.format("%d,",  machine.cmDownTime/simCount);
+			out.format("%d,", machine.waitTime/simCount);
+			out.format("%f,",  machine.pmCost/simCount);
+			out.format("%f,", machine.cmCost/simCount);
+			out.format("%d,",  machine.penaltyCost/simCount);
+			out.print(" ,");
+			out.format("%d,",  machine.procCost/simCount);
+			out.print(" ,");
+			out.format("%f,",  (double)machine.jobsDone/simCount);
+			out.format("%f,", (double)machine.pmJobsDone/simCount);
+			out.format("%f\n",  (double)machine.cmJobsDone/simCount);
+		
+		}
+		catch(IOException e){
+
+		}
+	
+	}
 	private static void addPMJobs(Schedule schedule,Component[] compList, SimulationResult row, long[] seriesTTR, int[][] seriesLabour) {
 		/*
 		 * Add PM jobs to given schedule.

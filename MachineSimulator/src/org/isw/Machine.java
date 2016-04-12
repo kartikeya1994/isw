@@ -8,14 +8,14 @@ import java.net.SocketTimeoutException;
 
 import org.isw.threads.ListenerThread;
 
-public class Machine 
+public class Machine
 {
 	static int machineStatus = Macros.MACHINE_IDLE;
 
 	static InetAddress schedulerIP;
 	static InetAddress maintenanceIP;
 	public static ServerSocket tcpSocket;
-	
+
 	static int machineNo;
 	public static int shiftCount;
 	public static Component[] compList;
@@ -34,24 +34,34 @@ public class Machine
 	public static long pmDownTime;
 	public static long runTime;
 	public static long idleTime;
-	
+
 	public static void setStatus(int status)
 	{
 		machineStatus = status;
 	}
-	
+
 	public static int getStatus()
 	{
 		return machineStatus;
 	}
-	
+
 	public static void main(String[] args) {
-		System.out.println("Hello");
-		
+		if(args.length > 0){
+			if(args[0].equals("BF"))
+			{
+				Macros.BF = true;
+			}
+			if(args[0].equals("MA"))
+			{
+				Macros.BF = false;
+			}
+			if(args[0].equals("NPM"))
+				Macros.NPM = true;
+		}
 		boolean maintenanceRegistered=false;
 		boolean iswRegistered = false;
 		boolean schedulerRegistered = false;
-		
+
 		try
 		{
 			DatagramPacket schedulerPacket  = FlagPacket.makePacket(Macros.SCHEDULING_DEPT_GROUP, Macros.SCHEDULING_DEPT_MULTICAST_PORT, Macros.REQUEST_SCHEDULING_DEPT_IP);
@@ -71,7 +81,7 @@ public class Machine
 					socket.send(iswPacket);
 				if(!schedulerRegistered) // register machine with scheduler
 					socket.send(maintenancePacket);
-				
+
 				System.out.println("Finding server...");
 				try
 				{
@@ -79,9 +89,9 @@ public class Machine
 				}catch(SocketTimeoutException stoe)
 				{
 					System.out.println("Timed out.");
-					continue; 
+					continue;
 				}
-				
+
 				switch (packetIn.flag){
 				case Macros.REPLY_MAINTENANCE_DEPT_IP:
 					maintenanceIP = packetIn.ip;
@@ -93,15 +103,15 @@ public class Machine
 					System.out.println("Registered to scheduler: "+ schedulerIP.getHostAddress());
 					schedulerRegistered = true;
 					break;
-				case Macros.REPLY_ISW_IP:	
+				case Macros.REPLY_ISW_IP:
 					Logger.init(packetIn.ip);
 					System.out.println("Registered to isw: "+ packetIn.ip.getHostAddress());
 					iswRegistered = true;
 					break;
 				}
 			}
-			
-			
+
+
 			//Variables required for the simulation results
 			downTime = 0;
 			jobsDone = 0;
@@ -128,11 +138,11 @@ public class Machine
 	static int oldStatus = 0;
 	public static void setOldStatus(int status) {
 		oldStatus = status;
-		
+
 	}
 
 	public static int getOldStatus() {
 		return oldStatus;
 	}
-	
+
 }

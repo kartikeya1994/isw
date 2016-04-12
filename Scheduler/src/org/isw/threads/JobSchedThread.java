@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.PriorityQueue;
@@ -78,7 +77,28 @@ public class JobSchedThread extends Thread
 				System.out.print(jobArray.get(i).getJobName()+": "+String.valueOf(jobArray.get(i).getJobTime()/Macros.TIME_SCALE_FACTOR)+" ");
 				pq.add(min);
 			}
-
+			
+			
+			Random rand = new Random();
+			int count1 = 0;
+			machineIPs = machineList.getIPs();
+			while(machineIPs.hasMoreElements()){
+				InetAddress ip = machineIPs.nextElement();
+				Schedule sched = new Schedule();
+				sched.setAddress(ip);
+				for(int i=0;i<Macros.NO_OF_JOBS;i++){
+					sched.addJob(jobArray.get(count1++));		
+				}
+				try {
+					sched.send(sched.getAddress(), Macros.MACHINE_PORT_TCP);
+					System.out.println("Sending schedule to "+sched.getAddress());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+			/*
 			while(!pq.isEmpty())
 			{
 				try {
@@ -92,7 +112,7 @@ public class JobSchedThread extends Thread
 					e.printStackTrace();
 				}
 
-			}
+			}*/
 			// schedules are sent
 			// wait till all machines send REQUEST_NEXT_SHIFT
 			FlagPacket fp;
@@ -117,7 +137,6 @@ public class JobSchedThread extends Thread
 		}
 
 	}
-
 	private void parseJobs() 
 	{
 		/*
@@ -126,22 +145,23 @@ public class JobSchedThread extends Thread
 		jobArray = new ArrayList<Job>();
 		try
 		{
-			FileInputStream file = new FileInputStream(new File("Jobs.xlsx"));
+			FileInputStream file ;
+			if(Macros.NO_OF_JOBS == 7)
+				file = new FileInputStream(new File("Jobs.xlsx"));
+			else 
+				file = new FileInputStream(new File("Jobs_3.xlsx"));
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheetAt(0);
-
-			for(int i=1;i<=machineList.count()*3;i++)
+			
+			for(int i=1;i<=machineList.count()*Macros.NO_OF_JOBS;i++)
 			{
 				Row row = sheet.getRow(i);
-				int demand = (int) row.getCell(5).getNumericCellValue();
 				String jobName = row.getCell(0).getStringCellValue();
 				long jobTime = (long)(row.getCell(1).getNumericCellValue()*Macros.TIME_SCALE_FACTOR);
-				double jobCost = row.getCell(3).getNumericCellValue();
-				for(int j=0; j<demand ;j++){
-					Job job = new Job(jobName,jobTime,jobCost,Job.JOB_NORMAL);
-					job.setPenaltyCost(row.getCell(4).getNumericCellValue());
-					jobArray.add(job);
-				}
+				double jobCost = row.getCell(3).getNumericCellValue();	
+				Job job = new Job(jobName,jobTime,jobCost,Job.JOB_NORMAL);
+				job.setPenaltyCost(row.getCell(4).getNumericCellValue());
+				jobArray.add(job);
 			}
 			file.close();
 		}
@@ -150,7 +170,7 @@ public class JobSchedThread extends Thread
 			e.printStackTrace();
 		}	
 		//sort jobs in descending order of job time
-		Collections.sort(jobArray, new JobComparator());
+		//Collections.sort(jobArray, new JobComparator());
 	}
 }
 
@@ -163,5 +183,6 @@ class JobComparator implements Comparator<Job> {
 	{
 		return Double.compare(b.getJobTime(),a.getJobTime());
 	}
+
 	
 }
