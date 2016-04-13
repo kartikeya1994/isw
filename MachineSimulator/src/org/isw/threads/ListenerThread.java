@@ -174,7 +174,7 @@ public class ListenerThread extends Thread
 				}
 			else{
 				System.out.println("MA");
-				MemeticAlgorithm ma = new MemeticAlgorithm(500,200,jl,intArray,result,false);
+				MemeticAlgorithm ma = new MemeticAlgorithm(80,100,jl,intArray,result,false);
 				results = ma.execute();
 			}
 		}
@@ -196,6 +196,9 @@ public class ListenerThread extends Thread
 		long endTime = System.nanoTime();
 		planningTime  = (endTime - starttime)/Math.pow(10, 9);
 		System.out.println("Planning complete in " +(endTime - starttime)/Math.pow(10, 9));
+		
+		System.exit(0);
+		/* This part not required. Evaluation is done centralized, at maintenance dept.
 		int count = 0;
 		while(count++ < Macros.SIMULATION_COUNT - 1)
 		{
@@ -219,6 +222,7 @@ public class ListenerThread extends Thread
 		Machine.shiftCount++;
 		//Request Scheduling Dept for next shift
 		FlagPacket.sendTCP(Macros.REQUEST_NEXT_SHIFT, schedulerIP, Macros.SCHEDULING_DEPT_PORT_TCP);		
+	*/
 	}
 
 	private void init(InitConfig ic) throws IOException {

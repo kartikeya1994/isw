@@ -1,4 +1,4 @@
-sudo docker run -it --rm -v /home/kartikeya/btp/isw/isw/out:/tmp/isw  isw
+sudo docker run -it --rm -v /home/kartikeya/btp/isw/isw/out:/isw/  isw
 sudo route add -net 224.0.0.0/4 dev docker0
 git config --global http.proxy http://cse1200114:xy.indore.iiti.ac.in:8080
 

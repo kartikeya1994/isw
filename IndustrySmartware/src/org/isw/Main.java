@@ -103,7 +103,7 @@ public class Main extends Application {
 		TextField semiskilled = new TextField("4");
 		TextField unskilled = new TextField("8");
 		TextField scaleFactor = new TextField("1");
-		TextField simulationCount = new TextField("100");
+		TextField simulationCount = new TextField("1000");
 		pane.add(skilled,1,2);
 		pane.add(semiskilled,1,3);
 		pane.add(unskilled,1,4);

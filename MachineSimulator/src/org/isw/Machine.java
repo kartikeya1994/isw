@@ -34,6 +34,7 @@ public class Machine
 	public static long pmDownTime;
 	public static long runTime;
 	public static long idleTime;
+	static int oldStatus = 0;
 
 	public static void setStatus(int status)
 	{
@@ -135,7 +136,7 @@ public class Machine
 			e.printStackTrace();
 		}
 	}
-	static int oldStatus = 0;
+	
 	public static void setOldStatus(int status) {
 		oldStatus = status;
 

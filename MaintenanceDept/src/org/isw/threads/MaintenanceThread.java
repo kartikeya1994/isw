@@ -253,8 +253,11 @@ public class MaintenanceThread  extends Thread{
 			threadPool.execute(new ScheduleExecutionThread(schedule,machines));
 		threadPool.shutdown();
 		while(!threadPool.isTerminated()); 
+		
+		
 		for(Machine machine : machines)
 			writeResults(machine,Macros.SIMULATION_COUNT);
+		
 		//sending PM incorporated schedule to respective machines
 		/*System.out.println("Sending to all machines...");
 		int count = 0;
@@ -340,6 +343,7 @@ public class MaintenanceThread  extends Thread{
 	}
 
 	private static void writeResults(Machine machine, int simCount) {
+		System.out.println("Version 2.0.4");
 		double cost = machine.cmCost + machine.pmCost + machine.penaltyCost;
 		double downtime = (machine.cmDownTime + machine.pmDownTime + machine.waitTime)/simCount;
 		double runtime = 1440 - machine.idleTime/simCount;
@@ -366,7 +370,7 @@ public class MaintenanceThread  extends Thread{
 			for(int i=0;i<machine.compList.length;i++)
 				out.format("%s;", machine.compList[i].compName);
 			out.print(",");
-			out.format("%f,", 0f);
+			out.print("0,");
 			out.format("%f,", availability);
 			out.format("%d,",  machine.idleTime/simCount);
 			out.format("%d,", machine.pmDownTime/simCount);
@@ -375,12 +379,12 @@ public class MaintenanceThread  extends Thread{
 			out.format("%f,",  machine.pmCost/simCount);
 			out.format("%f,", machine.cmCost/simCount);
 			out.format("%d,",  machine.penaltyCost/simCount);
-			out.print(" ,");
+			out.format("%f,", cost/simCount);
 			out.format("%d,",  machine.procCost/simCount);
-			out.print(" ,");
+			out.format("%f,",cost/simCount+machine.procCost/simCount);
 			out.format("%f,",  (double)machine.jobsDone/simCount);
 			out.format("%f,", (double)machine.pmJobsDone/simCount);
-			out.format("%f\n",  (double)machine.cmJobsDone/simCount);
+			out.format("%f\n\n",  (double)machine.cmJobsDone/simCount);
 		
 		}
 		catch(IOException e){

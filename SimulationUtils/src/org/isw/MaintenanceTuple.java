@@ -30,7 +30,7 @@ public class MaintenanceTuple implements Serializable
 	}
 
 	public void print() {
-		System.out.format("Start: %d End %d Laboour %d %d %d\n",start,end,labour[0],labour[1],labour[2]);
+		//System.out.format("Start: %d End %d Laboour %d %d %d\n",start,end,labour[0],labour[1],labour[2]);
 		
 	}
 }

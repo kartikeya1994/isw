@@ -33,7 +33,6 @@ class ClientHandlerThread extends Thread {
 		synchronized(machineList){
 		try
 		{
-		
 			if(!machineList.contains(packet.ip))
 			{
 				System.out.println("Newly joined: "+packet.ip);

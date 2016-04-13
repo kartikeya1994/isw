@@ -177,7 +177,7 @@ public class JobExecutor{
 					//Logger.log(Machine.getStatus(), "");
 					continue;
 				}
-				System.out.println("Undergoing PM");
+				//System.out.println("Undergoing PM");
 				// since an actual PM job is a series of PM jobs of each comp in compCombo
 				// we set all jobs in series to SERIES_STARED
 				if(current.getStatus() == Job.NOT_STARTED)
@@ -201,7 +201,7 @@ public class JobExecutor{
 			}
 			else if(current.getJobType() == Job.JOB_CM && Machine.getStatus() == Macros.MACHINE_CM)
 			{
-				System.out.println("Undergoing CM");
+				//System.out.println("Undergoing CM");
 				current.setStatus(Job.STARTED);
 				Machine.cmCost += current.getFixedCost() + current.getJobCost()/Macros.TIME_SCALE_FACTOR;
 				current.setFixedCost(0);
