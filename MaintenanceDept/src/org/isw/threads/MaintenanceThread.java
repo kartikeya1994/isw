@@ -384,7 +384,7 @@ public class MaintenanceThread  extends Thread{
 			out.format("%f,",cost/simCount+machine.procCost/simCount);
 			out.format("%f,",  (double)machine.jobsDone/simCount);
 			out.format("%f,", (double)machine.pmJobsDone/simCount);
-			out.format("%f\n\n",  (double)machine.cmJobsDone/simCount);
+			out.format("%f\n",  (double)machine.cmJobsDone/simCount);
 		
 		}
 		catch(IOException e){

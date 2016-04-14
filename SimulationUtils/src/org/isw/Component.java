@@ -146,7 +146,7 @@ public class Component implements Serializable{
 	}
 
 	public void initProps(int i) {
-		if(i<4)
+		if(i<10)
 			active = new SimpleBooleanProperty(true);
 		else
 			active = new SimpleBooleanProperty(false);

@@ -97,8 +97,8 @@ public class JobExecThread implements Callable<Double[]>{
 				}
 
 				if(jobList.isEmpty()){
-					System.out.println(time);
-					System.out.println(schedule.printSchedule());
+					//System.out.println(time);
+					//System.out.println(schedule.printSchedule());
 					System.exit(0);
 					timeSync();
 					time++;
@@ -120,7 +120,7 @@ public class JobExecThread implements Callable<Double[]>{
 					 * Add CM job to top of schedule and run it. 
 					 */
 					if(!isPlanning){
-						System.out.println("Machine Failed. Requesting maintenance...");
+						//System.out.println("Machine Failed. Requesting maintenance...");
 					}
 					Job cmJob = new Job("CM", upcomingFailure.repairTime, machine.compList[upcomingFailure.compNo].getCMLabourCost(), Job.JOB_CM);
 					cmJob.setFixedCost(machine.compList[upcomingFailure.compNo].getCMFixedCost());
@@ -320,7 +320,7 @@ public class JobExecThread implements Callable<Double[]>{
 						Job job = jobList.remove();
 						// job is complete, remove from joblist
 						if(!isPlanning){
-							System.out.println("Machine "+machine.machineNo+": Job "+ job.getJobName()+" complete");
+							//System.out.println("Machine "+machine.machineNo+": Job "+ job.getJobName()+" complete");
 						}
 						// update Machine status on job completion
 						if(jobList.isEmpty())
