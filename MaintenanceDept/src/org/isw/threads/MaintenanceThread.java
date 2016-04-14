@@ -257,6 +257,15 @@ public class MaintenanceThread  extends Thread{
 		
 		for(Machine machine : machines)
 			writeResults(machine,Macros.SIMULATION_COUNT);
+		try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("results.csv",true))))
+		{
+			out.println();
+		}
+		catch(IOException e)
+		{
+			System.out.println("Error in results file IO");
+			e.printStackTrace();
+		}
 		
 		//sending PM incorporated schedule to respective machines
 		/*System.out.println("Sending to all machines...");
@@ -343,7 +352,7 @@ public class MaintenanceThread  extends Thread{
 	}
 
 	private static void writeResults(Machine machine, int simCount) {
-		System.out.println("Version 2.0.4");
+		System.out.println("Version 2.1");
 		double cost = machine.cmCost + machine.pmCost + machine.penaltyCost;
 		double downtime = (machine.cmDownTime + machine.pmDownTime + machine.waitTime)/simCount;
 		double runtime = 1440 - machine.idleTime/simCount;
@@ -387,8 +396,10 @@ public class MaintenanceThread  extends Thread{
 			out.format("%f\n",  (double)machine.cmJobsDone/simCount);
 		
 		}
-		catch(IOException e){
-
+		catch(IOException e)
+		{
+			System.out.println("Error in results file IO");
+			e.printStackTrace();
 		}
 	
 	}
